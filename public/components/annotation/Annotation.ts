@@ -39,4 +39,26 @@ export default class Annotation extends Interface {
     getElements(): AnnotationElement[] {
         return this.elements;
     }
+
+    /**
+     * Adds an annotation element to the current instance and creates a corresponding method for consistency.
+     *
+     * @param {AnnotationElement} element - The annotation element to be added. It contains properties such as name, type, and default value.
+     * @return {void} No return value.
+     */
+    addElement(element: AnnotationElement): void {
+        this.elements.push(element);
+
+        // Also add as a method for consistency with parent class
+        const method: MethodProps = {
+            name: element.name,
+            returnType: element.type,
+            defaultValue: element.defaultValue,
+            visibility: Visibility.PUBLIC,
+            isAbstract: true,
+            params: []
+        };
+
+        this.methods.push(method);
+    }
 }
