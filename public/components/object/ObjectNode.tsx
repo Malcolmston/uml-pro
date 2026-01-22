@@ -23,7 +23,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
     protected classType: Types;
 
     protected parmRefs: React.RefObject<SVGTextElement>[] = [];
-    //protected constantRefs: React.RefObject<SVGTextElement>[] = [];
+    protected constantRefs: React.RefObject<SVGTextElement>[] = [];
     protected conRefs: React.RefObject<SVGTextElement>[] = [];
     protected methodRefs: React.RefObject<SVGTextElement>[] = [];
 
@@ -38,7 +38,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
     public state: State = {
         titleWidth: null,
         parmRects: [],
-        // constantRects: [],
+        constantRects: [],
         constructorRects: [],
         methodRects: [],
         isDragging: false,
@@ -62,7 +62,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
      *
      * @return {void}
      */
-    protected constructor(props: Props): void {
+    protected constructor(props: Props) {
         super(props);
 
         this.params = props.params || [];
@@ -152,11 +152,10 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
             return ref.current?.getBBox() || null;
         });
 
-        /*
         const constantRects = this.constantRefs.map(ref => {
             return ref.current?.getBBox() || null;
         });
-*/
+
         const constructorRects = this.conRefs.map(ref => {
             return ref.current?.getBBox() || null;
         });
@@ -165,8 +164,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
             return ref.current?.getBBox() || null;
         });
 
-        //this.setState({ titleWidth, parmRects, constantRects, constructorRects, methodRects });
-        this.setState({ titleWidth, parmRects, constructorRects, methodRects });
+        this.setState({ titleWidth, parmRects, constantRects, constructorRects, methodRects });
     }
 
     // Drag and drop event handlers
