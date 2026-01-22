@@ -34,7 +34,7 @@ export type Props = {
 export interface ClassState {
     titleWidth: DOMRect | null;
     parmRects: (DOMRect | null)[];
-    constantRects: (DOMRect | null)[];
+    //constantRects: (DOMRect | null)[];
     constructorRects: (DOMRect | null)[];
     methodRects: (DOMRect | null)[];
     contextMenu: {
