@@ -35,3 +35,5 @@ const Parm = forwardRef<SVGTextElement, P>(function Parm({ name, type, ...props 
         </Text>
     );
 });
+
+export default Parm;
