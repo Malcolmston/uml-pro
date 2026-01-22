@@ -3,7 +3,7 @@ import React, {Component, createRef} from "react";
 import Parameter, {type ParmProps} from "../Parameter";
 import Method, {type MethodProps} from "../Method"
 import Constructor, {type ConstructorProps} from "../Constructor";
-import type UML from "./uml";
+import type { UML } from "./uml";
 import Types from "../objects"
 import {type Props, type State} from "@/public/components/object/properties";
 import {Var} from "@/public/components/var";
@@ -273,7 +273,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
     };
 
     render() {
-        const { titleWidth, parmRects, constantRects, constructorRects, methodRects, isDragging, currentPosition, contextMenuOpen } = this.state;
+        const { titleWidth, parmRects, constantRects, constructorRects, methodRects, isDragging, currentPosition } = this.state;
 
         // Use current position from state instead of props for smooth dragging
         const x = currentPosition.x;
@@ -497,7 +497,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
                     cx={x + width - 5}
                     cy={y + 5}
                     fill="red"
-                    onContextMenu={(e) => {
+                    onContextMenu={() => {
                         /*
                         this.handleContextMenu(e);
                         this.setState({ contextMenuOpen: true });
