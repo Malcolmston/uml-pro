@@ -1,65 +1,136 @@
-import Image from "next/image";
+"use client";
+
+import React, {useEffect, useState} from 'react';
+import Class from "@/public/components/class/Class";
+import Visibility from "@/public/components/visibility";
+
+
+export const Background = ({viewBox}: {viewBox: {x: number, y: number, width: number, height: number} }) => (
+    <>
+        <defs>
+            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#f3f4f6" strokeWidth="1"/>
+            </pattern>
+            <pattern id="grid-major" width="200" height="200" patternUnits="userSpaceOnUse">
+                <path d="M 200 0 L 0 0 0 200" fill="none" stroke="#e5e7eb" strokeWidth="2"/>
+            </pattern>
+        </defs>
+
+        <rect x={viewBox.x - 1000} y={viewBox.y - 1000} width={viewBox.width + 2000} height={viewBox.height + 2000}
+              fill="url(#grid)" style={{pointerEvents: 'none'}}/>
+        <rect x={viewBox.x - 1000} y={viewBox.y - 1000} width={viewBox.width + 2000} height={viewBox.height + 2000}
+              fill="url(#grid-major)" style={{pointerEvents: 'none'}}/>
+    </>
+);
 
 export default function Home() {
+    const [viewBox, setViewBox] = useState({ x: -100, y: -100, width: 1800, height: 1400 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+    const [elements, setElements] = useState<React.ReactElement[]>([]);
+
+    useEffect(() => {
+        setElements([
+            <Class
+                key="class-1"
+                name="User"
+                x={100}
+                y={100}
+                params={[
+                    { name: "id", type: "long", visibility: Visibility.PRIVATE },
+                    { name: "username", type: "String", visibility: Visibility.PRIVATE },
+                    { name: "email", type: "String", visibility: Visibility.PRIVATE }
+                ]}
+                constants={[
+                    { name: "MAX_FAILED_LOGIN_ATTEMPTS", values: ["5"], type: "int", visibility: Visibility.PUBLIC, isStatic: true, isFinal: true }
+                ]}
+                constructors={[
+                    {
+                        name: "User",
+                        vis: Visibility.PUBLIC,
+                        params: [
+                            { name: "username", type: "String" },
+                            { name: "email", type: "String" }
+                        ]
+                    }
+                ]}
+                methods={[
+                    {
+                        name: "getUsername",
+                        returnType: "String",
+                        visibility: Visibility.PUBLIC,
+                        params: []
+                    },
+                    {
+                        name: "setEmail",
+                        returnType: "void",
+                        visibility: Visibility.PUBLIC,
+                        params: [{ name: "email", type: "String" }]
+                    }
+                ]}
+            />,
+            <Class
+                key="class-2"
+                name="Profile"
+                x={500}
+                y={100}
+                params={[
+                    { name: "bio", type: "String", visibility: Visibility.PRIVATE },
+                    { name: "avatarUrl", type: "String", visibility: Visibility.PRIVATE }
+                ]}
+                constants={[
+                    { name: "DEFAULT_AVATAR", values: ["\"default.png\""], type: "String", visibility: Visibility.PROTECTED, isStatic: true, isFinal: true }
+                ]}
+                constructors={[
+                    {
+                        name: "Profile",
+                        vis: Visibility.PUBLIC,
+                        params: []
+                    }
+                ]}
+                methods={[
+                    {
+                        name: "updateBio",
+                        returnType: "void",
+                        visibility: Visibility.PUBLIC,
+                        params: [{ name: "newBio", type: "String" }]
+                    }
+                ]}
+            />
+        ]);
+    }, []);
+    const [connectors, setConnectors] = useState<React.ReactElement[]>([]);
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+
+        {/* Main SVG Canvas */}
+        <div className="w-full h-full">
+            <svg
+                width="100%"
+                height="100%"
+                viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+                xmlns="http://www.w3.org/2000/svg"
+
+                className="cursor-grab active:cursor-grabbing"
+                id="svg-background"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+                <Background viewBox={viewBox} />
+
+                {/* Render all elements */}
+                {elements.map((element, index) => (
+                    <g key={`element-${index}`} id={`element-${element.key}`}>
+                        {element}
+                    </g>
+                ))}
+                {/* Render connectors on top of elements */}
+                {connectors.map((connector, idx) => (
+                    <g key={`connector-${idx}`} id={`connector-${connector.key}`}>
+                        {connector}
+                    </g>
+                ))}
+            </svg>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
     </div>
   );
 }
