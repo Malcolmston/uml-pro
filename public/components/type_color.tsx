@@ -1,3 +1,5 @@
+import {JSX} from "react";
+
 /**
  * Determines and returns a hex color code string representing a specific category
  * or type of variable or object. The color is associated with commonly used data types,
@@ -98,3 +100,31 @@ export const getColor = ( type: string ): string => {
             return "#b4b8b9ff"; // Default light color for Object or unknown types
     }
 };
+
+/**
+ * Tokenizes a type string and applies color to each token based on its type.
+ * @param type - The type string to tokenize and color.
+ * @returns An array of JSX elements representing the colored tokens.
+ */
+export function tokenizeAndColorType(type: string): JSX.Element[] {
+    const parts: JSX.Element[] = [];
+
+    const regex = /([A-Za-z_][A-Za-z0-9_]*|\[|\]|<|>|,|\s+|[?:])/g;
+    let match;
+    let index = 0;
+
+    while ((match = regex.exec(type)) !== null) {
+        const token = match[0];
+        const color = /^[A-Za-z_][A-Za-z0-9_]*$/.test(token)
+            ? getColor(token)
+            : undefined;
+
+        parts.push(
+            <tspan key={index++} fill={color}>
+            {token}
+            </tspan>
+    );
+    }
+
+    return parts;
+}
