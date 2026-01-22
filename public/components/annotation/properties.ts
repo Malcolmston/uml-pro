@@ -21,7 +21,4 @@ export type Props = {
     constructors?: unknown[];
     constants?: unknown[];
     onPositionChange?: (x: number, y: number) => void;
-    onDelete?: () => void;
-    onInspect?: (nodeData: Record<string, unknown>) => void;
-    onExport?: (code: string, fileName: string) => void;
 };
