@@ -8,6 +8,8 @@ import type UML from "./uml";
 import Types from "../objects"
 import {getVisibility} from "../visibility";
 import {type Props, type State} from "@/public/components/object/properties";
+import {Var} from "@/public/components/var";
+import Constant from "@/public/components/Constant";
 
 
 /**
@@ -28,7 +30,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
     protected methodRefs: React.RefObject<SVGTextElement>[] = [];
 
     protected params: ParmProps[];
-   // protected constants: Var[];
+    protected constants: Var[];
     protected constructors: ConstructorProps[];
     protected methods: MethodProps[];
 
@@ -66,7 +68,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
         super(props);
 
         this.params = props.params || [];
-        //this.constants = props.constants || [];
+        this.constants = props.constants || [];
         this.constructors = props.constructors || [];
         this.methods = props.methods || [];
 
@@ -123,7 +125,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
      */
     componentDidUpdate(prevProps: Props) {
         if (prevProps.name !== this.props.name ||
-            // prevProps.constants !== this.props.constants ||
+            prevProps.constants !== this.props.constants ||
             prevProps.params !== this.props.params ||
             prevProps.constructors !== this.props.constructors ||
             prevProps.methods !== this.props.methods) {
@@ -167,7 +169,6 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
         this.setState({ titleWidth, parmRects, constantRects, constructorRects, methodRects });
     }
 
-    // Drag and drop event handlers
     /**
      * Handles the `mousedown` event on an SVG element.
      *
@@ -283,7 +284,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
 
         // Initialize refs arrays
         this.parmRefs = this.params.map((_, i) => this.parmRefs[i] ?? createRef());
-       // this.constantRefs = this.constants.map((_, i) => this.constantRefs[i] ?? createRef());
+        this.constantRefs = this.constants.map((_, i) => this.constantRefs[i] ?? createRef());
         this.conRefs = this.constructors.map((_, i) => this.conRefs[i] ?? createRef());
         this.methodRefs = this.methods.map((_, i) => this.methodRefs[i] ?? createRef());
 
@@ -319,23 +320,19 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
         );
 
         const titleHeight = (titleWidth?.height || 0) + 10;
-        const totalParmHeight = parmHeight + (this.params.length > 0 ? 20 : 0);
-        const totalConstantHeight = constantHeight + (this.constantRefs.length > 0 ? 20 : 0);
-        const totalConstructorHeight = constructorHeight + (this.constructors.length > 0 ? 20 : 0);
-        const totalMethodHeight = methodHeight + (this.methods.length > 0 ? 20 : 0);
-
-        const height = titleHeight + totalParmHeight + totalConstantHeight + totalConstructorHeight + totalMethodHeight + 20;
+        const height = titleHeight + parmHeight + constantHeight + constructorHeight + methodHeight + 70;
         const padding = 4;
 
         // Y positions for sections
         const titleY = y + 15;
         const parmStartY = y + titleHeight + 15;
         const constantStartY = parmStartY + parmHeight + (this.params.length > 0 ? 15 : 5);
-        const constructorStartY = constantStartY + constantHeight + 5;
+        const constructorStartY = constantStartY + constantHeight + (this.constants.length > 0 ? 15 : 5);
         const methodStartY = constructorStartY + constructorHeight + (this.constructors.length > 0 ? 15 : 5);
 
         const circleRef = React.createRef<SVGCircleElement>();
 
+        // ...existing code...
         return (
             <g
                 ref={this.containerRef}
@@ -429,6 +426,35 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
                     />
                 )}
 
+                {/* Constants section */}
+                {this.constants.map((constant, i) => (
+                    <Constant
+                        key={`constant-${i}`}
+                        ref={this.constantRefs[i]}
+                        x={x + padding as number}
+                        y={constantStartY + i * 16 as number}
+                        fontSize={12}
+                        fill="black"
+                        name={constant.name}
+                        type={constant.type}
+                        values={Array.isArray(constant.values) ? constant.values.map(String) : undefined}
+                        visibility={constant.visibility}
+                        isStatic={constant.isStatic}
+                        isFinal={constant.isFinal}
+                    />
+                ))}
+
+                {/* Line after constants (only if there are constants) */}
+                {this.constants.length > 0 && (
+                    <Line
+                        x1={x}
+                        y1={constructorStartY - 10}
+                        x2={x + width}
+                        y2={constructorStartY - 10}
+                        stroke="black"
+                    />
+                )}
+
                 {/* Constructors section */}
                 {this.constructors.map((constructor, i) => (
                     <Constructor
@@ -486,9 +512,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
                     }}
                 />
 
-
             </g>
         );
     }
-
 };
