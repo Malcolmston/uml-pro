@@ -1,5 +1,4 @@
-import {AtRule} from "csstype";
-import Types = AtRule.Types;
+import Types from "../objects"
 import {ParmProps} from "@/public/components/Parameter";
 import {ConstructorProps} from "@/public/components/Constructor";
 import {MethodProps} from "@/public/components/Method";
