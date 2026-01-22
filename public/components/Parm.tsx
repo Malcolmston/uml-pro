@@ -1,6 +1,6 @@
 import {forwardRef, type SVGProps} from "react";
 import {tokenizeAndColorType} from "./type_color";
-import {Text} from "Svg";
+import {Text} from "./Svg";
 
 export type P = {
     name: string;
