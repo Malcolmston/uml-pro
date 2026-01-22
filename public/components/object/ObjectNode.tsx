@@ -41,4 +41,33 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
         contextMenu: { visible: false, x: 0, y: 0 },
         contextMenuOpen: false
     };
+
+    /**
+     * Protected constructor for initializing an instance with given properties.
+     *
+     * @param {Props} props - The properties used to initialize the instance.
+     * @param {Array} props.params - An array of parameters, defaults to an empty array if not provided.
+     * @param {Array} props.constructors - An array of constructors, defaults to an empty array if not provided.
+     * @param {Array} props.methods - An array of methods, defaults to an empty array if not provided.
+     * @param {string} props.name - The name associated with the instance.
+     * @param {string} props.type - The type of the class, defaults to `Types.CLASS`.
+     * @param {number} props.x - The x-position for the current state.
+     * @param {number} props.y - The y-position for the current state.
+     *
+     * @return {void}
+     */
+    protected constructor(props: Props) {
+        super(props);
+
+        this.params = props.params || [];
+        //this.constants = props.constants || [];
+        this.constructors = props.constructors || [];
+        this.methods = props.methods || [];
+
+        this.name = this.props.name;
+
+        this.classType = this.props.type || Types.CLASS;
+
+        this.state.currentPosition = { x: props.x, y: props.y };
+    }
 };
