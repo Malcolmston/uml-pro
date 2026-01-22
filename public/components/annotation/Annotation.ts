@@ -2,6 +2,7 @@ import Interface from "@/public/components/Interface/Interface";
 import {MethodProps} from "@/public/components/Method";
 import Visibility from "@/public/components/visibility";
 import {type AnnotationElement, Props} from "@/public/components/annotation/properties";
+import Types from "@/public/components/objects";
 
 export default class Annotation extends Interface {
     // Store elements for annotation-specific handling
@@ -9,7 +10,8 @@ export default class Annotation extends Interface {
 
     constructor(props: Props) {
         // @ts-expect-error: Interface constructor does not accept 'type', but required for annotation
-        super({...props, type: Types.ANNOTATION});
+        super(props);
+        this.setType = Types.ANNOTATION;
 
         // Convert elements to methods for the parent Interface class
         this.elements = props.elements || [];
