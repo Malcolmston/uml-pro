@@ -6,7 +6,7 @@ import Constructor, {type ConstructorProps} from "../addons/Constructor";
 import Constant, {type Var} from "../addons/Constant";
 import {Types, type UML} from "../addons/Modifiers";
 import {getVisibility} from "../visibility";
-import type {Props, State} from "@/public/components/object/properties";
+import {type Props, type State} from "@/public/components/object/properties";
 
 
 
@@ -22,7 +22,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
     protected methodRefs: React.RefObject<SVGTextElement>[] = [];
 
     protected params: ParmProps[];
-    protected constants: Var[];
+   // protected constants: Var[];
     protected constructors: ConstructorProps[];
     protected methods: MethodProps[];
 
@@ -269,4 +269,228 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
             );
         }
     };
+
+    render() {
+        const { titleWidth, parmRects, constantRects, constructorRects, methodRects, isDragging, currentPosition, contextMenuOpen } = this.state;
+
+        // Use current position from state instead of props for smooth dragging
+        const x = currentPosition.x;
+        const y = currentPosition.y;
+
+        // Initialize refs arrays
+        this.parmRefs = this.params.map((_, i) => this.parmRefs[i] ?? createRef());
+       // this.constantRefs = this.constants.map((_, i) => this.constantRefs[i] ?? createRef());
+        this.conRefs = this.constructors.map((_, i) => this.conRefs[i] ?? createRef());
+        this.methodRefs = this.methods.map((_, i) => this.methodRefs[i] ?? createRef());
+
+        // Calculate dimensions
+        const maxParmWidth = parmRects.length > 0
+            ? Math.max(...parmRects.map(rect => rect?.width || 0))
+            : 0;
+
+        const maxConstantWidth = constantRects.length > 0
+            ? Math.max(...constantRects.map(rect => rect?.width || 0))
+            : 0;
+
+        const maxConstructorWidth = constructorRects.length > 0
+            ? Math.max(...constructorRects.map(rect => rect?.width || 0))
+            : 0;
+
+        const maxMethodWidth = methodRects.length > 0
+            ? Math.max(...methodRects.map(rect => rect?.width || 0))
+            : 0;
+
+        const parmHeight = parmRects.reduce((acc, rect) => acc + (rect?.height || 0), 0);
+        const constantHeight = constantRects.reduce((acc, rect) => acc + (rect?.height || 0), 0);
+        const constructorHeight = constructorRects.reduce((acc, rect) => acc + (rect?.height || 0), 0);
+        const methodHeight = methodRects.reduce((acc, rect) => acc + (rect?.height || 0), 0);
+
+        const width = Math.max(
+            100,
+            (titleWidth?.width || 0) + 20,
+            maxParmWidth + 20,
+            maxConstantWidth + 20,
+            maxConstructorWidth + 20,
+            maxMethodWidth + 20
+        );
+
+        const titleHeight = (titleWidth?.height || 0) + 10;
+        const height = titleHeight + parmHeight + constantHeight + constructorHeight + methodHeight + 70;
+        const padding = 4;
+
+        // Y positions for sections
+        const titleY = y + 15;
+        const parmStartY = y + titleHeight + 15;
+        const constantStartY = parmStartY + parmHeight + (this.params.length > 0 ? 15 : 5);
+        const constructorStartY = constantStartY + constantHeight + (this.constants.length > 0 ? 15 : 5);
+        const methodStartY = constructorStartY + constructorHeight + (this.constructors.length > 0 ? 15 : 5);
+
+        const circleRef = React.createRef<SVGCircleElement>();
+
+        return (
+            <g
+                ref={this.containerRef}
+                onMouseDown={this.handleMouseDown}
+                style={{
+                    cursor: this.props.draggable === false ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+                    userSelect: 'none'
+                }}
+            >
+
+                {this.state.contextMenu.visible && (
+                    <foreignObject
+                        x={this.state.contextMenu.x + 20 + "px"}
+                        y={this.state.contextMenu.y}
+                        width={200}
+                        height={120}
+                        style={{ pointerEvents: 'auto' }}
+                    >
+
+                    </foreignObject>
+                )}
+
+                {/* Main rectangle */}
+                <Rect
+                    width={width}
+                    height={height}
+                    x={x}
+                    y={y}
+                    rx={5}
+                    ry={5}
+                    fill="white"
+                    stroke={isDragging ? "blue" : "black"}
+                    strokeWidth={isDragging ? 2 : 1}
+                />
+
+                {/* Class type (if not a regular class) */}
+                {this.classType !== Types.CLASS && (
+                    <Text
+                        x={x + width / 2}
+                        y={titleY + 11}
+                        text={`<<${this.classType}>>`}
+                        fontSize={10}
+                        fill="black"
+                        textAnchor="middle"
+                        fontStyle="italic"
+                    />
+                )}
+
+                {/* Class name */}
+                <Text
+                    ref={this.textRef}
+                    x={x + width / 2}
+                    y={titleY}
+                    text={this.name}
+                    fontSize={15}
+                    fill="black"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                />
+
+                {/* Line after class name */}
+                <Line
+                    x1={x}
+                    y1={parmStartY - 10}
+                    x2={x + width}
+                    y2={parmStartY - 10}
+                    stroke="black"
+                />
+
+                {/* Parameters section */}
+                {this.classType != Types.RECORD && this.params.map((param, i) => (
+                    <Parameter
+                        key={`param-${i}`}
+                        ref={this.parmRefs[i]}
+                        x={x + padding}
+                        y={parmStartY + i * 16}
+                        {...param}
+                        fontSize={12}
+                        fill="black"
+                    />
+                ))}
+
+                {/* Line after parameters (only if there are parameters) */}
+                { this.params.length > 0 && (
+                    <Line
+                        x1={x}
+                        y1={constantStartY - 10}
+                        x2={x + width}
+                        y2={constantStartY - 10}
+                        stroke="black"
+                    />
+                )}
+
+                {/* Line after constants (only if there are constants) */}
+                {this.constants.length > 0 && (
+                    <Line
+                        x1={x}
+                        y1={constructorStartY - 10}
+                        x2={x + width}
+                        y2={constructorStartY - 10}
+                        stroke="black"
+                    />
+                )}
+
+                {/* Constructors section */}
+                {this.constructors.map((constructor, i) => (
+                    <Constructor
+                        key={`constructor-${i}`}
+                        ref={this.conRefs[i]}
+                        x={x + padding}
+                        y={constructorStartY + i * 16}
+                        {...constructor}
+                        fontSize={12}
+                        fill="black"
+                    />
+                ))}
+
+                {/* Line after constructors (only if there are constructors) */}
+                {this.constructors.length > 0 && (
+                    <Line
+                        x1={x}
+                        y1={methodStartY - 10}
+                        x2={x + width}
+                        y2={methodStartY - 10}
+                        stroke="black"
+                    />
+                )}
+
+                {/* Methods section */}
+                {this.methods.map((method, i) => (
+                    <Method
+                        key={`method-${i}`}
+                        ref={this.methodRefs[i]}
+                        {...method}
+                        x={ (x + padding) as number}
+                        y={ (methodStartY + i * 16) as number}
+
+                        fontSize={12}
+                        fill="black"
+                    />
+                ))}
+
+                {/* Debug circle (optional - remove if not needed) */}
+                <Circle
+                    ref={circleRef}
+                    r={3}
+                    cx={x + width - 5}
+                    cy={y + 5}
+                    fill="red"
+                    onContextMenu={(e) => {
+                        /*
+                        this.handleContextMenu(e);
+                        this.setState({ contextMenuOpen: true });
+
+                         */
+                    }}
+                    onMouseLeave={() => {
+                        this.setState({ contextMenuOpen: false });
+                    }}
+                />
+
+
+            </g>
+        );
+    }
+
 };
