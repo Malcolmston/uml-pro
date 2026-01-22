@@ -47,4 +47,18 @@ In addition to visibility and color, parameters can have specific modifiers:
 1. **Static**: Represented with an <u>underline</u>.
 2. **Final**: Represented by converting the name to **UPPERCASE** and replacing spaces with underscores (e.g., `MAX_VALUE`).
 
+### Methods
+
+Methods represent behaviors of the class. They have the following visual modifiers:
+
+1. **Static**: Represented with an <u>underline</u>.
+2. **Abstract**: Represented with *italic* text.
+
+### Constructors
+
+Constructors are special methods used to initialize objects.
+
+1. **Static**: Represented with *italic* text.
+2. **Abstract**: Represented with **bold** text.
+
 
