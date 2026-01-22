@@ -3,6 +3,8 @@ import {ParmProps} from "@/public/components/Parameter";
 import {ConstructorProps} from "@/public/components/Constructor";
 import {MethodProps} from "@/public/components/Method";
 
+import {Var} from "@/public/components/var";
+
 export type Props = {
     name: string;
     type?: Types;
@@ -10,7 +12,7 @@ export type Props = {
     y: number;
 
     params?: ParmProps[];
-    //constants?: Var[];
+    constants?: Var[];
     constructors?: ConstructorProps[];
     methods?: MethodProps[];
 
