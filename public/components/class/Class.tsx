@@ -4,7 +4,7 @@ import Method, {MethodProps} from "@/public/components/Method";
 import Types from "@/public/components/objects";
 import React from "react";
 import Visibility from "@/public/components/visibility";
-import {Circle, Line, Rect, Text} from "../Svg";
+import {Text} from "../Svg";
 import Parameter from "@/public/components/Parameter";
 import Constructor from "@/public/components/Constructor";
 import Constant from "@/public/components/Constant";
@@ -425,7 +425,7 @@ export default class Class extends ObjectNode {
                     cx={x + width - 5}
                     cy={y + 5}
                     fill="red"
-                    onContextMenu={(e) => {
+                    onContextMenu={() => {
                         /*
                         this.handleContextMenu(e);
                         this.setState({contextMenuOpen: true});

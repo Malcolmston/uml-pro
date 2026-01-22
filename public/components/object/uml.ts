@@ -1,1 +1,1 @@
-export default interface UML {}
+export type UML = object;

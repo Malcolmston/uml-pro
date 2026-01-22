@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import Class from "@/public/components/class/Class";
 import Visibility from "@/public/components/visibility";
 
@@ -24,82 +24,76 @@ export const Background = ({viewBox}: {viewBox: {x: number, y: number, width: nu
 );
 
 export default function Home() {
-    const [viewBox, setViewBox] = useState({ x: -100, y: -100, width: 1800, height: 1400 });
-    const [isDragging, setIsDragging] = useState(false);
-    const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
-    const [elements, setElements] = useState<React.ReactElement[]>([]);
-
-    useEffect(() => {
-        setElements([
-            <Class
-                key="class-1"
-                name="User"
-                x={100}
-                y={100}
-                params={[
-                    { name: "id", type: "long", visibility: Visibility.PRIVATE },
-                    { name: "username", type: "String", visibility: Visibility.PRIVATE },
-                    { name: "email", type: "String", visibility: Visibility.PRIVATE }
-                ]}
-                constants={[
-                    { name: "MAX_FAILED_LOGIN_ATTEMPTS", values: ["5"], type: "int", visibility: Visibility.PUBLIC, isStatic: true, isFinal: true }
-                ]}
-                constructors={[
-                    {
-                        name: "User",
-                        vis: Visibility.PUBLIC,
-                        params: [
-                            { name: "username", type: "String" },
-                            { name: "email", type: "String" }
-                        ]
-                    }
-                ]}
-                methods={[
-                    {
-                        name: "getUsername",
-                        returnType: "String",
-                        visibility: Visibility.PUBLIC,
-                        params: []
-                    },
-                    {
-                        name: "setEmail",
-                        returnType: "void",
-                        visibility: Visibility.PUBLIC,
-                        params: [{ name: "email", type: "String" }]
-                    }
-                ]}
-            />,
-            <Class
-                key="class-2"
-                name="Profile"
-                x={500}
-                y={100}
-                params={[
-                    { name: "bio", type: "String", visibility: Visibility.PRIVATE },
-                    { name: "avatarUrl", type: "String", visibility: Visibility.PRIVATE }
-                ]}
-                constants={[
-                    { name: "DEFAULT_AVATAR", values: ["\"default.png\""], type: "String", visibility: Visibility.PROTECTED, isStatic: true, isFinal: true }
-                ]}
-                constructors={[
-                    {
-                        name: "Profile",
-                        vis: Visibility.PUBLIC,
-                        params: []
-                    }
-                ]}
-                methods={[
-                    {
-                        name: "updateBio",
-                        returnType: "void",
-                        visibility: Visibility.PUBLIC,
-                        params: [{ name: "newBio", type: "String" }]
-                    }
-                ]}
-            />
-        ]);
-    }, []);
-    const [connectors, setConnectors] = useState<React.ReactElement[]>([]);
+    const viewBox = { x: -100, y: -100, width: 1800, height: 1400 };
+    const elements: React.ReactElement[] = [
+        <Class
+            key="class-1"
+            name="User"
+            x={100}
+            y={100}
+            params={[
+                { name: "id", type: "long", visibility: Visibility.PRIVATE },
+                { name: "username", type: "String", visibility: Visibility.PRIVATE },
+                { name: "email", type: "String", visibility: Visibility.PRIVATE }
+            ]}
+            constants={[
+                { name: "MAX_FAILED_LOGIN_ATTEMPTS", values: ["5"], type: "int", visibility: Visibility.PUBLIC, isStatic: true, isFinal: true }
+            ]}
+            constructors={[
+                {
+                    name: "User",
+                    vis: Visibility.PUBLIC,
+                    params: [
+                        { name: "username", type: "String" },
+                        { name: "email", type: "String" }
+                    ]
+                }
+            ]}
+            methods={[
+                {
+                    name: "getUsername",
+                    returnType: "String",
+                    visibility: Visibility.PUBLIC,
+                    params: []
+                },
+                {
+                    name: "setEmail",
+                    returnType: "void",
+                    visibility: Visibility.PUBLIC,
+                    params: [{ name: "email", type: "String" }]
+                }
+            ]}
+        />,
+        <Class
+            key="class-2"
+            name="Profile"
+            x={500}
+            y={100}
+            params={[
+                { name: "bio", type: "String", visibility: Visibility.PRIVATE },
+                { name: "avatarUrl", type: "String", visibility: Visibility.PRIVATE }
+            ]}
+            constants={[
+                { name: "DEFAULT_AVATAR", values: ["\"default.png\""], type: "String", visibility: Visibility.PROTECTED, isStatic: true, isFinal: true }
+            ]}
+            constructors={[
+                {
+                    name: "Profile",
+                    vis: Visibility.PUBLIC,
+                    params: []
+                }
+            ]}
+            methods={[
+                {
+                    name: "updateBio",
+                    returnType: "void",
+                    visibility: Visibility.PUBLIC,
+                    params: [{ name: "newBio", type: "String" }]
+                }
+            ]}
+        />
+    ];
+    const connectors: React.ReactElement[] = [];
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
 
