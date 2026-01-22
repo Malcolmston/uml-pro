@@ -61,4 +61,18 @@ export default class Annotation extends Interface {
 
         this.methods.push(method);
     }
+
+    /**
+     * Removes an element from the elements list by its ID and removes associated methods.
+     *
+     * @param {string} elementId - The ID of the element to be removed.
+     * @return {void} No value is returned.
+     */
+    removeElement(elementId: string): void {
+        this.elements = this.elements.filter(el => el.id !== elementId);
+        // Also remove from methods
+        this.methods = this.methods.filter(method =>
+            !this.elements.some(el => el.name === method.name)
+        );
+    }
 }
