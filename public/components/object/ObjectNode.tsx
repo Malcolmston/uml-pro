@@ -79,4 +79,194 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
     protected set setType(type: Types) {
         this.classType = type;
     }
+
+    /**
+     * Lifecycle method invoked immediately after the component is mounted.
+     * Initializes necessary event listeners and performs operations required after the component is added to the DOM.
+     *
+     * @return {void} This method does not return a value.
+     */
+    componentDidMount() {
+        this.updateWidths();
+
+        // Add global event listeners for drag operations
+        document.addEventListener('mousemove', this.handleMouseMove);
+        document.addEventListener('mouseup', this.handleMouseUp);
+        document.addEventListener('mouseleave', this.handleMouseUp); // Stop dragging if mouse leaves document
+    }
+
+    /**
+     * Lifecycle method invoked immediately before a component is unmounted and destroyed.
+     * This method is used to perform cleanup activities such as removing event listeners or canceling network requests.
+     *
+     * @return {void} This method does not return a value.
+     */
+    componentWillUnmount() {
+        // Clean up event listeners
+        document.removeEventListener('mousemove', this.handleMouseMove);
+        document.removeEventListener('mouseup', this.handleMouseUp);
+        document.removeEventListener('mouseleave', this.handleMouseUp);
+    }
+
+    /**
+     * Lifecycle method called after the component updates.
+     * This method checks for changes in specific props and updates the component's state or calls other methods accordingly.
+     *
+     * @param {Props} prevProps - The props that were passed to the component before the update.
+     * @return {void} This method does not return any value.
+     */
+    componentDidUpdate(prevProps: Props) {
+        if (prevProps.name !== this.props.name ||
+            // prevProps.constants !== this.props.constants ||
+            prevProps.params !== this.props.params ||
+            prevProps.constructors !== this.props.constructors ||
+            prevProps.methods !== this.props.methods) {
+            this.updateWidths();
+        }
+
+        // Update position if props changed
+        if (prevProps.x !== this.props.x || prevProps.y !== this.props.y) {
+            this.setState({
+                currentPosition: { x: this.props.x, y: this.props.y }
+            });
+        }
+    }
+
+    /**
+     * Updates the widths of various elements by retrieving their bounding box dimensions
+     * and updates the component's state with the collected dimensions.
+     *
+     * @return {void} Does not return a value. Updates the component's state with
+     *                the calculated dimensions for title, parameters, constructors, and methods.
+     */
+    updateWidths() {
+        const titleWidth = this.textRef.current?.getBBox() || null;
+
+        const parmRects = this.parmRefs.map(ref => {
+            return ref.current?.getBBox() || null;
+        });
+
+        /*
+        const constantRects = this.constantRefs.map(ref => {
+            return ref.current?.getBBox() || null;
+        });
+*/
+        const constructorRects = this.conRefs.map(ref => {
+            return ref.current?.getBBox() || null;
+        });
+
+        const methodRects = this.methodRefs.map(ref => {
+            return ref.current?.getBBox() || null;
+        });
+
+        //this.setState({ titleWidth, parmRects, constantRects, constructorRects, methodRects });
+        this.setState({ titleWidth, parmRects, constructorRects, methodRects });
+    }
+
+    // Drag and drop event handlers
+    /**
+     * Handles the `mousedown` event on an SVG element.
+     *
+     * This function is triggered when a user presses the mouse button over an SVG element.
+     * It calculates the mouse position relative to the SVG coordinate space and determines
+     * the drag offset. The component state is updated to enable dragging behavior.
+     *
+     * Behavior:
+     * - If the `draggable` prop is set to `false`, the function exits early without any action.
+     * - Prevents the default browser behavior and stops event propagation.
+     * - Computes the offset between the mouse position and the current position of the node.
+     * - Updates the component state to mark the start of a dragging operation and records the drag offset.
+     *
+     * @param {React.MouseEvent<SVGGElement>} event - The `mousedown` event object triggered by the user interaction.
+     */
+    handleMouseDown = (event: React.MouseEvent<SVGGElement>) => {
+        if (this.props.draggable === false) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Get the SVG element to calculate proper coordinates
+        const svg = event.currentTarget.ownerSVGElement;
+        if (!svg) return;
+
+        const rect = svg.getBoundingClientRect();
+        const svgX = event.clientX - rect.left;
+        const svgY = event.clientY - rect.top;
+
+        // Calculate offset from mouse position to node position
+        const dragOffset = {
+            x: svgX - this.state.currentPosition.x,
+            y: svgY - this.state.currentPosition.y
+        };
+
+        this.setState({
+            isDragging: true,
+            dragOffset
+        });
+    };
+
+    /**
+     * Handles the mouse movement event during a drag operation.
+     * Updates the position of an object within an SVG element based on the current mouse coordinates.
+     *
+     * @param {MouseEvent} event The mouse event containing the current cursor position.
+     */
+    handleMouseMove = (event: MouseEvent) => {
+        if (!this.state.isDragging) return;
+
+        // Find the SVG element
+        const svg = this.containerRef.current?.ownerSVGElement;
+        if (!svg) return;
+
+        const rect = svg.getBoundingClientRect();
+        const svgX = event.clientX - rect.left;
+        const svgY = event.clientY - rect.top;
+
+        // Calculate new position
+        const newPosition = {
+            x: svgX - this.state.dragOffset.x,
+            y: svgY - this.state.dragOffset.y
+        };
+
+        // Ensure the node doesn't go off-screen (optional bounds checking)
+        const boundedPosition = {
+            x: newPosition.x,
+            y:  newPosition.y
+        };
+
+        this.setState({
+            currentPosition: boundedPosition
+        });
+    };
+
+    /**
+     * Handles the mouse up event during a drag operation.
+     *
+     * This function is responsible for stopping the drag operation and resetting
+     * the `isDragging` state. If a position change occurred during the drag, it
+     * will notify the parent component by invoking the `onPositionChange` callback
+     * with the current position coordinates.
+     *
+     * State Changes:
+     * - Sets `isDragging` to `false` to indicate that the drag operation has ended.
+     *
+     * Callbacks:
+     * - Invokes `onPositionChange` if it is provided as a prop, passing the current
+     *   `x` and `y` coordinates of the position.
+     */
+    handleMouseUp = () => {
+        if (!this.state.isDragging) return;
+
+        this.setState({
+            isDragging: false
+        });
+
+        // Notify parent component of position change
+        if (this.props.onPositionChange) {
+            this.props.onPositionChange(
+                this.state.currentPosition.x,
+                this.state.currentPosition.y
+            );
+        }
+    };
 };
