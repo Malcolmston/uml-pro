@@ -115,6 +115,19 @@ export default class Class extends ObjectNode {
         } as ClassState);
     };
 
+    /**
+     * Renders a UI component that displays class details such as parameters, constants, constructors,
+     * and methods along with optional collapsible getters and setters. It dynamically calculates
+     * dimensions and positions for various sections and incorporates smooth dragging functionality
+     * as part of its rendering logic.
+     *
+     * The rendering includes support for context menus, sections for parameters, constants, constructors,
+     * and method details, as well as custom styling based on class type and interaction states
+     * (e.g., dragging).
+     *
+     * @return {JSX.Element} A group of SVG elements rendering the class details with visual representation
+     *                       for different sections such as parameters, constants, constructors, and methods.
+     */
     private renderWithCollapsibleGettersSetters() {
         const {
             titleWidth,
@@ -138,7 +151,7 @@ export default class Class extends ObjectNode {
         // Initialize refs arrays (only for regular methods in collapsed view)
         const displayMethods = this.state.gettersSettersCollapsed ? regularMethods : this.methods;
         this.parmRefs = this.params.map((_, i) => this.parmRefs[i] ?? React.createRef());
-        // this.constantRefs = this.constants.map((_, i) => this.constantRefs[i] ?? React.createRef());
+        this.constantRefs = this.constants.map((_, i) => this.constantRefs[i] ?? React.createRef());
         this.conRefs = this.constructors.map((_, i) => this.conRefs[i] ?? React.createRef());
         this.methodRefs = displayMethods.map((_, i) => this.methodRefs[i] ?? React.createRef());
 
@@ -146,7 +159,6 @@ export default class Class extends ObjectNode {
         const maxParmWidth = parmRects.length > 0
             ? Math.max(...parmRects.map(rect => rect?.width || 0))
             : 0;
-
 
         const maxConstantWidth = constantRects.length > 0
             ? Math.max(...constantRects.map(rect => rect?.width || 0))
@@ -183,19 +195,14 @@ export default class Class extends ObjectNode {
         );
 
         const titleHeight = (titleWidth?.height || 0) + 10;
-        const totalParmHeight = parmHeight + (this.params.length > 0 ? 20 : 0);
-        const totalConstantHeight = constantHeight + (this.constantRefs.length > 0 ? 20 : 0);
-        const totalConstructorHeight = constructorHeight + (this.constructors.length > 0 ? 20 : 0);
-        const totalMethodHeight = methodHeight + (displayMethods.length > 0 || (this.state.gettersSettersCollapsed && this.generatedGettersSetters.length > 0) ? 20 : 0);
-
-        const height = titleHeight + totalParmHeight + totalConstantHeight + totalConstructorHeight + totalMethodHeight + 20;
+        const height = titleHeight + parmHeight + constantHeight + constructorHeight + methodHeight + 70;
         const padding = 4;
 
         // Y positions for sections
         const titleY = y + 15;
         const parmStartY = y + titleHeight + 15;
         const constantStartY = parmStartY + parmHeight + (this.params.length > 0 ? 15 : 5);
-        const constructorStartY = constantStartY + constantHeight + 5;
+        const constructorStartY = constantStartY + constantHeight + (this.constants.length > 0 ? 15 : 5);
         const methodStartY = constructorStartY + constructorHeight + (this.constructors.length > 0 ? 15 : 5);
 
         const circleRef = React.createRef<SVGCircleElement>();
@@ -234,7 +241,7 @@ export default class Class extends ObjectNode {
                 )}
 
                 {/* Main rectangle */}
-                <Rect
+                <rect
                     width={width}
                     height={height}
                     x={x}
@@ -271,7 +278,7 @@ export default class Class extends ObjectNode {
                 />
 
                 {/* Sections */}
-                <Line
+                <line
                     x1={x}
                     y1={parmStartY - 10}
                     x2={x + width}
@@ -293,7 +300,7 @@ export default class Class extends ObjectNode {
                 ))}
 
                 {this.params.length > 0 && (
-                    <Line
+                    <line
                         x1={x}
                         y1={constantStartY - 10}
                         x2={x + width}
@@ -302,7 +309,33 @@ export default class Class extends ObjectNode {
                     />
                 )}
 
+                {/* Constants */}
+                {this.constants.map((constant, i) => (
+                    <Constant
+                        key={`constant-${i}`}
+                        ref={this.constantRefs[i]}
+                        name={constant.name}
+                        type={constant.type}
+                        values={Array.isArray(constant.values) ? constant.values : undefined}
+                        visibility={constant.visibility}
+                        isStatic={constant.isStatic}
+                        isFinal={constant.isFinal}
+                        x={x + padding}
+                        y={constantStartY + i * 16}
+                        fontSize={12}
+                        fill="black"
+                    />
+                ))}
 
+                {this.constants.length > 0 && (
+                    <line
+                        x1={x}
+                        y1={constructorStartY - 10}
+                        x2={x + width}
+                        y2={constructorStartY - 10}
+                        stroke="black"
+                    />
+                )}
 
                 {/* Constructors */}
                 {this.constructors.map((constructor, i) => (
@@ -318,7 +351,7 @@ export default class Class extends ObjectNode {
                 ))}
 
                 {this.constructors.length > 0 && (
-                    <Line
+                    <line
                         x1={x}
                         y1={methodStartY - 10}
                         x2={x + width}
@@ -385,25 +418,26 @@ export default class Class extends ObjectNode {
                 )}
 
                 {/* Debug circle */}
-                <Circle
+                <circle
                     ref={circleRef}
                     r={3}
                     cx={x + width - 5}
                     cy={y + 5}
                     fill="red"
                     onContextMenu={(e) => {
-                        /*
                         this.handleContextMenu(e);
                         this.setState({contextMenuOpen: true});
-
-                         */
                     }}
                     onMouseLeave={() => {
                         this.setState({contextMenuOpen: false});
                     }}
                 />
 
-
+                {!this.state.contextMenuOpen && (
+                    <Tooltip triggerRef={circleRef as React.RefObject<SVGElement>}>
+                        <Class.OutputJava code={this.toJava()}/>
+                    </Tooltip>
+                )}
             </g>
         );
     }
