@@ -40,4 +40,11 @@ there are 3 visibility modifiers in javascript
 - <span style="color:#f1c40f">■</span> `@Override`, `@Nullable`, `@Test` (Yellow)
 - <span style="color:#b4b8b9ff">■</span> Default for unknown types
 
+### parameter types
+
+In addition to visibility and color, parameters can have specific modifiers:
+
+1. **Static**: Represented with an <u>underline</u>.
+2. **Final**: Represented by converting the name to **UPPERCASE** and replacing spaces with underscores (e.g., `MAX_VALUE`).
+
 
