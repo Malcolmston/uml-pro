@@ -183,7 +183,12 @@ export default class Class extends ObjectNode {
         );
 
         const titleHeight = (titleWidth?.height || 0) + 10;
-        const height = titleHeight + parmHeight + constantHeight + constructorHeight + methodHeight + 70;
+        const totalParmHeight = parmHeight + (this.params.length > 0 ? 20 : 0);
+        const totalConstantHeight = constantHeight + (this.constantRefs.length > 0 ? 20 : 0);
+        const totalConstructorHeight = constructorHeight + (this.constructors.length > 0 ? 20 : 0);
+        const totalMethodHeight = methodHeight + (displayMethods.length > 0 || (this.state.gettersSettersCollapsed && this.generatedGettersSetters.length > 0) ? 20 : 0);
+
+        const height = titleHeight + totalParmHeight + totalConstantHeight + totalConstructorHeight + totalMethodHeight + 20;
         const padding = 4;
 
         // Y positions for sections

@@ -319,14 +319,19 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
         );
 
         const titleHeight = (titleWidth?.height || 0) + 10;
-        const height = titleHeight + parmHeight + constantHeight + constructorHeight + methodHeight + 70;
+        const totalParmHeight = parmHeight + (this.params.length > 0 ? 20 : 0);
+        const totalConstantHeight = constantHeight + (this.constantRefs.length > 0 ? 20 : 0);
+        const totalConstructorHeight = constructorHeight + (this.constructors.length > 0 ? 20 : 0);
+        const totalMethodHeight = methodHeight + (this.methods.length > 0 ? 20 : 0);
+
+        const height = titleHeight + totalParmHeight + totalConstantHeight + totalConstructorHeight + totalMethodHeight + 20;
         const padding = 4;
 
         // Y positions for sections
         const titleY = y + 15;
         const parmStartY = y + titleHeight + 15;
         const constantStartY = parmStartY + parmHeight + (this.params.length > 0 ? 15 : 5);
-        const constructorStartY = 5; // constantStartY + constantHeight + (this.constants.length > 0 ? 15 : 5);
+        const constructorStartY = constantStartY + constantHeight + 5;
         const methodStartY = constructorStartY + constructorHeight + (this.constructors.length > 0 ? 15 : 5);
 
         const circleRef = React.createRef<SVGCircleElement>();
