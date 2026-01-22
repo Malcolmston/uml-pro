@@ -1,8 +1,7 @@
 import Interface from "@/public/components/Interface/Interface";
-import Props from "@/public/components/abstract/properties";
 import {MethodProps} from "@/public/components/Method";
 import Visibility from "@/public/components/visibility";
-import {type AnnotationElement} from "@/public/components/annotation/properties";
+import {type AnnotationElement, Props} from "@/public/components/annotation/properties";
 
 export default class Annotation extends Interface {
     // Store elements for annotation-specific handling
