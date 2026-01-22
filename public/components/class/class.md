@@ -1,25 +1,32 @@
 ## What is a class
 
-in any languge a class is a object factory. 
+In any language, a class is an object factory.
 
-there are 4 major segments of a class.
+A class object in this tool can represent these capabilities:
 
-1. name
-   2. as well as abstractin 
-2. properties
-3. methods
-   4. getters and setters
-4. constuctors
+1. Class name and optional class type label:
+   - `class` (default)
+   - `abstract`
+   - `interface`
+   - `enumeration`
+   - `annotation`
+   - `record`
+2. Properties (fields/parameters)
+3. Constants (enum-style values or named constants)
+4. Constructors
+5. Methods
+6. Auto-generated getters and setters (collapsible section)
+7. Drag position and sizing (x/y placement and dynamic width)
 
 ### visibility modifiers
 
-there are 3 visibility modifiers in javascript
+Visibility is displayed with UML-style symbols and maps to these options:
 
-1. public
-2. private
-3. protected
-4. package
-5. default
+1. public `+`
+2. private `-`
+3. protected `#`
+4. package `~`
+5. default `*` (no keyword when exporting)
 
 
 ### parameter color
@@ -47,12 +54,22 @@ In addition to visibility and color, parameters can have specific modifiers:
 1. **Static**: Represented with an <u>underline</u>.
 2. **Final**: Represented by converting the name to **UPPERCASE** and replacing spaces with underscores (e.g., `MAX_VALUE`).
 
+### Properties
+
+Properties (fields) show the visibility symbol, name, and type. They can also be marked as static and/or final.
+
+### Constants
+
+Constants render a name and optional values list. They are commonly used for enum values, but can also represent named constants.
+
 ### Methods
 
 Methods represent behaviors of the class. They have the following visual modifiers:
 
 1. **Static**: Represented with an <u>underline</u>.
 2. **Abstract**: Represented with *italic* text.
+3. **Return type**: Shown after the parameter list.
+4. **Default value**: Optional, shown as `default <value>`.
 
 ### Constructors
 
@@ -61,4 +78,68 @@ Constructors are special methods used to initialize objects.
 1. **Static**: Represented with *italic* text.
 2. **Abstract**: Represented with **bold** text.
 
+### Examples
 
+**Java**
+
+```java
+public class User {
+    private static final int MAX_AGE = 120;
+    private String name;
+    private int age;
+
+    public User(String name, int age) { ... }
+    public String getName() { ... }
+    public void setName(String name) { ... }
+    public boolean isAdult() { ... }
+}
+```
+
+UML-style entries:
+- `- name: String`
+- `- age: int`
+- `+ User(name: String, age: int)`
+- `+ getName(): String`
+- `+ setName(value: String): void`
+- `+ isAdult(): boolean`
+
+**TypeScript**
+
+```ts
+export class ApiClient {
+    private readonly baseUrl: string;
+    private token?: string;
+
+    constructor(baseUrl: string) { ... }
+    public setToken(token: string): void { ... }
+    public async fetchUser(id: number): Promise<User> { ... }
+}
+```
+
+UML-style entries:
+- `- BASE_URL: string` (final/readonly)
+- `- token: string`
+- `+ ApiClient(baseUrl: string)`
+- `+ setToken(token: string): void`
+- `+ fetchUser(id: int): Promise<User>`
+
+**C++**
+
+```cpp
+class Point {
+private:
+    double x;
+    double y;
+public:
+    Point(double x, double y);
+    double distanceTo(const Point& other) const;
+    static Point origin();
+};
+```
+
+UML-style entries:
+- `- x: double`
+- `- y: double`
+- `+ Point(x: double, y: double)`
+- `+ distanceTo(other: Point): double`
+- `+ origin(): Point` (static)
