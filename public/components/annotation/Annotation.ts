@@ -30,4 +30,13 @@ export default class Annotation extends Interface {
             this.methods = [...(props.methods || []), ...elementMethods];
         }
     }
+
+    /**
+     * Retrieves a list of annotation elements.
+     *
+     * @return {AnnotationElement[]} An array of annotation elements.
+     */
+    getElements(): AnnotationElement[] {
+        return this.elements;
+    }
 }
