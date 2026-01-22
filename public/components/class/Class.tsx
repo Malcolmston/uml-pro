@@ -4,7 +4,7 @@ import Method, {MethodProps} from "@/public/components/Method";
 import Types from "@/public/components/objects";
 import React from "react";
 import Visibility from "@/public/components/visibility";
-import {Text} from "../Svg";
+import {Circle, Line, Rect, Text} from "../Svg";
 import Parameter from "@/public/components/Parameter";
 import Constructor from "@/public/components/Constructor";
 
@@ -16,7 +16,7 @@ export default class Class extends ObjectNode {
 
     // Access parent's protected members (they need to be protected in ObjectNode)
     protected parmRefs: React.RefObject<SVGTextElement>[] = [];
-    // protected constantRefs: React.RefObject<SVGTextElement>[] = [];
+    protected constantRefs: React.RefObject<SVGTextElement>[] = [];
     protected conRefs: React.RefObject<SVGTextElement>[] = [];
     protected methodRefs: React.RefObject<SVGTextElement>[] = [];
     protected classType: Types = Types.CLASS;
@@ -29,7 +29,7 @@ export default class Class extends ObjectNode {
             ...{
                 titleWidth: null,
                 parmRects: [],
-                //constantRects: [],
+                constantRects: [],
                 constructorRects: [],
                 methodRects: [],
                 isDragging: false,
@@ -119,7 +119,7 @@ export default class Class extends ObjectNode {
         const {
             titleWidth,
             parmRects,
-            //constantRects,
+            constantRects,
             constructorRects,
             methodRects,
             isDragging,
@@ -138,7 +138,7 @@ export default class Class extends ObjectNode {
         // Initialize refs arrays (only for regular methods in collapsed view)
         const displayMethods = this.state.gettersSettersCollapsed ? regularMethods : this.methods;
         this.parmRefs = this.params.map((_, i) => this.parmRefs[i] ?? React.createRef());
-       // this.constantRefs = this.constants.map((_, i) => this.constantRefs[i] ?? React.createRef());
+        // this.constantRefs = this.constants.map((_, i) => this.constantRefs[i] ?? React.createRef());
         this.conRefs = this.constructors.map((_, i) => this.conRefs[i] ?? React.createRef());
         this.methodRefs = displayMethods.map((_, i) => this.methodRefs[i] ?? React.createRef());
 
@@ -148,13 +148,9 @@ export default class Class extends ObjectNode {
             : 0;
 
 
-        const maxConstantWidth = 0;
-            /*
-            constantRects.length > 0
+        const maxConstantWidth = constantRects.length > 0
             ? Math.max(...constantRects.map(rect => rect?.width || 0))
             : 0;
-
-             */
 
         const maxConstructorWidth = constructorRects.length > 0
             ? Math.max(...constructorRects.map(rect => rect?.width || 0))
@@ -165,7 +161,7 @@ export default class Class extends ObjectNode {
             : 0;
 
         const parmHeight = parmRects.reduce((acc, rect) => acc + (rect?.height || 0), 0);
-        const constantHeight = 0; //constantRects.reduce((acc, rect) => acc + (rect?.height || 0), 0);
+        const constantHeight = constantRects.reduce((acc, rect) => acc + (rect?.height || 0), 0);
         const constructorHeight = constructorRects.reduce((acc, rect) => acc + (rect?.height || 0), 0);
 
         // Calculate method height - add space for collapsed getters/setters
@@ -194,7 +190,7 @@ export default class Class extends ObjectNode {
         const titleY = y + 15;
         const parmStartY = y + titleHeight + 15;
         const constantStartY = parmStartY + parmHeight + (this.params.length > 0 ? 15 : 5);
-        const constructorStartY = constantStartY + constantHeight + 5 //(this.constants.length > 0 ? 15 : 5);
+        const constructorStartY = constantStartY + constantHeight + 5;
         const methodStartY = constructorStartY + constructorHeight + (this.constructors.length > 0 ? 15 : 5);
 
         const circleRef = React.createRef<SVGCircleElement>();
@@ -233,7 +229,7 @@ export default class Class extends ObjectNode {
                 )}
 
                 {/* Main rectangle */}
-                <rect
+                <Rect
                     width={width}
                     height={height}
                     x={x}
@@ -270,7 +266,7 @@ export default class Class extends ObjectNode {
                 />
 
                 {/* Sections */}
-                <line
+                <Line
                     x1={x}
                     y1={parmStartY - 10}
                     x2={x + width}
@@ -292,7 +288,7 @@ export default class Class extends ObjectNode {
                 ))}
 
                 {this.params.length > 0 && (
-                    <line
+                    <Line
                         x1={x}
                         y1={constantStartY - 10}
                         x2={x + width}
@@ -317,7 +313,7 @@ export default class Class extends ObjectNode {
                 ))}
 
                 {this.constructors.length > 0 && (
-                    <line
+                    <Line
                         x1={x}
                         y1={methodStartY - 10}
                         x2={x + width}
@@ -384,7 +380,7 @@ export default class Class extends ObjectNode {
                 )}
 
                 {/* Debug circle */}
-                <circle
+                <Circle
                     ref={circleRef}
                     r={3}
                     cx={x + width - 5}
