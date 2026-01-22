@@ -1,10 +1,11 @@
 import {Circle, Line, Rect, Text} from "../Svg";
 import React, {Component, createRef} from "react";
-import Parameter, {type ParmProps} from "../addons/Parameter";
-import Method, {type MethodProps} from "../addons/Method";
-import Constructor, {type ConstructorProps} from "../addons/Constructor";
-import Constant, {type Var} from "../addons/Constant";
-import {Types, type UML} from "../addons/Modifiers";
+import Parameter, {type ParmProps} from "../Parameter";
+import Method, {type MethodProps} from "../Method"
+import Constructor, {type ConstructorProps} from "../Constructor";
+//import Constant, {type Var} from "../addons/Constant";
+import type UML from "./uml";
+import Types from "../objects"
 import {getVisibility} from "../visibility";
 import {type Props, type State} from "@/public/components/object/properties";
 
