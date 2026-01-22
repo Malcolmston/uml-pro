@@ -3,14 +3,11 @@ import React, {Component, createRef} from "react";
 import Parameter, {type ParmProps} from "../Parameter";
 import Method, {type MethodProps} from "../Method"
 import Constructor, {type ConstructorProps} from "../Constructor";
-//import Constant, {type Var} from "../addons/Constant";
 import type UML from "./uml";
 import Types from "../objects"
-import {getVisibility} from "../visibility";
 import {type Props, type State} from "@/public/components/object/properties";
 import {Var} from "@/public/components/var";
 import Constant from "@/public/components/Constant";
-
 
 /**
  * Abstract class representing a node object in an UML diagram.

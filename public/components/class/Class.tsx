@@ -7,6 +7,7 @@ import Visibility from "@/public/components/visibility";
 import {Circle, Line, Rect, Text} from "../Svg";
 import Parameter from "@/public/components/Parameter";
 import Constructor from "@/public/components/Constructor";
+import Constant from "@/public/components/Constant";
 
 export default class Class extends ObjectNode {
     private generatedGettersSetters: MethodProps[] = [];
@@ -425,19 +426,16 @@ export default class Class extends ObjectNode {
                     cy={y + 5}
                     fill="red"
                     onContextMenu={(e) => {
+                        /*
                         this.handleContextMenu(e);
                         this.setState({contextMenuOpen: true});
+
+                         */
                     }}
                     onMouseLeave={() => {
                         this.setState({contextMenuOpen: false});
                     }}
                 />
-
-                {!this.state.contextMenuOpen && (
-                    <Tooltip triggerRef={circleRef as React.RefObject<SVGElement>}>
-                        <Class.OutputJava code={this.toJava()}/>
-                    </Tooltip>
-                )}
             </g>
         );
     }

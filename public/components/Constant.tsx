@@ -1,5 +1,5 @@
 // Extend Var with the required SVG text props
-import {forwardRef, SVGProps} from "react";
+import React, {forwardRef, SVGProps} from "react";
 import {Var} from "@/public/components/var";
 import {Text} from "./Svg";
 
@@ -31,7 +31,7 @@ export type ConstantProps = Var & {
  *
  * @returns {React.Element} A rendered SVG `<Text>` element displaying the constant and its values.
  */
-const Constant = forwardRef<SVGTextElement, ConstantProps>(function Constant({
+const Constant: React.ForwardRefExoticComponent<React.PropsWithoutRef<ConstantProps> & React.RefAttributes<SVGTextElement>> = forwardRef<SVGTextElement, ConstantProps>(function Constant({
                                                                                  name,
                                                                                  values,
                                                                                  x,
