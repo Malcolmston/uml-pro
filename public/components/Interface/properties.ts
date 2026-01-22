@@ -11,3 +11,5 @@ type Props = {
     constructors?: ConstructorProps[];
     methods?: MethodProps[];
 };
+
+export default Props;
