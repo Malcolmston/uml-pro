@@ -10,7 +10,12 @@ import {getVisibility} from "../visibility";
 import {type Props, type State} from "@/public/components/object/properties";
 
 
-
+/**
+ * Abstract class representing a node object in an UML diagram.
+ * This class extends React.Component and provides drag-and-drop functionality, event handling,
+ * and state management for diagram elements.
+ * Use it as a base class for implementing specific types of UML diagram nodes.
+ */
 export default abstract class ObjectNode extends Component<Props, State> implements UML {
     protected textRef = createRef<SVGTextElement>();
     public containerRef = createRef<SVGGElement>(); // Made public for connector access
