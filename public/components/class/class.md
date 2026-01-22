@@ -20,3 +20,24 @@ there are 3 visibility modifiers in javascript
 3. protected
 4. package
 5. default
+
+
+### parameter color
+
+- <span style="color:#e67e22">■</span> `int`, `long`, `short`, `byte` (Orange)
+- <span style="color:#1abc9c">■</span> `float`, `double` (Teal)
+- <span style="color:#9b59b6">■</span> `char` (Purple)
+- <span style="color:#e74c3c">■</span> `boolean` (Red)
+- <span style="color:#3498db">■</span> `String`, `CharSequence`, `StringBuilder` (Blue)
+- <span style="color:#2ecc71">■</span> `List`, `ArrayList`, `Set`, `Map`, `Queue` (Green)
+- <span style="color:#f39c12">■</span> `BigInteger`, `BigDecimal`, `Number` (Gold)
+- <span style="color:#00bcd4">■</span> `LocalDate`, `LocalDateTime`, `Date`, `Calendar` (Cyan)
+- <span style="color:#8a9899">■</span> `InputStream`, `OutputStream`, `Reader`, `Writer` (Gray)
+- <span style="color:#c0392b">■</span> `Thread`, `Runnable`, `ExecutorService` (Dark red)
+- <span style="color:#737375">■</span> `void`, `null` (Light gray)
+- <span style="color:#8e44ad">■</span> `Comparable`, `Serializable`, `Cloneable` (Violet)
+- <span style="color:#ff6b6b">■</span> `Exception`, `IOException`, `RuntimeException` (Bright red)
+- <span style="color:#f1c40f">■</span> `@Override`, `@Nullable`, `@Test` (Yellow)
+- <span style="color:#b4b8b9ff">■</span> Default for unknown types
+
+
