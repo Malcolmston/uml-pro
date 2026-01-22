@@ -70,4 +70,13 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
 
         this.state.currentPosition = { x: props.x, y: props.y };
     }
+
+    /**
+     * Sets the class type.
+     *
+     * @param {Types} type - The type to set for the class.
+     */
+    protected set setType(type: Types) {
+        this.classType = type;
+    }
 };
