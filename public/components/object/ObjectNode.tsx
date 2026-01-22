@@ -56,7 +56,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
      *
      * @return {void}
      */
-    protected constructor(props: Props) {
+    protected constructor(props: Props): void {
         super(props);
 
         this.params = props.params || [];
