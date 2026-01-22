@@ -31,11 +31,11 @@ describe('Interface component', () => {
       </svg>
     )
     const methodText = screen.getByText((content, element) => {
-      const hasText = (text: string) => element?.textContent?.includes(text);
-      return element?.tagName.toLowerCase() === 'text' && 
-             hasText('findById') && 
-             hasText('id') && 
-             hasText('String') && 
+      const hasText = (text: string) => !!element?.textContent?.includes(text);
+      return element?.tagName.toLowerCase() === 'text' &&
+             hasText('findById') &&
+             hasText('id') &&
+             hasText('String') &&
              hasText('T');
     });
     expect(methodText).toBeInTheDocument()

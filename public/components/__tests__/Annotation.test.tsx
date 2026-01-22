@@ -31,9 +31,9 @@ describe('Annotation component', () => {
     )
     // Annotation elements are converted to public abstract methods in the implementation
     const elementText = screen.getByText((content, element) => {
-      const hasText = (text: string) => element?.textContent?.includes(text);
-      return element?.tagName.toLowerCase() === 'text' && 
-             hasText('tableName') && 
+      const hasText = (text: string) => !!element?.textContent?.includes(text);
+      return element?.tagName.toLowerCase() === 'text' &&
+             hasText('tableName') &&
              hasText('String');
     });
     expect(elementText).toBeInTheDocument()
