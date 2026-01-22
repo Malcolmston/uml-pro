@@ -328,7 +328,7 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
         const titleY = y + 15;
         const parmStartY = y + titleHeight + 15;
         const constantStartY = parmStartY + parmHeight + (this.params.length > 0 ? 15 : 5);
-        const constructorStartY = constantStartY + constantHeight + (this.constants.length > 0 ? 15 : 5);
+        const constructorStartY = 5; // constantStartY + constantHeight + (this.constants.length > 0 ? 15 : 5);
         const methodStartY = constructorStartY + constructorHeight + (this.constructors.length > 0 ? 15 : 5);
 
         const circleRef = React.createRef<SVGCircleElement>();
