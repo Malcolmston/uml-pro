@@ -19,3 +19,4 @@ there are 3 visibility modifiers in javascript
 2. private
 3. protected
 4. package
+5. default
