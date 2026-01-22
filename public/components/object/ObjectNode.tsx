@@ -426,17 +426,6 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
                     />
                 )}
 
-                {/* Line after constants (only if there are constants) */}
-                {this.constants.length > 0 && (
-                    <Line
-                        x1={x}
-                        y1={constructorStartY - 10}
-                        x2={x + width}
-                        y2={constructorStartY - 10}
-                        stroke="black"
-                    />
-                )}
-
                 {/* Constructors section */}
                 {this.constructors.map((constructor, i) => (
                     <Constructor
