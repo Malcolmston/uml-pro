@@ -38,6 +38,10 @@ const Constant: React.ForwardRefExoticComponent<React.PropsWithoutRef<ConstantPr
                                                                                  y,
                                                                                  fontSize,
                                                                                  fill,
+                                                                                 isStatic,
+                                                                                 isFinal,
+                                                                                 type,
+                                                                                 visibility,
                                                                                  ...props
                                                                              }, ref) {
     if (values?.length && values.length >= 1) {
