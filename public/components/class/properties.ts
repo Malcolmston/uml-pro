@@ -1,7 +1,6 @@
 import {ParmProps} from "@/public/components/Parameter";
 import {ConstructorProps} from "@/public/components/Constructor";
 import {MethodProps} from "@/public/components/Method";
-import {Property} from "csstype";
 import Visibility from "@/public/components/visibility";
 
 export type Props = {
