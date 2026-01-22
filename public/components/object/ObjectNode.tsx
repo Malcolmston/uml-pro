@@ -21,6 +21,14 @@ export default abstract class ObjectNode extends Component<Props, State> impleme
     protected conRefs: React.RefObject<SVGTextElement>[] = [];
     protected methodRefs: React.RefObject<SVGTextElement>[] = [];
 
+    protected params: ParmProps[];
+    protected constants: Var[];
+    protected constructors: ConstructorProps[];
+    protected methods: MethodProps[];
+
+    protected name: string;
+
+
     public state: State = {
         titleWidth: null,
         parmRects: [],
