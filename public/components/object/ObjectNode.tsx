@@ -11,5 +11,13 @@ import type {Props, State} from "@/public/components/object/properties";
 
 
 export default abstract class ObjectNode extends Component<Props, State> implements UML {
+    protected textRef = createRef<SVGTextElement>();
+    public containerRef = createRef<SVGGElement>(); // Made public for connector access
 
+    protected classType: Types;
+
+    protected parmRefs: React.RefObject<SVGTextElement>[] = [];
+    //protected constantRefs: React.RefObject<SVGTextElement>[] = [];
+    protected conRefs: React.RefObject<SVGTextElement>[] = [];
+    protected methodRefs: React.RefObject<SVGTextElement>[] = [];
 };
