@@ -44,6 +44,11 @@ const Constant: React.ForwardRefExoticComponent<React.PropsWithoutRef<ConstantPr
                                                                                  visibility,
                                                                                  ...props
                                                                              }, ref) {
+    // Explicitly strip non-SVG props to avoid passing them to <Text>.
+    void isStatic;
+    void isFinal;
+    void type;
+    void visibility;
     if (values?.length && values.length >= 1) {
         return (
             <Text
