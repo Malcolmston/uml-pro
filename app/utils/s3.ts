@@ -218,10 +218,47 @@ async function moveFile(sourceBucket: string, sourcePath: string, destinationBuc
     }
 
     // For cross-bucket moves, download and re-upload
-    // Note: This requires additional implementation for downloading the file first
-    return {
-        data: null,
-        error: new Error('Cross-bucket file moves are not directly supported. Download and re-upload the file instead.')
+    try {
+        // Download the file from source bucket
+        const { data: downloadData, error: downloadError } = await supabase.storage
+            .from(sourceBucket)
+            .download(sourcePath)
+
+        if (downloadError) {
+            return { data: null, error: downloadError }
+        }
+
+        // Upload to destination bucket
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from(destinationBucket)
+            .upload(destinationPath, downloadData, {
+                cacheControl: '3600',
+                upsert: false
+            })
+
+        if (uploadError) {
+            return { data: null, error: uploadError }
+        }
+
+        // Delete from source bucket
+        const { error: deleteError } = await supabase.storage
+            .from(sourceBucket)
+            .remove([sourcePath])
+
+        if (deleteError) {
+            // File was copied but not deleted from source
+            return {
+                data: null,
+                error: new Error(`File copied to destination but failed to delete from source: ${deleteError.message}`)
+            }
+        }
+
+        return { data: uploadData, error: null }
+    } catch (err) {
+        return {
+            data: null,
+            error: err instanceof Error ? err : new Error('Unknown error occurred during file move')
+        }
     }
 }
 
