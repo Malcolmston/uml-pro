@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Project } from './Project'
 import * as s3 from '../../utils/s3'
 
@@ -17,6 +17,7 @@ describe('Project Entity', () => {
     project = new Project()
     project.name = 'Test Project'
     project.description = 'A test project'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     project.visibility = 'public' as any
   })
 
@@ -173,16 +174,19 @@ describe('Project Entity', () => {
 
   describe('Visibility Enum', () => {
     it('should accept public visibility', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       project.visibility = 'public' as any
       expect(project.visibility).toBe('public')
     })
 
     it('should accept private visibility', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       project.visibility = 'private' as any
       expect(project.visibility).toBe('private')
     })
 
     it('should accept internal visibility', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       project.visibility = 'internal' as any
       expect(project.visibility).toBe('internal')
     })
