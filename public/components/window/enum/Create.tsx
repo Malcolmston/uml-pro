@@ -672,8 +672,9 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
         }
 
         this.setState(prev => {
-            const { constructor: constructorError, ...remainingErrors } = prev.errors;
-            void constructorError;
+            // Remove constructor error if it exists
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { constructor: _constructorError, ...remainingErrors } = prev.errors;
             return {
                 constructors: [...prev.constructors, {
                     id: this.generateId(),
