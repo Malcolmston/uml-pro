@@ -54,7 +54,8 @@ export function getRolePermissions(role: RoleType): Rules {
 export function canCreate(role: RoleType, resource: ResourceType): boolean | null {
   const rules = rulesMap[role]
   if (!rules || !rules.create) return false
-  return rules.create[resource] ?? false
+  const permission = rules.create[resource]
+  return permission === undefined ? false : permission
 }
 
 /**
@@ -63,7 +64,8 @@ export function canCreate(role: RoleType, resource: ResourceType): boolean | nul
 export function canRead(role: RoleType, resource: ResourceType): boolean | null {
   const rules = rulesMap[role]
   if (!rules || !rules.read) return false
-  return rules.read[resource] ?? false
+  const permission = rules.read[resource]
+  return permission === undefined ? false : permission
 }
 
 /**
@@ -72,7 +74,8 @@ export function canRead(role: RoleType, resource: ResourceType): boolean | null 
 export function canUpdate(role: RoleType, resource: ResourceType): boolean | null {
   const rules = rulesMap[role]
   if (!rules || !rules.update) return false
-  return rules.update[resource] ?? false
+  const permission = rules.update[resource]
+  return permission === undefined ? false : permission
 }
 
 /**
@@ -81,7 +84,8 @@ export function canUpdate(role: RoleType, resource: ResourceType): boolean | nul
 export function canWrite(role: RoleType, resource: ResourceType): boolean | null {
   const rules = rulesMap[role]
   if (!rules || !rules.write) return false
-  return rules.write[resource] ?? false
+  const permission = rules.write[resource]
+  return permission === undefined ? false : permission
 }
 
 /**
@@ -90,7 +94,8 @@ export function canWrite(role: RoleType, resource: ResourceType): boolean | null
 export function canExecute(role: RoleType, resource: ResourceType): boolean | null {
   const rules = rulesMap[role]
   if (!rules || !rules.execute) return false
-  return rules.execute[resource] ?? false
+  const permission = rules.execute[resource]
+  return permission === undefined ? false : permission
 }
 
 /**
@@ -99,7 +104,8 @@ export function canExecute(role: RoleType, resource: ResourceType): boolean | nu
 export function canDelete(role: RoleType, resource: ResourceType): boolean | null {
   const rules = rulesMap[role]
   if (!rules || !rules.delete) return false
-  return rules.delete[resource] ?? false
+  const permission = rules.delete[resource]
+  return permission === undefined ? false : permission
 }
 
 /**
@@ -108,7 +114,8 @@ export function canDelete(role: RoleType, resource: ResourceType): boolean | nul
 export function canList(role: RoleType, resource: ResourceType): boolean | null {
   const rules = rulesMap[role]
   if (!rules || !rules.list) return false
-  return rules.list[resource] ?? false
+  const permission = rules.list[resource]
+  return permission === undefined ? false : permission
 }
 
 /**
