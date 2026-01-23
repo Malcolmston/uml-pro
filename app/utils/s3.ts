@@ -357,7 +357,7 @@ async function createBucketWithRules(name: string, role: RoleType, isPublic: boo
         }
     }
 
-    if (bucketExsists(name)) {
+    if (await bucketExsists(name)) {
         return {
             data: null,
             error: new Error(`Bucket '${name}' already exists`)
