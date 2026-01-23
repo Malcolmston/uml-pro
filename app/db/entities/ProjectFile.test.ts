@@ -91,7 +91,7 @@ describe('ProjectFile Entity', () => {
     })
 
     it('should rename file in S3 when fileName changes', async () => {
-      vi.mocked(s3.renameFile).mockResolvedValue({ data: {}, error: null })
+      vi.mocked(s3.renameFile).mockResolvedValue({ data: { message: 'Renamed' }, error: null })
 
       await projectFile.beforeUpdate()
 
@@ -99,7 +99,7 @@ describe('ProjectFile Entity', () => {
     })
 
     it('should update s3Key when fileName changes and s3Key matched original fileName', async () => {
-      vi.mocked(s3.renameFile).mockResolvedValue({ data: {}, error: null })
+      vi.mocked(s3.renameFile).mockResolvedValue({ data: { message: 'Renamed' }, error: null })
 
       await projectFile.beforeUpdate()
 
@@ -118,14 +118,15 @@ describe('ProjectFile Entity', () => {
     it('should throw error if S3 rename fails', async () => {
       vi.mocked(s3.renameFile).mockResolvedValue({
         data: null,
-        error: new Error('Rename failed')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        error: { name: 'StorageError', message: 'Rename failed', __isStorageError: true } as any
       })
 
       await expect(projectFile.beforeUpdate()).rejects.toThrow('Failed to rename file in S3')
     })
 
     it('should update original values after successful rename', async () => {
-      vi.mocked(s3.renameFile).mockResolvedValue({ data: {}, error: null })
+      vi.mocked(s3.renameFile).mockResolvedValue({ data: { message: 'Renamed' }, error: null })
 
       await projectFile.beforeUpdate()
 
@@ -136,7 +137,7 @@ describe('ProjectFile Entity', () => {
     it('should not update s3Key if it was custom path', async () => {
       projectFile['originalS3Key'] = 'custom/old.txt'
       projectFile.s3Key = 'custom/old.txt'
-      vi.mocked(s3.renameFile).mockResolvedValue({ data: {}, error: null })
+      vi.mocked(s3.renameFile).mockResolvedValue({ data: { message: 'Renamed' }, error: null })
 
       await projectFile.beforeUpdate()
 
@@ -147,7 +148,7 @@ describe('ProjectFile Entity', () => {
 
   describe('@BeforeRemove Hook - File Deletion', () => {
     it('should delete file from S3 on remove', async () => {
-      vi.mocked(s3.deleteFile).mockResolvedValue({ data: {}, error: null })
+      vi.mocked(s3.deleteFile).mockResolvedValue({ data: [], error: null })
 
       await projectFile.beforeRemove()
 
@@ -157,7 +158,8 @@ describe('ProjectFile Entity', () => {
     it('should throw error if S3 deletion fails', async () => {
       vi.mocked(s3.deleteFile).mockResolvedValue({
         data: null,
-        error: new Error('Delete failed')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        error: { name: 'StorageError', message: 'Delete failed', __isStorageError: true } as any
       })
 
       await expect(projectFile.beforeRemove()).rejects.toThrow('Failed to delete file from S3')
