@@ -3,8 +3,9 @@ import memberRules from './chart/member.json'
 import viewRules from './chart/view.json'
 
 type RoleType = 'admin' | 'member' | 'viewer'
-type ActionType = 'create' | 'read' | 'update' | 'write' | 'execute' | 'delete' | 'list'
+type ActionType = 'create' | 'read' | 'update' | 'write' | 'execute' | 'delete' | 'list' | 'rule'
 type ResourceType = 'bucket' | 'file' | 'folder'
+type RuleActionType = 'modify' | 'limit' | 'list'
 
 interface Rules {
   [key: string]: {
@@ -110,4 +111,31 @@ export function canList(role: RoleType, resource: ResourceType): boolean | null 
   return rules.list[resource] ?? false
 }
 
-export { rulesMap }
+/**
+ * Checks if a role can perform a rule action (modify, limit, list rules).
+ */
+export function canModifyRule(role: RoleType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.rule) return false
+  return rules.rule['modify'] ?? false
+}
+
+/**
+ * Checks if a role can set limits on rules.
+ */
+export function canLimitRule(role: RoleType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.rule) return false
+  return rules.rule['limit'] ?? false
+}
+
+/**
+ * Checks if a role can list rules.
+ */
+export function canListRule(role: RoleType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.rule) return false
+  return rules.rule['list'] ?? false
+}
+
+export { rulesMap, RoleType, ActionType, ResourceType, RuleActionType }
