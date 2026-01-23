@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CreateEnum from '../window/enum/Create';
 import React from 'react';
@@ -148,7 +148,7 @@ describe('CreateEnum component', () => {
     it('applies common enum patterns', () => {
         render(<CreateEnum {...defaultProps} />);
 
-        const statusButton = screen.getByRole('button', { name: 'Status' });
+        const statusButton = screen.getByRole('button', { name: /^Status$/i });
         fireEvent.click(statusButton);
 
         // Should populate with status constants
@@ -220,19 +220,19 @@ describe('CreateEnum component', () => {
         });
     });
 
-    it('requires at least one constant', () => {
+    it('requires at least one constant', async () => {
         render(<CreateEnum {...defaultProps} />);
 
         const nameInput = screen.getByPlaceholderText(/Enter enum name/i);
         fireEvent.change(nameInput, { target: { value: 'Status' } });
 
         const createButton = screen.getByRole('button', { name: /Create Enum/i });
+        fireEvent.click(createButton);
 
-        // Button should be disabled without constants
-        expect(createButton).toBeDisabled();
-
-        // Verify onAdd was never called
-        expect(mockOnAdd).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(screen.getByText(/Add at least one enum constant/i)).toBeInTheDocument();
+            expect(mockOnAdd).not.toHaveBeenCalled();
+        });
     });
 
     it('handles constructor creation with fields', () => {
@@ -251,8 +251,14 @@ describe('CreateEnum component', () => {
         const addConstructorButton = screen.getByRole('button', { name: /Use current fields as constructor/i });
         fireEvent.click(addConstructorButton);
 
-        // Check that constructor was added with the correct signature
-        expect(screen.getByText(/\(value: String\)/)).toBeInTheDocument();
+        const constructorsSection = screen.getByText(/Constructors \(Optional\)/i).parentElement;
+        expect(constructorsSection).toBeTruthy();
+        if (!constructorsSection) return;
+        const constructorMatches = within(constructorsSection).getAllByText((content, element) =>
+            !!element?.textContent?.includes('private') &&
+            element.textContent.includes('value: String')
+        );
+        expect(constructorMatches.length).toBeGreaterThan(0);
     });
 
     it('auto-populates from initialData', () => {
