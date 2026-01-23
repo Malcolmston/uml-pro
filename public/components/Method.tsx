@@ -10,6 +10,7 @@ export type MethodProps = {
     returnType: string;
     defaultValue?: string;
     visibility?: Visibility;
+    isDefault?: boolean;
 } & Omit<ConstructorProps, 'vis'>;
 
 /**
@@ -51,11 +52,13 @@ const Method = forwardRef<SVGTextElement, MethodProps & {
         params,
         isStatic = false,
         isAbstract = false,
+        isDefault,
         defaultValue,
         ...props
     },
     ref
 ) {
+    void isDefault;
     // Get visibility symbol/text
     const visibilitySymbol = visibility; // Assuming Visibility enum provides the symbols
 
