@@ -47,4 +47,67 @@ export function getRolePermissions(role: RoleType): Rules {
   return rulesMap[role] || {}
 }
 
+/**
+ * Checks if a role can create a resource. null = allow without modification.
+ */
+export function canCreate(role: RoleType, resource: ResourceType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.create) return false
+  return rules.create[resource] ?? false
+}
+
+/**
+ * Checks if a role can read a resource. null = allow without modification.
+ */
+export function canRead(role: RoleType, resource: ResourceType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.read) return false
+  return rules.read[resource] ?? false
+}
+
+/**
+ * Checks if a role can update a resource. null = allow without modification.
+ */
+export function canUpdate(role: RoleType, resource: ResourceType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.update) return false
+  return rules.update[resource] ?? false
+}
+
+/**
+ * Checks if a role can write to a resource. null = allow without modification.
+ */
+export function canWrite(role: RoleType, resource: ResourceType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.write) return false
+  return rules.write[resource] ?? false
+}
+
+/**
+ * Checks if a role can execute on a resource. null = allow without modification.
+ */
+export function canExecute(role: RoleType, resource: ResourceType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.execute) return false
+  return rules.execute[resource] ?? false
+}
+
+/**
+ * Checks if a role can delete a resource. null = allow without modification.
+ */
+export function canDelete(role: RoleType, resource: ResourceType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.delete) return false
+  return rules.delete[resource] ?? false
+}
+
+/**
+ * Checks if a role can list a resource. null = allow without modification.
+ */
+export function canList(role: RoleType, resource: ResourceType): boolean | null {
+  const rules = rulesMap[role]
+  if (!rules || !rules.list) return false
+  return rules.list[resource] ?? false
+}
+
 export { rulesMap }
