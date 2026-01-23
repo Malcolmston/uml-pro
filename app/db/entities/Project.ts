@@ -1,6 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, Generated } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, BeforeUpdate, BeforeRemove, Generated } from "typeorm"
 import Visibility from "../visibility";
-import {bucketExsists, createBucket} from "../../utils/s3";
+import {bucketExsists, createBucket, deleteBucket, renameBucket} from "../../utils/s3";
 
 
 @Entity()
@@ -25,6 +25,9 @@ export class Project {
     @Column({nullable: true})
     description: string
 
+    // Store the original name to detect changes
+    private originalName?: string
+
     @CreateDateColumn()
     createdAt: Date
 
@@ -37,6 +40,21 @@ export class Project {
     @BeforeInsert()
     async beforeInsert() {
         await Project.createBuckets(this.name)
+        this.originalName = this.name
+    }
+
+    @BeforeUpdate()
+    async beforeUpdate() {
+        // Check if name has changed
+        if (this.originalName && this.originalName !== this.name) {
+            await Project.renameBuckets(this.originalName, this.name)
+            this.originalName = this.name
+        }
+    }
+
+    @BeforeRemove()
+    async beforeRemove() {
+        await Project.deleteBuckets(this.name)
     }
 
     private static async createBuckets(name: string) {
@@ -51,6 +69,43 @@ export class Project {
                 throw new Error(`Bucket '${bucketName}' already exists`)
             }
             createBucket(bucketName)
+        }
+    }
+
+    private static async renameBuckets(oldName: string, newName: string) {
+        const bucketTypes = ['files', 'rules', 'backups']
+
+        for (const type of bucketTypes) {
+            const oldBucketName = `project/${oldName}-${type}`
+            const newBucketName = `project/${newName}-${type}`
+
+            if (bucketExsists(newBucketName)) {
+                throw new Error(`Bucket '${newBucketName}' already exists`)
+            }
+
+            // Note: Supabase doesn't support direct bucket renaming
+            // This will create new bucket, copy files, and delete old bucket
+            const result = await renameBucket(oldBucketName, newBucketName)
+
+            if (result.error) {
+                throw new Error(`Failed to rename bucket '${oldBucketName}': ${result.error.message}`)
+            }
+        }
+    }
+
+    private static async deleteBuckets(name: string) {
+        const bucketTypes = ['files', 'rules', 'backups']
+
+        for (const type of bucketTypes) {
+            const bucketName = `project/${name}-${type}`
+
+            if (bucketExsists(bucketName)) {
+                const result = await deleteBucket(bucketName)
+
+                if (result.error) {
+                    throw new Error(`Failed to delete bucket '${bucketName}': ${result.error.message}`)
+                }
+            }
         }
     }
 }
