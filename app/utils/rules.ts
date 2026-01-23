@@ -145,4 +145,4 @@ export function canListRule(role: RoleType): boolean | null {
   return rules.rule['list'] ?? false
 }
 
-export { rulesMap, RoleType, ActionType, ResourceType, RuleActionType }
+export { rulesMap }
