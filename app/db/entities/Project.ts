@@ -1,4 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, BeforeUpdate } from "typeorm"
+import Visibility from "../visibility";
+
 
 @Entity()
 export class Project {
@@ -8,6 +10,13 @@ export class Project {
     @Column()
     @Generated("uuid")
     uuid: string;
+
+    @Column({
+        type: "enum",
+        enum: Visibility,
+        default: Visibility.PUBLIC
+    })
+    visibility: Visibility;
 
     @Column({nullable: false})
     name: string
