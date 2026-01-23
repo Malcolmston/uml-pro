@@ -737,5 +737,377 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
         );
     }
 
+    render() {
+        const {
+            className, params, constructors, methods, errors,
+            editingParam, editingMethod, paramDraft, methodDraft, autoGettersSetters
+        } = this.state;
+        const { onClose, onDelete, onInspect, onExport } = this.props;
+        const isFormValid = className.trim() && Object.keys(errors).length === 0;
 
+        return (
+            <div className="absolute top-4 left-4 p-6 bg-white rounded-lg shadow-lg w-[36rem] space-y-6 overflow-y-auto max-h-[90vh] z-10 border" style={{overflowY: "auto"}}>
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-800">Create New Class</h2>
+                    {onClose && (
+                        <button
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                    )}
+                </div>
+
+                {/* Class Name */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Class Name *</label>
+                    <input
+                        type="text"
+                        placeholder="Enter class name"
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            errors.className ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                        value={className}
+                        onChange={(e) => {
+                            this.setState({ className: e.target.value });
+                            if (errors.className) {
+                                this.validateInput('className', e.target.value, 'class');
+                            }
+                        }}
+                        onBlur={() => this.validateInput('className', className, 'class')}
+                        onKeyPress={(e) => this.handleKeyPress(e, this.handleAddClass)}
+                    />
+                    {errors.className && (
+                        <p className="text-xs text-red-500">{errors.className}</p>
+                    )}
+                </div>
+
+                {/* Parameters Section */}
+                <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700">Parameters</h3>
+
+                    {/* Add/Edit Parameter Form */}
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2">
+                            <input
+                                type="text"
+                                placeholder="Name"
+                                value={paramDraft.name}
+                                onChange={(e) => this.setState({ paramDraft: { ...paramDraft, name: e.target.value } })}
+                                onKeyPress={(e) => this.handleKeyPress(e, editingParam ? this.handleUpdateParam : this.handleAddParam)}
+                                className={`px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                    errors.paramName ? 'border-red-300' : 'border-gray-300'
+                                }`}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Type"
+                                value={paramDraft.type}
+                                onChange={(e) => this.setState({ paramDraft: { ...paramDraft, type: e.target.value } })}
+                                onKeyPress={(e) => this.handleKeyPress(e, editingParam ? this.handleUpdateParam : this.handleAddParam)}
+                                className={`px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                    errors.paramType ? 'border-red-300' : 'border-gray-300'
+                                }`}
+                            />
+                            <select
+                                value={paramDraft.visibility}
+                                onChange={(e) => this.setState({ paramDraft: { ...paramDraft, visibility: e.target.value as Visibility } })}
+                                className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            >
+                                <option value={Visibility.PRIVATE}>private</option>
+                                <option value={Visibility.PUBLIC}>public</option>
+                                <option value={Visibility.PROTECTED}>protected</option>
+                            </select>
+                        </div>
+
+                        {/* Parameter Modifiers */}
+                        {this.renderModifierCheckboxes(
+                            paramDraft,
+                            (field, value) => this.setState({ paramDraft: { ...paramDraft, [field]: value } }),
+                            'param'
+                        )}
+
+                        {(errors.paramName || errors.paramType) && (
+                            <p className="text-xs text-red-500">
+                                {errors.paramName || errors.paramType}
+                            </p>
+                        )}
+
+                        <div className="flex gap-2">
+                            {editingParam ? (
+                                <>
+                                    <button
+                                        onClick={this.handleUpdateParam}
+                                        className="text-sm text-green-600 hover:text-green-800 hover:underline font-medium"
+                                    >
+                                        ✓ Update Parameter
+                                    </button>
+                                    <button
+                                        onClick={this.handleCancelEditParam}
+                                        className="text-sm text-gray-600 hover:text-gray-800 hover:underline font-medium"
+                                    >
+                                        ✗ Cancel
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={this.handleAddParam}
+                                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                >
+                                    + Add Parameter
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Parameter List */}
+                    {params.length > 0 && (
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {params.map((param) => (
+                                <div key={param.id} className={`flex items-center justify-between px-2 py-1 rounded text-sm ${
+                                    editingParam === param.id ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                                }`}>
+                                    <span className="flex-1">
+                                        <span className="text-gray-500">{param.visibility}</span>
+                                        {param.isStatic && <span className="text-blue-600 ml-1">static</span>}
+                                        {param.isFinal && <span className="text-purple-600 ml-1">final</span>}
+                                        <span className="ml-1">{param.name}: {param.type}</span>
+                                    </span>
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => this.handleEditParam(param.id)}
+                                            className="text-blue-500 hover:text-blue-700 text-xs"
+                                            aria-label="Edit parameter"
+                                        >
+                                            ✎
+                                        </button>
+                                        <button
+                                            onClick={() => this.handleRemoveParam(param.id)}
+                                            className="text-red-500 hover:text-red-700"
+                                            aria-label="Remove parameter"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Methods Section */}
+                <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700">Methods</h3>
+
+                    {/* Add/Edit Method Form */}
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2">
+                            <input
+                                type="text"
+                                placeholder="Name"
+                                value={methodDraft.name}
+                                onChange={(e) => this.setState({ methodDraft: { ...methodDraft, name: e.target.value } })}
+                                onKeyPress={(e) => this.handleKeyPress(e, editingMethod ? this.handleUpdateMethod : this.handleAddMethod)}
+                                className={`px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                    errors.methodName ? 'border-red-300' : 'border-gray-300'
+                                }`}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Return Type"
+                                value={methodDraft.returnType}
+                                onChange={(e) => this.setState({ methodDraft: { ...methodDraft, returnType: e.target.value } })}
+                                onKeyPress={(e) => this.handleKeyPress(e, editingMethod ? this.handleUpdateMethod : this.handleAddMethod)}
+                                className={`px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                    errors.methodType ? 'border-red-300' : 'border-gray-300'
+                                }`}
+                            />
+                            <select
+                                value={methodDraft.visibility}
+                                onChange={(e) => this.setState({ methodDraft: { ...methodDraft, visibility: e.target.value as Visibility } })}
+                                className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            >
+                                <option value={Visibility.PRIVATE}>private</option>
+                                <option value={Visibility.PUBLIC}>public</option>
+                                <option value={Visibility.PROTECTED}>protected</option>
+                            </select>
+                        </div>
+
+                        {/* Method Modifiers */}
+                        {this.renderModifierCheckboxes(
+                            methodDraft,
+                            (field, value) => this.setState({ methodDraft: { ...methodDraft, [field]: value } }),
+                            'method'
+                        )}
+
+                        {(errors.methodName || errors.methodType) && (
+                            <p className="text-xs text-red-500">
+                                {errors.methodName || errors.methodType}
+                            </p>
+                        )}
+
+                        <div className="flex gap-2">
+                            {editingMethod ? (
+                                <>
+                                    <button
+                                        onClick={this.handleUpdateMethod}
+                                        className="text-sm text-green-600 hover:text-green-800 hover:underline font-medium"
+                                    >
+                                        ✓ Update Method
+                                    </button>
+                                    <button
+                                        onClick={this.handleCancelEditMethod}
+                                        className="text-sm text-gray-600 hover:text-gray-800 hover:underline font-medium"
+                                    >
+                                        ✗ Cancel
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={this.handleAddMethod}
+                                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                >
+                                    + Add Method
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Method List */}
+                    {methods.length > 0 && (
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {methods.map((method) => (
+                                <div key={method.id} className={`flex items-center justify-between px-2 py-1 rounded text-sm ${
+                                    editingMethod === method.id ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                                }`}>
+                                    <span className="flex-1">
+                                        <span className="text-gray-500">{method.visibility}</span>
+                                        {method.isStatic && <span className="text-blue-600 ml-1">static</span>}
+                                        <span className="ml-1">{method.name}(): {method.returnType}</span>
+                                    </span>
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => this.handleEditMethod(method.id)}
+                                            className="text-blue-500 hover:text-blue-700 text-xs"
+                                            aria-label="Edit method"
+                                        >
+                                            ✎
+                                        </button>
+                                        <button
+                                            onClick={() => this.handleRemoveMethod(method.id)}
+                                            className="text-red-500 hover:text-red-700"
+                                            aria-label="Remove method"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Constructors Section */}
+                <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700">Constructors</h3>
+
+                    <div className="space-y-2">
+                        <button
+                            onClick={this.handleAddConstructor}
+                            className="text-sm text-green-600 hover:text-green-800 hover:underline font-medium"
+                            disabled={params.length === 0}
+                        >
+                            + Use current parameters as constructor
+                        </button>
+
+                        {errors.constructor && (
+                            <p className="text-xs text-red-500">{String(errors.constructor)}</p>
+                        )}
+                    </div>
+
+                    {/* Constructor List */}
+                    {constructors.length > 0 && (
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {constructors.map((constructor) => (
+                                <div key={constructor.id} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
+                                    <span>
+                                        {constructor.name}({constructor.params.map(p => `${p.name}: ${p.type}`).join(', ')})
+                                    </span>
+                                    <button
+                                        onClick={() => this.handleRemoveConstructor(constructor.id)}
+                                        className="text-red-500 hover:text-red-700 ml-2"
+                                        aria-label="Remove constructor"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Auto-Generate Getters/Setters */}
+                <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                        <input
+                            type="checkbox"
+                            id="autoGettersSetters"
+                            checked={autoGettersSetters}
+                            onChange={(e) => this.setState({ autoGettersSetters: e.target.checked })}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="autoGettersSetters" className="text-sm font-medium text-gray-700">
+                            Auto-generate getters and setters
+                        </label>
+                    </div>
+                    {autoGettersSetters && (
+                        <div className="text-xs text-gray-500 ml-6">
+                            Getters and setters will be automatically generated for all parameters
+                        </div>
+                    )}
+                </div>
+
+                {/* Preview */}
+                {className && (
+                    <div className="border border-gray-200 rounded-lg bg-gray-50 p-3">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Preview</h4>
+                        <div className="bg-white rounded border" style={{ minHeight: '150px' }}>
+                            <svg width="100%" height="200" viewBox="0 0 280 200">
+                                <Class
+                                    key={`preview-${params.length}-${methods.length}-${constructors.length}-${className}-${autoGettersSetters}`}
+                                    x={10}
+                                    y={10}
+                                    name={className}
+                                    draggable={false}
+                                    params={params}
+                                    constructors={constructors}
+                                    methods={methods}
+                                    autoGettersSetters={autoGettersSetters}
+                                    onDelete={onDelete}
+                                    onInspect={onInspect}
+                                    onExport={onExport}
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                )}
+
+                {/* Create Button */}
+                <button
+                    onClick={this.handleAddClass}
+                    disabled={!isFormValid}
+                    className={`w-full px-4 py-3 rounded-md font-medium transition-colors ${
+                        isFormValid
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                >
+                    Create Class
+                </button>
+            </div>
+        );
+    }
 }
