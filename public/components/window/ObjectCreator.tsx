@@ -47,7 +47,7 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
      */
     validateInput(name: string, value: string, type: string): boolean {
         const { errors } = this.state;
-        const newErrors = { ...(errors || {}) };
+        const newErrors: Record<string, string> = { ...(errors || {}) };
 
         if (!value.trim()) {
             newErrors[name] = `${type} name is required`;
@@ -133,7 +133,9 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
 
     // --- Shared CRUD Operations ---
 
-    handleEditParam(params: ParamInput[], id: string) {
+    handleEditParam(id: string) {
+        const { params } = this.state;
+        if (!params) return;
         const param = params.find(p => p.id === id);
         if (param) {
             this.setState({
@@ -149,7 +151,7 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
         }
     }
 
-    handleCancelEditParam() {
+    handleCancelEditParam = () => {
         const { errors } = this.state;
         const newErrors = { ...errors };
         delete newErrors.paramName;
@@ -166,22 +168,22 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
             editingParam: null,
             errors: newErrors
         } as unknown as S);
-    }
+    };
 
-    handleEditMethod(methods: MethodInput[], id: string) {
+    handleEditMethod(id: string) {
+        const { methods } = this.state;
+        if (!methods) return;
         const method = methods.find(m => m.id === id);
         if (method) {
+            const { id: _id, ...draft } = method;
             this.setState({
-                methodDraft: {
-                    ...method,
-                    id: undefined
-                },
+                methodDraft: draft,
                 editingMethod: id
             } as unknown as S);
         }
     }
 
-    handleCancelEditMethod() {
+    handleCancelEditMethod = () => {
         const { errors } = this.state;
         const newErrors = { ...errors };
         delete newErrors.methodName;
@@ -197,7 +199,7 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
             editingMethod: null,
             errors: newErrors
         } as unknown as S);
-    }
+    };
 
     handleRemoveParam(id: string) {
         const { params, editingParam } = this.state;
@@ -233,9 +235,6 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
             constructors: constructors.filter(c => c.id !== id)
         } as unknown as S);
     }
-
-    abstract handleCancelEditParam(): void;
-    abstract handleCancelEditMethod(): void;
 
     /**
      * Abstract method to be implemented by subclasses.

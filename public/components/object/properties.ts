@@ -15,6 +15,11 @@ export type Props = {
     constants?: Var[];
     constructors?: ConstructorProps[];
     methods?: MethodProps[];
+    elements?: Array<{
+        name: string;
+        type: string;
+        defaultValue?: string;
+    }>;
 
     autoGettersSetters?: boolean;
 
