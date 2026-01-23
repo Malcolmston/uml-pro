@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, BeforeUpdate } from "typeorm"
 import * as bcrypt from 'bcrypt';
 
 @Entity()
@@ -23,6 +23,15 @@ export class User {
 
   @Column({nullable: false})
   password: string
+
+  @CreateDateColumn()
+  createdAt: Date
+
+  @UpdateDateColumn()
+  updatedAt: Date
+
+  @DeleteDateColumn()
+  deletedAt: Date
 
   @BeforeInsert()
   async beforeInsert() {
@@ -50,8 +59,8 @@ export class User {
    * @param password The plain-text password to be hashed.
    * @return A promise that resolves to the hashed password.
    */
-  private static async hashPassword(password: string): Promise<string> {
-      return await bcrypt.hash(password, 10);
+  private async hashPassword(): Promise<string> {
+      return await bcrypt.hash(this.password, 10);
   }
 
 
