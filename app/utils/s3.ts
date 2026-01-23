@@ -1,4 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import { canCreate, canRead, canDelete, canUpdate, canList } from './rules'
+
+type RoleType = 'admin' | 'member' | 'viewer'
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -316,6 +319,61 @@ async function moveFile(sourceBucket: string, sourcePath: string, destinationBuc
     }
 }
 
+// Permission check helpers
+export const canCreateBucket = (role: RoleType) => canCreate(role, 'bucket')
+export const canDeleteBucket = (role: RoleType) => canDelete(role, 'bucket')
+export const canListBucket = (role: RoleType) => canList(role, 'bucket')
+export const canUpdateBucket = (role: RoleType) => canUpdate(role, 'bucket')
+
+export const canCreateFile = (role: RoleType) => canCreate(role, 'file')
+export const canReadFile = (role: RoleType) => canRead(role, 'file')
+export const canUpdateFile = (role: RoleType) => canUpdate(role, 'file')
+export const canDeleteFile = (role: RoleType) => canDelete(role, 'file')
+export const canListFile = (role: RoleType) => canList(role, 'file')
+
+export const canCreateFolder = (role: RoleType) => canCreate(role, 'folder')
+export const canListFolder = (role: RoleType) => canList(role, 'folder')
+
+/**
+ * Creates a bucket with role-based access rules.
+ *
+ * @param {string} name - The name of the bucket
+ * @param {RoleType} role - The role to set permissions for
+ * @param {boolean} isPublic - Whether the bucket should be public
+ * @return {Promise<{data: any, error: null} | {data: null, error: Error}>}
+ */
+async function createBucketWithRules(name: string, role: RoleType, isPublic: boolean = false) {
+    if (!name) {
+        throw new Error('Bucket name is required')
+    }
+
+    if (!canCreateBucket(role)) {
+        return {
+            data: null,
+            error: new Error(`Role '${role}' does not have permission to create buckets`)
+        }
+    }
+
+    if (bucketExsists(name)) {
+        return {
+            data: null,
+            error: new Error(`Bucket '${name}' already exists`)
+        }
+    }
+
+    const { data, error } = await supabase.storage.createBucket(name, {
+        public: isPublic,
+        fileSizeLimit: 52428800, // 50MB
+        allowedMimeTypes: null
+    })
+
+    if (error) {
+        return { data: null, error }
+    }
+
+    return { data, error: null }
+}
+
 export default supabase
 export {
     createBucket,
@@ -328,5 +386,6 @@ export {
     renameFile,
     moveFile,
     getFile,
-    getAllFiles
+    getAllFiles,
+    createBucketWithRules
 }
