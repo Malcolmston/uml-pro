@@ -33,6 +33,12 @@ export class User {
     this.password = await this.hashPassword();
   }
 
+  @BeforeUpdate()
+  async beforeUpdate() {
+      if (this.password !== this.originalPassword) {
+          this.password = await this.hashPassword();
+      }
+  }
 
 
   /**
