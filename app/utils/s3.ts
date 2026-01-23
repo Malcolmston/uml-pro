@@ -187,6 +187,60 @@ async function renameFile(bucket: string, oldPath: string, newPath: string) {
 }
 
 /**
+ * Gets a file from the specified bucket by name/path.
+ *
+ * @param {string} bucket - The name of the bucket.
+ * @param {string} filePath - The path of the file to retrieve.
+ * @return {Promise<{data: Blob, error: null} | {data: null, error: Error}>} Returns file blob or error.
+ */
+async function getFile(bucket: string, filePath: string) {
+    if (!bucket) {
+        throw new Error('Bucket name is required')
+    }
+
+    if (!filePath) {
+        throw new Error('File path is required')
+    }
+
+    const { data, error } = await supabase.storage
+        .from(bucket)
+        .download(filePath)
+
+    if (error) {
+        return { data: null, error }
+    }
+
+    return { data, error: null }
+}
+
+/**
+ * Gets all files in the specified bucket.
+ *
+ * @param {string} bucket - The name of the bucket.
+ * @param {string} [path] - Optional path within the bucket. Defaults to root.
+ * @return {Promise<{data: Array, error: null} | {data: null, error: Error}>} Returns list of files or error.
+ */
+async function getAllFiles(bucket: string, path?: string) {
+    if (!bucket) {
+        throw new Error('Bucket name is required')
+    }
+
+    const { data, error } = await supabase.storage
+        .from(bucket)
+        .list(path || '', {
+            limit: 1000,
+            offset: 0,
+            sortBy: { column: 'name', order: 'asc' }
+        })
+
+    if (error) {
+        return { data: null, error }
+    }
+
+    return { data, error: null }
+}
+
+/**
  * Moves a file from one location to another within the same bucket or across buckets.
  *
  * @param {string} sourceBucket - The name of the source bucket.
