@@ -7,35 +7,35 @@ import TeamRole from "../teamRole"
 export class TeamMember {
 
     @PrimaryGeneratedColumn()
-    id: number
+    id: number | null = null
 
     @ManyToOne(() => User)
     @JoinColumn()
-    user: User
+    user: User | null = null
 
-    @Column()
-    userId: number
+    @Column({ type: 'int' })
+    userId: number | null = null
 
     @ManyToOne(() => Team)
     @JoinColumn()
-    team: Team
+    team: Team | null = null
 
-    @Column()
-    teamId: number
+    @Column({ type: 'int' })
+    teamId: number | null = null
 
     @Column({
         type: "enum",
         enum: TeamRole,
         default: TeamRole.MEMBER
     })
-    role: TeamRole
+    role: TeamRole = TeamRole.MEMBER
 
     @CreateDateColumn()
-    createdAt: Date
+    createdAt: Date | null = null
 
     @UpdateDateColumn()
-    updatedAt: Date
+    updatedAt: Date | null = null
 
     @DeleteDateColumn()
-    deletedAt: Date
+    deletedAt: Date | null = null
 }

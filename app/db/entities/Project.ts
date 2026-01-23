@@ -6,36 +6,36 @@ import {bucketExsists, createBucket, deleteBucket, renameBucket} from "../../uti
 @Entity()
 export class Project {
     @PrimaryGeneratedColumn()
-    id: number
+    id: number | null = null
 
-    @Column()
+    @Column({ type: 'uuid' })
     @Generated("uuid")
-    uuid: string
+    uuid: string = ''
 
     @Column({
         type: "enum",
         enum: Visibility,
         default: Visibility.PUBLIC
     })
-    visibility: Visibility
+    visibility: Visibility = Visibility.PUBLIC
 
-    @Column({nullable: false})
-    name: string
+    @Column({ type: 'varchar', nullable: false })
+    name: string = ''
 
-    @Column({nullable: true})
-    description: string
+    @Column({ type: 'text', nullable: true })
+    description: string | null = null
 
     // Store the original name to detect changes
     private originalName?: string
 
     @CreateDateColumn()
-    createdAt: Date
+    createdAt: Date | null = null
 
     @UpdateDateColumn()
-    updatedAt: Date
+    updatedAt: Date | null = null
 
     @DeleteDateColumn()
-    deletedAt: Date
+    deletedAt: Date | null = null
 
     @BeforeInsert()
     async beforeInsert() {

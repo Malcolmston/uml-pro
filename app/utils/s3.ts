@@ -1,12 +1,58 @@
 import { createClient } from '@supabase/supabase-js'
+import {
+    S3Client,
+    CreateBucketCommand,
+    HeadBucketCommand,
+    DeleteBucketCommand,
+    HeadObjectCommand,
+    PutObjectCommand,
+    DeleteObjectCommand,
+    CopyObjectCommand,
+    GetObjectCommand,
+    ListObjectsV2Command
+} from '@aws-sdk/client-s3'
 import { canCreate, canRead, canDelete, canUpdate, canList } from './rules'
 
 type RoleType = 'admin' | 'member' | 'viewer'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabase = supabaseUrl && supabaseServiceRoleKey
+    ? createClient(supabaseUrl, supabaseServiceRoleKey)
+    : null
+
+const s3Endpoint = process.env.S3_ENDPOINT
+const s3AccessKeyId = process.env.AWS_ACCESS_KEY_ID
+const s3SecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+const s3Region = process.env.AWS_REGION || 'us-east-1'
+
+const useS3 = !!(s3Endpoint && s3AccessKeyId && s3SecretAccessKey)
+const s3Client = useS3
+    ? new S3Client({
+        region: s3Region,
+        endpoint: s3Endpoint,
+        credentials: {
+            accessKeyId: s3AccessKeyId,
+            secretAccessKey: s3SecretAccessKey
+        },
+        forcePathStyle: true
+    })
+    : null
+
+const getSupabase = () => {
+    if (!supabase) {
+        throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set')
+    }
+    return supabase
+}
+
+const isNotFoundError = (error: unknown) => {
+    if (!error || typeof error !== 'object') {
+        return false
+    }
+    const err = error as { name?: string; $metadata?: { httpStatusCode?: number } }
+    return err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404
+}
 
 
 /**
@@ -21,13 +67,17 @@ async function createBucket(name: string) {
         throw new Error('Bucket name is required')
     }
 
-    const { data, error } = await supabase.storage.createBucket(name)
-
-    if (error) {
-        return { data: null, error }
+    if (useS3 && s3Client) {
+        try {
+            await s3Client.send(new CreateBucketCommand({ Bucket: name }))
+            return { data: { name }, error: null }
+        } catch (error) {
+            return { data: null, error: error as Error }
+        }
     }
 
-    return { data, error: null }
+    const { data, error } = await getSupabase().storage.createBucket(name)
+    return error ? { data: null, error } : { data, error: null }
 }
 
 /**
@@ -37,7 +87,16 @@ async function createBucket(name: string) {
  * @return {Promise<boolean>} Returns true if the bucket exists, false otherwise.
  */
 async function bucketExsists(name: string): Promise<boolean> {
-    const { data } = await supabase.storage.getBucket(name)
+    if (useS3 && s3Client) {
+        try {
+            await s3Client.send(new HeadBucketCommand({ Bucket: name }))
+            return true
+        } catch (error) {
+            return !isNotFoundError(error)
+        }
+    }
+
+    const { data } = await getSupabase().storage.getBucket(name)
     return data !== null
 }
 
@@ -53,13 +112,17 @@ async function deleteBucket(name: string) {
         throw new Error('Bucket name is required')
     }
 
-    const { data, error } = await supabase.storage.deleteBucket(name)
-
-    if (error) {
-        return { data: null, error }
+    if (useS3 && s3Client) {
+        try {
+            await s3Client.send(new DeleteBucketCommand({ Bucket: name }))
+            return { data: { message: 'Deleted' }, error: null }
+        } catch (error) {
+            return { data: null, error: error as Error }
+        }
     }
 
-    return { data, error: null }
+    const { data, error } = await getSupabase().storage.deleteBucket(name)
+    return error ? { data: null, error } : { data, error: null }
 }
 
 /**
@@ -78,17 +141,22 @@ async function fileExists(bucket: string, fileName: string): Promise<boolean> {
         throw new Error('File name is required')
     }
 
-    const { data, error } = await supabase.storage
+    if (useS3 && s3Client) {
+        try {
+            await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: fileName }))
+            return true
+        } catch (error) {
+            return !isNotFoundError(error)
+        }
+    }
+
+    const { data, error } = await getSupabase().storage
         .from(bucket)
         .list(fileName.split('/').slice(0, -1).join('/') || '', {
             search: fileName.split('/').pop()
         })
 
-    if (error) {
-        return false
-    }
-
-    return data.length > 0
+    return !error && data.length > 0
 }
 
 /**
@@ -119,18 +187,23 @@ async function uploadFile(bucket: string, file: File, path?: string) {
         }
     }
 
-    const { data, error } = await supabase.storage
+    if (useS3 && s3Client) {
+        try {
+            await s3Client.send(new PutObjectCommand({ Bucket: bucket, Key: filePath, Body: file as unknown }))
+            return { data: { path: filePath }, error: null }
+        } catch (error) {
+            return { data: null, error: error as Error }
+        }
+    }
+
+    const { data, error } = await getSupabase().storage
         .from(bucket)
         .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
         })
 
-    if (error) {
-        return { data: null, error }
-    }
-
-    return { data, error: null }
+    return error ? { data: null, error } : { data, error: null }
 }
 
 /**
@@ -149,15 +222,20 @@ async function deleteFile(bucket: string, filePath: string) {
         throw new Error('File path is required')
     }
 
-    const { data, error } = await supabase.storage
+    if (useS3 && s3Client) {
+        try {
+            await s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: filePath }))
+            return { data: {}, error: null }
+        } catch (error) {
+            return { data: null, error: error as Error }
+        }
+    }
+
+    const { data, error } = await getSupabase().storage
         .from(bucket)
         .remove([filePath])
 
-    if (error) {
-        return { data: null, error }
-    }
-
-    return { data, error: null }
+    return error ? { data: null, error } : { data, error: null }
 }
 
 /**
@@ -181,15 +259,26 @@ async function renameFile(bucket: string, oldPath: string, newPath: string) {
         throw new Error('New file path is required')
     }
 
-    const { data, error } = await supabase.storage
+    if (useS3 && s3Client) {
+        const copySource = `${bucket}/${encodeURIComponent(oldPath)}`
+        try {
+            await s3Client.send(new CopyObjectCommand({
+                Bucket: bucket,
+                CopySource: copySource,
+                Key: newPath
+            }))
+            await s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: oldPath }))
+            return { data: {}, error: null }
+        } catch (error) {
+            return { data: null, error: error as Error }
+        }
+    }
+
+    const { data, error } = await getSupabase().storage
         .from(bucket)
         .move(oldPath, newPath)
 
-    if (error) {
-        return { data: null, error }
-    }
-
-    return { data, error: null }
+    return error ? { data: null, error } : { data, error: null }
 }
 
 /**
@@ -208,15 +297,20 @@ async function getFile(bucket: string, filePath: string) {
         throw new Error('File path is required')
     }
 
-    const { data, error } = await supabase.storage
+    if (useS3 && s3Client) {
+        try {
+            const { Body } = await s3Client.send(new GetObjectCommand({ Bucket: bucket, Key: filePath }))
+            return { data: Body as Blob, error: null }
+        } catch (error) {
+            return { data: null, error: error as Error }
+        }
+    }
+
+    const { data, error } = await getSupabase().storage
         .from(bucket)
         .download(filePath)
 
-    if (error) {
-        return { data: null, error }
-    }
-
-    return { data, error: null }
+    return error ? { data: null, error } : { data, error: null }
 }
 
 /**
@@ -231,7 +325,20 @@ async function getAllFiles(bucket: string, path?: string) {
         throw new Error('Bucket name is required')
     }
 
-    const { data, error } = await supabase.storage
+    if (useS3 && s3Client) {
+        try {
+            const { Contents } = await s3Client.send(new ListObjectsV2Command({
+                Bucket: bucket,
+                Prefix: path || ''
+            }))
+            const data = (Contents || []).map(item => ({ name: item.Key ?? '' }))
+            return { data, error: null }
+        } catch (error) {
+            return { data: null, error: error as Error }
+        }
+    }
+
+    const { data, error } = await getSupabase().storage
         .from(bucket)
         .list(path || '', {
             limit: 1000,
@@ -239,11 +346,7 @@ async function getAllFiles(bucket: string, path?: string) {
             sortBy: { column: 'name', order: 'asc' }
         })
 
-    if (error) {
-        return { data: null, error }
-    }
-
-    return { data, error: null }
+    return error ? { data: null, error } : { data, error: null }
 }
 
 /**
@@ -279,8 +382,18 @@ async function moveFile(sourceBucket: string, sourcePath: string, destinationBuc
 
     // For cross-bucket moves, download and re-upload
     try {
-        // Download the file from source bucket
-        const { data: downloadData, error: downloadError } = await supabase.storage
+        if (useS3 && s3Client) {
+            const copySource = `${sourceBucket}/${encodeURIComponent(sourcePath)}`
+            await s3Client.send(new CopyObjectCommand({
+                Bucket: destinationBucket,
+                CopySource: copySource,
+                Key: destinationPath
+            }))
+            await s3Client.send(new DeleteObjectCommand({ Bucket: sourceBucket, Key: sourcePath }))
+            return { data: { path: destinationPath }, error: null }
+        }
+
+        const { data: downloadData, error: downloadError } = await getSupabase().storage
             .from(sourceBucket)
             .download(sourcePath)
 
@@ -288,8 +401,7 @@ async function moveFile(sourceBucket: string, sourcePath: string, destinationBuc
             return { data: null, error: downloadError }
         }
 
-        // Upload to destination bucket
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await getSupabase().storage
             .from(destinationBucket)
             .upload(destinationPath, downloadData, {
                 cacheControl: '3600',
@@ -300,13 +412,11 @@ async function moveFile(sourceBucket: string, sourcePath: string, destinationBuc
             return { data: null, error: uploadError }
         }
 
-        // Delete from source bucket
-        const { error: deleteError } = await supabase.storage
+        const { error: deleteError } = await getSupabase().storage
             .from(sourceBucket)
             .remove([sourcePath])
 
         if (deleteError) {
-            // File was copied but not deleted from source
             return {
                 data: null,
                 error: new Error(`File copied to destination but failed to delete from source: ${deleteError.message}`)
@@ -364,7 +474,11 @@ async function createBucketWithRules(name: string, role: RoleType, isPublic: boo
         }
     }
 
-    const { data, error } = await supabase.storage.createBucket(name, {
+    if (useS3 && s3Client) {
+        return createBucket(name)
+    }
+
+    const { data, error } = await getSupabase().storage.createBucket(name, {
         public: isPublic,
         fileSizeLimit: 52428800, // 50MB
         allowedMimeTypes: null

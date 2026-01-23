@@ -6,41 +6,41 @@ import { deleteFile, renameFile } from "../../utils/s3"
 export class ProjectFile {
 
     @PrimaryGeneratedColumn()
-    id: number
+    id: number | null = null
 
     @ManyToOne(() => Project)
     @JoinColumn()
-    project: Project
+    project: Project | null = null
 
-    @Column()
-    projectId: number
+    @Column({ type: 'int' })
+    projectId: number | null = null
 
-    @Column({ nullable: false })
-    fileName: string
+    @Column({ type: 'varchar', nullable: false })
+    fileName: string = ''
 
-    @Column({ nullable: false })
-    s3Key: string
+    @Column({ type: 'varchar', nullable: false })
+    s3Key: string = ''
 
-    @Column({ nullable: false })
-    s3Bucket: string
+    @Column({ type: 'varchar', nullable: false })
+    s3Bucket: string = ''
 
-    @Column({ nullable: true })
-    fileSize: number
+    @Column({ type: 'int', nullable: true })
+    fileSize: number | null = null
 
-    @Column({ nullable: true })
-    mimeType: string
+    @Column({ type: 'varchar', nullable: true })
+    mimeType: string | null = null
 
-    @Column({ nullable: true })
-    s3Url: string
+    @Column({ type: 'varchar', nullable: true })
+    s3Url: string | null = null
 
     @CreateDateColumn()
-    createdAt: Date
+    createdAt: Date | null = null
 
     @UpdateDateColumn()
-    updatedAt: Date
+    updatedAt: Date | null = null
 
     @DeleteDateColumn()
-    deletedAt: Date
+    deletedAt: Date | null = null
 
     // Store the original file name to detect changes
     private originalFileName?: string

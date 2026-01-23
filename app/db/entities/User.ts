@@ -4,34 +4,34 @@ import * as bcrypt from 'bcrypt';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: number
+  id: number | null = null
 
-  @Column({nullable: false})
-  firstname: string
+  @Column({ type: 'varchar', nullable: false })
+  firstname: string = ''
 
-  @Column({nullable: false})
-  lastname: string
+  @Column({ type: 'varchar', nullable: false })
+  lastname: string = ''
 
-  @Column({nullable: false})
-  age: number
+  @Column({ type: 'int', nullable: false })
+  age: number = 0
 
-  @Column({ unique: true, nullable: false})
-  email: string
+  @Column({ type: 'varchar', unique: true, nullable: false })
+  email: string = ''
 
-  @Column({ unique: true, nullable: false})
-  username: string
+  @Column({ type: 'varchar', unique: true, nullable: false })
+  username: string = ''
 
-  @Column({nullable: false})
-  password: string
+  @Column({ type: 'varchar', nullable: false })
+  password: string = ''
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date | null = null
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date | null = null
 
   @DeleteDateColumn()
-  deletedAt: Date
+  deletedAt: Date | null = null
 
   // Internal property to track original password for change detection
   originalPassword?: string

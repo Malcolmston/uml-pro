@@ -11,32 +11,32 @@ interface CustomRules {
 @Entity()
 export class Team {
     @PrimaryGeneratedColumn()
-    id: number
+    id: number | null = null
 
-    @Column({nullable: false})
-    name: string
+    @Column({ type: 'varchar', nullable: false })
+    name: string = ''
 
     @Column({
         type: "json",
         nullable: true
     })
-    customRules: CustomRules | null
+    customRules: CustomRules | null = null
 
     @Column({
         type: "enum",
         enum: TeamRole,
         default: TeamRole.MEMBER
     })
-    defaultRole: TeamRole
+    defaultRole: TeamRole = TeamRole.MEMBER
 
     @CreateDateColumn()
-    createdAt: Date
+    createdAt: Date | null = null
 
     @UpdateDateColumn()
-    updatedAt: Date
+    updatedAt: Date | null = null
 
     @DeleteDateColumn()
-    deletedAt: Date
+    deletedAt: Date | null = null
 
     /**
      * Check if a team member with a specific role can perform an action on a resource

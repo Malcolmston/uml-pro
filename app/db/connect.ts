@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { DataSource } from "typeorm"
 import { User } from "./entities/User"
 import { Project } from "./entities/Project"
@@ -5,20 +6,51 @@ import { ProjectFile } from "./entities/ProjectFile"
 import { Team } from "./entities/Team"
 import { TeamMember } from "./entities/TeamMember"
 
+const normalizePostgresUrl = (url: string) => {
+    try {
+        const parsed = new URL(url)
+        const sslmode = parsed.searchParams.get("sslmode")
+        const hasCompat = parsed.searchParams.has("uselibpqcompat")
+
+        if (sslmode && sslmode !== "verify-full" && !hasCompat) {
+            parsed.searchParams.set("uselibpqcompat", "true")
+        }
+
+        return parsed.toString()
+    } catch {
+        return url
+    }
+}
+
+// Use connection pooling URL if available, otherwise fall back to individual params
+const connectionConfig = process.env.POSTGRES_URL 
+    ? {
+        type: "postgres" as const,
+        url: normalizePostgresUrl(process.env.POSTGRES_URL),
+    }
+    : {
+        type: "postgres" as const,
+        host: process.env.POSTGRES_HOST,
+        port: 5432,
+        username: process.env.POSTGRES_USER,
+        password: process.env.POSTGRES_PASSWORD,
+        database: process.env.POSTGRES_DATABASE,
+    }
+
 const Database = new DataSource({
-    type: "postgres",
-    host: process.env.POSTGRES_HOST,
-    port: 5432,
-    username: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    database: process.env.POSTGRES_DATABASE,
-    synchronize: process.env.NODE_ENV === "development", // Auto-create tables in dev
-    logging: process.env.NODE_ENV === "development",
+    ...connectionConfig,
+    synchronize: true, // Auto-create tables
+    logging: false, // Disable logging in tests
     entities: [User, Project, ProjectFile, Team, TeamMember],
     migrations: [],
     subscribers: [],
     ssl: {
         rejectUnauthorized: false
+    },
+    extra: {
+        ssl: {
+            rejectUnauthorized: false
+        }
     }
 })
 
