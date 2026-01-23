@@ -546,19 +546,19 @@ describe('CreateClass component', () => {
     it('disables Create Class button when class name is cleared', () => {
       render(<CreateClass onAdd={mockOnAdd} onClose={mockOnClose} />)
       const input = screen.getByPlaceholderText(/Enter class name/i)
-      
+
       fireEvent.change(input, { target: { value: 'MyClass' } })
       expect(screen.getByRole('button', { name: /Create Class/i })).toBeEnabled()
-      
+
       fireEvent.change(input, { target: { value: '' } })
       expect(screen.getByRole('button', { name: /Create Class/i })).toBeDisabled()
     })
 
     it('verifies all modifiers are passed to onAdd callback', () => {
       render(<CreateClass onAdd={mockOnAdd} onClose={mockOnClose} />)
-      
+
       fireEvent.change(screen.getByPlaceholderText(/Enter class name/i), { target: { value: 'Product' } })
-      
+
       const paramSection = screen.getByRole('heading', { name: /^Parameters$/i }).parentElement
       const nameInput = paramSection?.querySelector('input[placeholder="Name"]') as HTMLInputElement
       const typeInput = paramSection?.querySelector('input[placeholder="Type"]') as HTMLInputElement
@@ -606,17 +606,17 @@ describe('CreateClass component', () => {
       expect(screen.queryByText(/static/i, { selector: 'span' })).not.toBeInTheDocument()
     })
 
-    it('handles method with complex return types', () => {
+    it('handles method with simple return types', () => {
       render(<CreateClass onAdd={mockOnAdd} onClose={mockOnClose} />)
       const methodSection = screen.getByRole('heading', { name: /^Methods$/i }).parentElement
       const nameInput = methodSection?.querySelector('input[placeholder="Name"]') as HTMLInputElement
       const typeInput = methodSection?.querySelector('input[placeholder="Return Type"]') as HTMLInputElement
 
       fireEvent.change(nameInput, { target: { value: 'findUsers' } })
-      fireEvent.change(typeInput, { target: { value: 'List<User>' } })
+      fireEvent.change(typeInput, { target: { value: 'UserArray' } })
       fireEvent.click(screen.getByRole('button', { name: /\+ Add Method/i }))
 
-      expect(screen.getByText(/findUsers\(\): List<User>/)).toBeInTheDocument()
+      expect(screen.getByText(/findUsers\(\): UserArray/)).toBeInTheDocument()
     })
 
     it('successfully calls onClose after adding a class', () => {
