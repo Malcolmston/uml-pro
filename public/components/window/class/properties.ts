@@ -1,6 +1,7 @@
 import ParamInput from "@/public/components/window/param_input";
 import MethodInput from "@/public/components/window/method_input";
 import ConstructorInput from "@/public/components/window/constructor_input";
+import {BaseObjectCreatorState} from "@/public/components/window/ObjectCreator";
 
 export type ClassNodeData = Record<string, unknown>;
 
@@ -21,12 +22,11 @@ export interface CreateClassProps {
     };
 }
 
-export  interface CreateClassState {
+export interface CreateClassState extends BaseObjectCreatorState {
     className: string;
     params: ParamInput[];
     constructors: ConstructorInput[];
     methods: MethodInput[];
-    errors: Record<string, string>;
     editingParam: string | null;
     editingMethod: string | null;
     paramDraft: Omit<ParamInput, 'id'>;

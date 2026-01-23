@@ -121,28 +121,9 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
     /**
      * Updates the component state to enable editing of a specific parameter based on its ID.
      *
-     * This function searches for a parameter in the existing state using the provided ID.
-     * If the parameter is found, it populates a draft object with the parameter's details
-     * (name, type, visibility, isStatic, isFinal) and sets up the editing context. The draft
-     * is used to pre-fill the editing form and the editing context tracks the parameter being edited.
-     *
      * @param {string} id - Identifier of the parameter to be edited.
      */
-    handleEditParam = (id: string) => {
-        const param = this.state.params.find(p => p.id === id);
-        if (param) {
-            this.setState({
-                paramDraft: {
-                    name: param.name,
-                    type: param.type,
-                    visibility: param.visibility,
-                    isStatic: param.isStatic || false,
-                    isFinal: param.isFinal || false
-                },
-                editingParam: id
-            });
-        }
-    };
+    handleEditParam = (id: string) => super.handleEditParam(this.state.params, id);
 
     /**
      * Handles the update operation for a parameter being edited.
@@ -226,34 +207,8 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
 
     /**
      * Resets the parameter editing state to its default values.
-     *
-     * The `handleCancelEditParam` function is used to clear the current parameter being edited,
-     * reset the parameter draft fields to default values (empty or initial state),
-     * and remove any associated validation errors specific to the parameter being edited.
-     *
-     * State Updates:
-     * - Clears the `paramDraft` object by resetting its `name`, `type`, `visibility`, `isStatic`, and `isFinal` properties.
-     * - Sets `editingParam` to `null` indicating no parameter is currently being edited.
-     * - Removes validation errors related to `paramName` and `paramType` from the `errors` object.
      */
-    handleCancelEditParam = () => {
-        this.setState(prev => ({
-            paramDraft: {
-                name: "",
-                type: "",
-                visibility: Visibility.PRIVATE,
-                isStatic: false,
-                isFinal: false
-            },
-            editingParam: null,
-            errors: (() => {
-                const newErrors = { ...prev.errors };
-                delete newErrors.paramName;
-                delete newErrors.paramType;
-                return newErrors;
-            })()
-        }));
-    };
+    handleCancelEditParam = () => super.handleCancelEditParam();
 
     /**
      * Handles the addition of a new method to the application's state.
@@ -321,27 +276,9 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
     /**
      * Handles the editing process of a method by its identifier.
      *
-     * This function searches for a method in the current component's state using the
-     * provided `id`. If a method with the corresponding identifier is found, it updates
-     * the state to set up the editing environment, including a draft of the method's
-     * properties and marking the method as being edited.
-     *
      * @param {string} id - The unique identifier of the method to be edited.
      */
-    handleEditMethod = (id: string) => {
-        const method = this.state.methods.find(m => m.id === id);
-        if (method) {
-            this.setState({
-                methodDraft: {
-                    name: method.name,
-                    returnType: method.returnType,
-                    visibility: method.visibility,
-                    isStatic: method.isStatic || false
-                },
-                editingMethod: id
-            });
-        }
-    };
+    handleEditMethod = (id: string) => super.handleEditMethod(this.state.methods, id);
 
     /**
      * Handles the process of updating an existing method in the state based on the current `methodDraft`.
@@ -415,34 +352,8 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
 
     /**
      * Resets the editing state for a method in a form or editor.
-     *
-     * This function clears the current method draft data, including the
-     * name, return type, visibility, and static property, by resetting
-     * them to default values. Additionally, it removes any validation
-     * errors related to the method's name and type from the errors object.
-     *
-     * Updates applied:
-     * - Resets the `methodDraft` object to default values.
-     * - Clears the `editingMethod` reference to indicate no active method is being edited.
-     * - Removes `methodName` and `methodType` keys from the validation `errors` object.
      */
-    handleCancelEditMethod = () => {
-        this.setState(prev => ({
-            methodDraft: {
-                name: "",
-                returnType: "",
-                visibility: Visibility.PUBLIC,
-                isStatic: false
-            },
-            editingMethod: null,
-            errors: (() => {
-                const newErrors = { ...prev.errors };
-                delete newErrors.methodName;
-                delete newErrors.methodType;
-                return newErrors;
-            })()
-        }));
-    };
+    handleCancelEditMethod = () => super.handleCancelEditMethod();
 
     /**
      * Handles the addition of a new constructor to the state.
@@ -517,15 +428,7 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
      *
      * @param {string} id - The unique identifier of the parameter to be removed.
      */
-    handleRemoveParam = (id: string) => {
-        this.setState(prev => ({
-            params: prev.params.filter(p => p.id !== id)
-        }), () => {
-            if (this.state.editingParam === id) {
-                this.handleCancelEditParam();
-            }
-        });
-    };
+    handleRemoveParam = (id: string) => super.handleRemoveParam(id);
 
     /**
      * Handles the removal of a method by its unique identifier.
@@ -538,15 +441,7 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
      *
      * @param {string} id - The unique identifier of the method to be removed.
      */
-    handleRemoveMethod = (id: string) => {
-        this.setState(prev => ({
-            methods: prev.methods.filter(m => m.id !== id)
-        }), () => {
-            if (this.state.editingMethod === id) {
-                this.handleCancelEditMethod();
-            }
-        });
-    };
+    handleRemoveMethod = (id: string) => super.handleRemoveMethod(id);
 
     /**
      * Handles the removal of a constructor by its unique identifier.
@@ -557,11 +452,7 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
      *
      * @param {string} id - The unique identifier of the constructor to be removed.
      */
-    handleRemoveConstructor = (id: string) => {
-        this.setState(prev => ({
-            constructors: prev.constructors.filter(c => c.id !== id)
-        }));
-    };
+    handleRemoveConstructor = (id: string) => super.handleRemoveConstructor(id);
 
     /**
      * Handles the addition of a new class element to the application's state and triggers relevant updates.
@@ -656,11 +547,8 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
      * The checkboxes allow toggling these properties, and the changes are passed back via the `onChange` callback.
      *
      * @param {Object} item - An object representing the item with optional `isStatic` and `isFinal` properties.
-     * @param {boolean} [item.isStatic] - Indicates if the item is static.
-     * @param {boolean} [item.isFinal] - Indicates if the item is final.
      * @param {Function} onChange - Callback function triggered when a checkbox value changes.
-     *                              Receives two arguments: the field name ('isStatic' or 'isFinal') and the new boolean value of the field.
-     * @param {'param'|'method'} type - Specifies the type of item. If set to 'param', the `isFinal` checkbox will be rendered.
+     * @param {'param'|'method'} type - Specifies the type of item.
      *
      * @return {JSX.Element} A JSX element containing the checkbox inputs for modifying the item's properties.
      */
@@ -669,30 +557,7 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
         onChange: (field: string, value: boolean) => void,
         type: 'param' | 'method'
     ) {
-        return (
-            <div className="flex gap-3 text-xs">
-                <label className="flex items-center gap-1">
-                    <input
-                        type="checkbox"
-                        checked={item.isStatic || false}
-                        onChange={(e) => onChange('isStatic', e.target.checked)}
-                        className="h-3 w-3"
-                    />
-                    static
-                </label>
-                {type === 'param' && (
-                    <label className="flex items-center gap-1">
-                        <input
-                            type="checkbox"
-                            checked={item.isFinal || false}
-                            onChange={(e) => onChange('isFinal', e.target.checked)}
-                            className="h-3 w-3"
-                        />
-                        final
-                    </label>
-                )}
-            </div>
-        );
+        return super.renderModifierCheckboxes(item, onChange, type);
     }
 
     render() {

@@ -1,3 +1,5 @@
+import {BaseObjectCreatorState} from "@/public/components/window/ObjectCreator";
+
 export type AnnotationElementInput = {
     id: string;
     name: string;
@@ -14,9 +16,9 @@ export interface CreateAnnotationProps {
     };
 }
 
-export interface CreateAnnotationState {
+export interface CreateAnnotationState extends BaseObjectCreatorState {
     annotationName: string;
     elements: AnnotationElementInput[];
-    errors: Record<string, string>;
     elementDraft: Omit<AnnotationElementInput, 'id'>;
+    editingElement: string | null;
 }
