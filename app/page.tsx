@@ -116,15 +116,6 @@ export default function Home() {
 
             {isCreateOpen && (
                 <div className="mt-4 border-t pt-4 overflow-y-auto max-h-[calc(100vh-200px)]">
-                    <div className="flex justify-between items-center mb-2">
-                        <h2 className="font-semibold">Create Class</h2>
-                        <button
-                            onClick={() => setIsCreateOpen(false)}
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            ✕
-                        </button>
-                    </div>
                     <CreateClass onAdd={handleAddNode} onClose={() => setIsCreateOpen(false)} />
                 </div>
             )}
@@ -145,7 +136,7 @@ export default function Home() {
 
                 {/* Render all elements */}
                 {elements.map((element, index) => (
-                    <g key={`element-${element.key || index}`} id={`element-${element.key}`}>
+                    <g key={`element-${element.key || index}`} id={`element-${element.key || index}`}>
                         {element}
                     </g>
                 ))}
