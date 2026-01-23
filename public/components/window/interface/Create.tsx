@@ -7,7 +7,7 @@ import Interface from "@/public/components/Interface/Interface";
 export default class CreateInterface extends ObjectCreator<CreateInterfaceProps, CreateInterfaceState> {
     constructor(props: CreateInterfaceProps) {
         super(props);
-        this.state = {
+        const baseState: CreateInterfaceState = {
             interfaceName: "",
             constants: [],
             methods: [],
@@ -27,6 +27,36 @@ export default class CreateInterface extends ObjectCreator<CreateInterfaceProps,
                 isStatic: false
             }
         };
+        this.state = {
+            ...baseState,
+            ...this.seedInitialState(props.initialData)
+        };
+    }
+
+    private seedInitialState(initialData?: CreateInterfaceProps['initialData']) {
+        if (!initialData) return {};
+        const seeded: Partial<CreateInterfaceState> = {};
+
+        if (initialData.interfaceName) {
+            seeded.interfaceName = initialData.interfaceName;
+        } else if ((initialData as CreateInterfaceProps['initialData'] & { className?: string }).className) {
+            seeded.interfaceName = (initialData as CreateInterfaceProps['initialData'] & { className?: string }).className || "";
+        }
+
+        if (initialData.constants) {
+            seeded.constants = initialData.constants.map(c => ({
+                ...c,
+                id: `constant-${Date.now()}-${Math.random()}`
+            }));
+        }
+        if (initialData.methods) {
+            seeded.methods = initialData.methods.map(m => ({
+                ...m,
+                id: `method-${Date.now()}-${Math.random()}`
+            }));
+        }
+
+        return seeded;
     }
 
     componentDidUpdate(prevProps: CreateInterfaceProps) {
@@ -35,29 +65,9 @@ export default class CreateInterface extends ObjectCreator<CreateInterfaceProps,
             this.props.initialData &&
             this.props.initialData !== prevProps.initialData
         ) {
-            const { initialData } = this.props;
-
-            if (initialData.interfaceName) {
-                this.setState({ interfaceName: initialData.interfaceName });
-            } else if ((initialData as CreateInterfaceProps['initialData'] & { className?: string }).className) {
-                this.setState({ interfaceName: (initialData as CreateInterfaceProps['initialData'] & { className?: string }).className || "" });
-            }
-
-            if (initialData.constants) {
-                this.setState({
-                    constants: initialData.constants.map(c => ({
-                        ...c,
-                        id: `constant-${Date.now()}-${Math.random()}`
-                    }))
-                });
-            }
-            if (initialData.methods) {
-                this.setState({
-                    methods: initialData.methods.map(m => ({
-                        ...m,
-                        id: `method-${Date.now()}-${Math.random()}`
-                    }))
-                });
+            const seeded = this.seedInitialState(this.props.initialData);
+            if (Object.keys(seeded).length > 0) {
+                this.setState(seeded as Pick<CreateInterfaceState, keyof CreateInterfaceState>);
             }
         }
     }
