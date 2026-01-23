@@ -2,14 +2,11 @@ import React from "react";
 import {CreateClassProps, CreateClassState} from "@/public/components/window/class/properties";
 import Visibility from "@/public/components/visibility";
 import Class from "@/public/components/class/Class";
+import ObjectCreator from "@/public/components/window/ObjectCreator";
 
-export default class CreateClass extends React.Component<CreateClassProps, CreateClassState> {
-    idRef: { current: number };
-
-
+export default class CreateClass extends ObjectCreator<CreateClassProps, CreateClassState> {
     constructor(props: CreateClassProps) {
         super(props);
-        this.idRef = { current: 0 };
         this.state = {
             className: "",
             params: [],
@@ -63,37 +60,6 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
         }
     }
 
-    /**
-     * Generates a unique identifier string.
-     *
-     * This function creates a unique ID by combining a static prefix (`item-`),
-     * the current timestamp in milliseconds, and a random number.
-     * Each call to this function produces a different ID value.
-     *
-     * @returns {string} A unique identifier string.
-     */
-    generateId = () => `item-${Date.now()}-${Math.random()}`;
-
-    /**
-     * Validates the provided input value based on its type and updates the error state accordingly.
-     *
-     * @param {string} name - The name of the input field to validate.
-     * @param {string} value - The value of the input field to validate.
-     * @param {'class' | 'param' | 'method'} type - The type of the input, used for error messaging (e.g., 'class', 'param', or 'method').
-     * @returns {boolean} - Returns `true` if the input is valid, otherwise `false`.
-     */
-    validateInput = (name: string, value: string, type: 'class' | 'param' | 'method') => {
-        const newErrors = { ...this.state.errors };
-        if (!value.trim()) {
-            newErrors[name] = `${type} name is required`;
-        } else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value.trim())) {
-            newErrors[name] = `${type} name must be a valid identifier`;
-        } else {
-            delete newErrors[name];
-        }
-        this.setState({ errors: newErrors });
-        return !newErrors[name];
-    };
 
     /**
      * Handles the addition of a parameter draft to the list of parameters.
@@ -684,20 +650,6 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
         onClose?.();
     };
 
-    /**
-     * Handles the 'Enter' key press event for a given React keyboard event.
-     * If the 'Enter' key is pressed, the default browser action is prevented
-     * and the specified callback action is executed.
-     *
-     * @param {React.KeyboardEvent} e - The keyboard event triggered by user interaction.
-     * @param {Function} action - A callback function to be executed when the 'Enter' key is pressed.
-     */
-    handleKeyPress = (e: React.KeyboardEvent, action: () => void) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            action();
-        }
-    };
 
     /**
      * Renders checkbox inputs for modifying properties of an item such as `isStatic` and `isFinal`.

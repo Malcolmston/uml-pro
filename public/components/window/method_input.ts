@@ -8,6 +8,7 @@ type MethodInput = {
     visibility: Visibility;
     isStatic?: boolean;
     isAbstract?: boolean;
+    isDefault?: boolean;
     params?: ParamInput[];
 };
 
