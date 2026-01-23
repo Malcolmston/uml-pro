@@ -693,4 +693,49 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
         }
     };
 
+    /**
+     * Renders checkbox inputs for modifying properties of an item such as `isStatic` and `isFinal`.
+     * The checkboxes allow toggling these properties, and the changes are passed back via the `onChange` callback.
+     *
+     * @param {Object} item - An object representing the item with optional `isStatic` and `isFinal` properties.
+     * @param {boolean} [item.isStatic] - Indicates if the item is static.
+     * @param {boolean} [item.isFinal] - Indicates if the item is final.
+     * @param {Function} onChange - Callback function triggered when a checkbox value changes.
+     *                              Receives two arguments: the field name ('isStatic' or 'isFinal') and the new boolean value of the field.
+     * @param {'param'|'method'} type - Specifies the type of item. If set to 'param', the `isFinal` checkbox will be rendered.
+     *
+     * @return {JSX.Element} A JSX element containing the checkbox inputs for modifying the item's properties.
+     */
+    renderModifierCheckboxes(
+        item: { isStatic?: boolean; isFinal?: boolean },
+        onChange: (field: string, value: boolean) => void,
+        type: 'param' | 'method'
+    ) {
+        return (
+            <div className="flex gap-3 text-xs">
+                <label className="flex items-center gap-1">
+                    <input
+                        type="checkbox"
+                        checked={item.isStatic || false}
+                        onChange={(e) => onChange('isStatic', e.target.checked)}
+                        className="h-3 w-3"
+                    />
+                    static
+                </label>
+                {type === 'param' && (
+                    <label className="flex items-center gap-1">
+                        <input
+                            type="checkbox"
+                            checked={item.isFinal || false}
+                            onChange={(e) => onChange('isFinal', e.target.checked)}
+                            className="h-3 w-3"
+                        />
+                        final
+                    </label>
+                )}
+            </div>
+        );
+    }
+
+
 }
