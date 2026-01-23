@@ -73,47 +73,13 @@ export default class CreateAbstract extends CreateClass {
         this.props.onClose?.();
     };
 
-    renderModifierCheckboxes(
-        item: { isStatic?: boolean; isFinal?: boolean; isAbstract?: boolean },
-        onChange: (field: string, value: boolean) => void,
-        type: 'param' | 'method'
-    ) {
-        return (
-            <div className="flex gap-3 text-xs">
-                <label className="flex items-center gap-1">
-                    <input
-                        type="checkbox"
-                        checked={item.isStatic || false}
-                        onChange={(e) => onChange('isStatic', e.target.checked)}
-                        className="h-3 w-3"
-                    />
-                    static
-                </label>
-                {type === 'param' && (
-                    <label className="flex items-center gap-1">
-                        <input
-                            type="checkbox"
-                            checked={item.isFinal || false}
-                            onChange={(e) => onChange('isFinal', e.target.checked)}
-                            className="h-3 w-3"
-                        />
-                        final
-                    </label>
-                )}
-                {type === 'method' && (
-                    <label className="flex items-center gap-1">
-                        <input
-                            type="checkbox"
-                            checked={item.isAbstract || false}
-                            onChange={(e) => onChange('isAbstract', e.target.checked)}
-                            className="h-3 w-3"
-                        />
-                        abstract
-                    </label>
-                )}
-            </div>
-        );
-    }
+    handleEditParam = (id: string) => super.handleEditParam(this.state.params, id);
+    handleCancelEditParam = () => super.handleCancelEditParam();
+    handleEditMethod = (id: string) => super.handleEditMethod(this.state.methods, id);
+    handleCancelEditMethod = () => super.handleCancelEditMethod();
+    handleRemoveParam = (id: string) => super.handleRemoveParam(id);
+    handleRemoveMethod = (id: string) => super.handleRemoveMethod(id);
+    handleRemoveConstructor = (id: string) => super.handleRemoveConstructor(id);
 
     render() {
         const {
