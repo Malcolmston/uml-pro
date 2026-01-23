@@ -56,4 +56,14 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
         }
     }
 
+    /**
+     * Generates a unique identifier string.
+     *
+     * This function creates a unique ID by combining a static prefix (`item-`),
+     * the current timestamp in milliseconds, and a random number.
+     * Each call to this function produces a different ID value.
+     *
+     * @returns {string} A unique identifier string.
+     */
+    generateId = () => `item-${Date.now()}-${Math.random()}`;
 }
