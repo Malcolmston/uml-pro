@@ -15,35 +15,55 @@ import { canCreate, canRead, canDelete, canUpdate, canList } from './rules'
 
 type RoleType = 'admin' | 'member' | 'viewer'
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-const supabase = supabaseUrl && supabaseServiceRoleKey
-    ? createClient(supabaseUrl, supabaseServiceRoleKey)
-    : null
-
-const s3Endpoint = process.env.S3_ENDPOINT
-const s3AccessKeyId = process.env.AWS_ACCESS_KEY_ID
-const s3SecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
-const s3Region = process.env.AWS_REGION || 'us-east-1'
-
-const useS3 = !!(s3Endpoint && s3AccessKeyId && s3SecretAccessKey)
-const s3Client = useS3
-    ? new S3Client({
-        region: s3Region,
-        endpoint: s3Endpoint,
-        credentials: {
-            accessKeyId: s3AccessKeyId,
-            secretAccessKey: s3SecretAccessKey
-        },
-        forcePathStyle: true
-    })
-    : null
-
+let cachedSupabase: ReturnType<typeof createClient> | null = null
+let cachedSupabaseKey = ''
 const getSupabase = () => {
-    if (!supabase) {
+    const supabaseUrl = process.env.SUPABASE_URL
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
         throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set')
     }
-    return supabase
+
+    const cacheKey = `${supabaseUrl}:${supabaseServiceRoleKey}`
+    if (!cachedSupabase || cachedSupabaseKey !== cacheKey) {
+        cachedSupabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+        cachedSupabaseKey = cacheKey
+    }
+
+    return cachedSupabase
+}
+
+let cachedS3Client: S3Client | null = null
+let cachedS3Key = ''
+const getS3Client = () => {
+    if (!useS3Override()) {
+        return null
+    }
+
+    const s3Endpoint = process.env.S3_ENDPOINT
+    const s3AccessKeyId = process.env.AWS_ACCESS_KEY_ID
+    const s3SecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+    const s3Region = process.env.AWS_REGION || 'us-east-1'
+
+    if (!s3Endpoint || !s3AccessKeyId || !s3SecretAccessKey) {
+        return null
+    }
+
+    const cacheKey = `${s3Endpoint}:${s3AccessKeyId}:${s3SecretAccessKey}:${s3Region}`
+    if (!cachedS3Client || cachedS3Key !== cacheKey) {
+        cachedS3Client = new S3Client({
+            region: s3Region,
+            endpoint: s3Endpoint,
+            credentials: {
+                accessKeyId: s3AccessKeyId,
+                secretAccessKey: s3SecretAccessKey
+            },
+            forcePathStyle: true
+        })
+        cachedS3Key = cacheKey
+    }
+
+    return cachedS3Client
 }
 
 const isNotFoundError = (error: unknown) => {
@@ -53,6 +73,8 @@ const isNotFoundError = (error: unknown) => {
     const err = error as { name?: string; $metadata?: { httpStatusCode?: number } }
     return err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404
 }
+
+const useS3Override = () => process.env.USE_S3 === 'true'
 
 
 /**
@@ -67,7 +89,8 @@ async function createBucket(name: string) {
         throw new Error('Bucket name is required')
     }
 
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         try {
             await s3Client.send(new CreateBucketCommand({ Bucket: name }))
             return { data: { name }, error: null }
@@ -87,7 +110,8 @@ async function createBucket(name: string) {
  * @return {Promise<boolean>} Returns true if the bucket exists, false otherwise.
  */
 async function bucketExsists(name: string): Promise<boolean> {
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         try {
             await s3Client.send(new HeadBucketCommand({ Bucket: name }))
             return true
@@ -112,7 +136,8 @@ async function deleteBucket(name: string) {
         throw new Error('Bucket name is required')
     }
 
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         try {
             await s3Client.send(new DeleteBucketCommand({ Bucket: name }))
             return { data: { message: 'Deleted' }, error: null }
@@ -141,7 +166,8 @@ async function fileExists(bucket: string, fileName: string): Promise<boolean> {
         throw new Error('File name is required')
     }
 
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         try {
             await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: fileName }))
             return true
@@ -191,7 +217,8 @@ async function uploadFile(bucket: string, file: File | Blob, path?: string) {
         }
     }
 
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         try {
             const body = new Uint8Array(await file.arrayBuffer())
             await s3Client.send(new PutObjectCommand({ Bucket: bucket, Key: filePath, Body: body }))
@@ -227,7 +254,8 @@ async function deleteFile(bucket: string, filePath: string) {
         throw new Error('File path is required')
     }
 
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         try {
             await s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: filePath }))
             return { data: {}, error: null }
@@ -264,7 +292,8 @@ async function renameFile(bucket: string, oldPath: string, newPath: string) {
         throw new Error('New file path is required')
     }
 
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         const copySource = `${bucket}/${encodeURIComponent(oldPath)}`
         try {
             await s3Client.send(new CopyObjectCommand({
@@ -302,7 +331,8 @@ async function getFile(bucket: string, filePath: string) {
         throw new Error('File path is required')
     }
 
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         try {
             const { Body } = await s3Client.send(new GetObjectCommand({ Bucket: bucket, Key: filePath }))
             return { data: Body as Blob, error: null }
@@ -330,7 +360,8 @@ async function getAllFiles(bucket: string, path?: string) {
         throw new Error('Bucket name is required')
     }
 
-    if (useS3 && s3Client) {
+    const s3Client = getS3Client()
+    if (s3Client) {
         try {
             const { Contents } = await s3Client.send(new ListObjectsV2Command({
                 Bucket: bucket,
@@ -387,7 +418,8 @@ async function moveFile(sourceBucket: string, sourcePath: string, destinationBuc
 
     // For cross-bucket moves, download and re-upload
     try {
-        if (useS3 && s3Client) {
+        const s3Client = getS3Client()
+        if (s3Client) {
             const copySource = `${sourceBucket}/${encodeURIComponent(sourcePath)}`
             await s3Client.send(new CopyObjectCommand({
                 Bucket: destinationBucket,
@@ -479,7 +511,7 @@ async function createBucketWithRules(name: string, role: RoleType, isPublic: boo
         }
     }
 
-    if (useS3 && s3Client) {
+    if (getS3Client()) {
         return createBucket(name)
     }
 
@@ -548,7 +580,6 @@ async function renameBucket(oldName: string, newName: string) {
     return { data: { message: `Bucket renamed from '${oldName}' to '${newName}'` }, error: null }
 }
 
-export default supabase
 export {
     createBucket,
     bucketExsists,

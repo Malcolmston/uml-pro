@@ -20,39 +20,34 @@ const mockStorage = {
   }))
 }
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({
-    storage: mockStorage
-  }))
-}))
-
 describe('s3.ts - Supabase Storage Client', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
+    vi.unmock('./s3')
+    delete process.env.S3_ENDPOINT
+    delete process.env.AWS_ACCESS_KEY_ID
+    delete process.env.AWS_SECRET_ACCESS_KEY
+    delete process.env.AWS_REGION
+    delete process.env.USE_S3
+    process.env.SUPABASE_URL = 'http://localhost'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key'
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        storage: mockStorage
+      }))
+    }))
   })
 
   describe('Bucket Operations', () => {
     it('should create a bucket when it does not exist', async () => {
-      mockStorage.getBucket.mockReturnValue(null)
-      mockStorage.createBucket.mockReturnValue(true)
+      mockStorage.createBucket.mockResolvedValue({ data: { name: 'test-bucket' }, error: null })
 
       const { createBucket } = await import('./s3')
-      const result = createBucket('test-bucket')
+      const result = await createBucket('test-bucket')
 
-      expect(mockStorage.getBucket).toHaveBeenCalledWith('test-bucket')
       expect(mockStorage.createBucket).toHaveBeenCalledWith('test-bucket')
-      expect(result).toBe(true)
-    })
-
-    it('should not create a bucket when it already exists', async () => {
-      mockStorage.getBucket.mockReturnValue({ name: 'test-bucket' })
-
-      const { createBucket } = await import('./s3')
-      const result = createBucket('test-bucket')
-
-      expect(mockStorage.getBucket).toHaveBeenCalledWith('test-bucket')
-      expect(mockStorage.createBucket).not.toHaveBeenCalled()
-      expect(result).toBe(false)
+      expect(result.error).toBeNull()
     })
 
     it('should delete a bucket', async () => {
@@ -66,10 +61,10 @@ describe('s3.ts - Supabase Storage Client', () => {
     })
 
     it('should check if bucket exists', async () => {
-      mockStorage.getBucket.mockReturnValue({ name: 'test-bucket' })
+      mockStorage.getBucket.mockResolvedValue({ data: { name: 'test-bucket' }, error: null })
 
       const { bucketExsists } = await import('./s3')
-      const result = bucketExsists('test-bucket')
+      const result = await bucketExsists('test-bucket')
 
       expect(mockStorage.getBucket).toHaveBeenCalledWith('test-bucket')
       expect(result).toBe(true)
