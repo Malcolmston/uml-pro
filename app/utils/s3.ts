@@ -167,7 +167,7 @@ async function fileExists(bucket: string, fileName: string): Promise<boolean> {
  * @param {string} [path] - Optional path within the bucket. If not provided, uses the file name.
  * @return {Promise<{data: {path: string}, error: null} | {data: null, error: Error}>} Returns the upload result with path or error.
  */
-async function uploadFile(bucket: string, file: File, path?: string) {
+async function uploadFile(bucket: string, file: File | Blob, path?: string) {
     if (!bucket) {
         throw new Error('Bucket name is required')
     }
@@ -176,7 +176,11 @@ async function uploadFile(bucket: string, file: File, path?: string) {
         throw new Error('File is required')
     }
 
-    const filePath = path || file.name
+    const fileName = 'name' in file ? file.name : ''
+    const filePath = path || fileName
+    if (!filePath) {
+        throw new Error('File name is required')
+    }
 
     // Check if file already exists
     const exists = await fileExists(bucket, filePath)
@@ -189,7 +193,8 @@ async function uploadFile(bucket: string, file: File, path?: string) {
 
     if (useS3 && s3Client) {
         try {
-            await s3Client.send(new PutObjectCommand({ Bucket: bucket, Key: filePath, Body: file as unknown }))
+            const body = new Uint8Array(await file.arrayBuffer())
+            await s3Client.send(new PutObjectCommand({ Bucket: bucket, Key: filePath, Body: body }))
             return { data: { path: filePath }, error: null }
         } catch (error) {
             return { data: null, error: error as Error }
