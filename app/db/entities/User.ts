@@ -35,6 +35,9 @@ export class User {
 
   @BeforeUpdate()
   async beforeUpdate() {
+      if ( this.age < 12 ) {
+          throw new Error('User must be at least 12 years old to register');
+      }
       if (this.password !== this.originalPassword) {
           this.password = await this.hashPassword();
       }
