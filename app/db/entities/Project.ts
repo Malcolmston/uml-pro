@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, BeforeUpdate } from "typeorm"
 import Visibility from "../visibility";
+import {bucketExsists, createBucket} from "../../utils/s3";
 
 
 @Entity()
@@ -32,4 +33,18 @@ export class Project {
 
     @DeleteDateColumn()
     deletedAt: Date
+
+    @BeforeInsert()
+    beforeInsert() {
+        Project.createBuckets(this.name);
+    }
+
+    private static createBuckets (name: string) {
+        if( bucketExsists(`project/${name}-files`) ) throw new Error("Bucket already exists");
+        else createBucket( `project/${name}-files`)
+        if( bucketExsists(`project/${name}-rules`) ) throw new Error("Bucket already exists");
+        else createBucket( `project/${name}-rules`)
+        if( bucketExsists(`project/${name}-backups`) ) throw new Error("Bucket already exists");
+        else createBucket( `project/${name}-backups`)
+    }
 }
