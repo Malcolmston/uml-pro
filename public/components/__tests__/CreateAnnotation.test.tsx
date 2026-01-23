@@ -56,8 +56,8 @@ describe('CreateAnnotation component', () => {
   it('can edit an existing element', () => {
     render(<CreateAnnotation onAdd={mockOnAdd} onClose={mockOnClose} />)
 
-    const nameInput = screen.getByPlaceholderText('Element Name')
-    const typeInput = screen.getByPlaceholderText('Type')
+    const nameInput = screen.getByPlaceholderText('Element Name') as HTMLInputElement
+    const typeInput = screen.getByPlaceholderText('Type') as HTMLInputElement
     const addButton = screen.getByRole('button', { name: /\+ Add Element/i })
 
     // Add
