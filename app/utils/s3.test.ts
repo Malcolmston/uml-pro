@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createClient } from '@supabase/supabase-js'
 
 const mockUpload = vi.fn()
 const mockDownload = vi.fn()
