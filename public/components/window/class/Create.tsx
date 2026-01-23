@@ -797,6 +797,7 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
                                 placeholder="Name"
                                 value={paramDraft.name}
                                 onChange={(e) => this.setState({ paramDraft: { ...paramDraft, name: e.target.value } })}
+                                onBlur={() => this.validateInput('paramName', paramDraft.name, 'param')}
                                 onKeyPress={(e) => this.handleKeyPress(e, editingParam ? this.handleUpdateParam : this.handleAddParam)}
                                 className={`px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                                     errors.paramName ? 'border-red-300' : 'border-gray-300'
@@ -910,6 +911,7 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
                                 placeholder="Name"
                                 value={methodDraft.name}
                                 onChange={(e) => this.setState({ methodDraft: { ...methodDraft, name: e.target.value } })}
+                                onBlur={() => this.validateInput('methodName', methodDraft.name, 'method')}
                                 onKeyPress={(e) => this.handleKeyPress(e, editingMethod ? this.handleUpdateMethod : this.handleAddMethod)}
                                 className={`px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                                     errors.methodName ? 'border-red-300' : 'border-gray-300'
