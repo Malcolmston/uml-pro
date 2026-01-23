@@ -175,7 +175,8 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
         if (!methods) return;
         const method = methods.find(m => m.id === id);
         if (method) {
-            const { id: _id, ...draft } = method;
+            const { id: methodId, ...draft } = method;
+            void methodId;
             this.setState({
                 methodDraft: draft,
                 editingMethod: id
