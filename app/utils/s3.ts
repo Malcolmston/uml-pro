@@ -106,4 +106,31 @@ async function uploadFile(bucket: string, file: File, path?: string) {
     return { data, error: null }
 }
 
+/**
+ * Deletes a file from the specified Supabase storage bucket.
+ *
+ * @param {string} bucket - The name of the bucket containing the file.
+ * @param {string} filePath - The path of the file to delete.
+ * @return {Promise<{data: {}, error: null} | {data: null, error: Error}>} Returns success data or error.
+ */
+async function deleteFile(bucket: string, filePath: string) {
+    if (!bucket) {
+        throw new Error('Bucket name is required')
+    }
+
+    if (!filePath) {
+        throw new Error('File path is required')
+    }
+
+    const { data, error } = await supabase.storage
+        .from(bucket)
+        .remove([filePath])
+
+    if (error) {
+        return { data: null, error }
+    }
+
+    return { data, error: null }
+}
+
 export default supabase
