@@ -65,10 +65,10 @@ export class Project {
         ]
 
         for (const bucketName of buckets) {
-            if (bucketExsists(bucketName)) {
+            if (await bucketExsists(bucketName)) {
                 throw new Error(`Bucket '${bucketName}' already exists`)
             }
-            createBucket(bucketName)
+            await createBucket(bucketName)
         }
     }
 
@@ -79,7 +79,7 @@ export class Project {
             const oldBucketName = `project/${oldName}-${type}`
             const newBucketName = `project/${newName}-${type}`
 
-            if (bucketExsists(newBucketName)) {
+            if (await bucketExsists(newBucketName)) {
                 throw new Error(`Bucket '${newBucketName}' already exists`)
             }
 
@@ -99,7 +99,7 @@ export class Project {
         for (const type of bucketTypes) {
             const bucketName = `project/${name}-${type}`
 
-            if (bucketExsists(bucketName)) {
+            if (await bucketExsists(bucketName)) {
                 const result = await deleteBucket(bucketName)
 
                 if (result.error) {
