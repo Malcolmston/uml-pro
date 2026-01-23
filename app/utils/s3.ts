@@ -5,4 +5,24 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+
+/**
+ * Creates a new storage bucket with the specified name.
+ *
+ * @param {string} name - The name of the bucket to be created. It must be a non-empty string.
+ * @return {boolean} Returns true if the bucket is successfully created, or false if a bucket with the specified name already exists.
+ * @throws {Error} Throws an error if the bucket name is not provided.
+ */
+function createBucket(name: string): boolean {
+    if (!name) {
+        throw new Error('Bucket name is required')
+    }
+
+    if (supabase.storage.getBucket(name)) {
+        return false
+    }
+
+    return supabase.storage.createBucket(name)
+}
+
 export default supabase
