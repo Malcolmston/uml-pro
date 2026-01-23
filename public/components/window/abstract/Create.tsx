@@ -1,12 +1,12 @@
-import { CreateAbstractProps } from "./properties";
-import {CreateAbstractState} from "@/public/components/window/abstract/properties";
+import { CreateAbstractProps, AbstractMethod } from "./properties";
+import { CreateClassProps } from "@/public/components/window/class/properties";
 import Visibility from "@/public/components/visibility";
 import Abstract from "@/public/components/abstract/Abstract";
 import CreateClass from "@/public/components/window/class/Create";
 
 export default class CreateAbstract extends CreateClass {
     constructor(props: CreateAbstractProps) {
-        super(props as any);
+        super(props as unknown as CreateClassProps);
         // Override methodDraft to include isAbstract
         this.state = {
             ...this.state,
@@ -371,7 +371,7 @@ export default class CreateAbstract extends CreateClass {
                                     <span className="flex-1">
                                         <span className="text-gray-500">{method.visibility}</span>
                                         {method.isStatic && <span className="text-blue-600 ml-1">static</span>}
-                                        {(method as any).isAbstract && <span className="text-orange-600 ml-1">abstract</span>}
+                                        {(method as AbstractMethod).isAbstract && <span className="text-orange-600 ml-1">abstract</span>}
                                         <span className="ml-1">{method.name}(): {method.returnType}</span>
                                     </span>
                                     <div className="flex gap-1">
