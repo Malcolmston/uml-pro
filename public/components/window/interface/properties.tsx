@@ -1,5 +1,6 @@
 import ParamInput from "@/public/components/window/param_input";
 import MethodInput from "@/public/components/window/method_input";
+import {BaseObjectCreatorState} from "@/public/components/window/ObjectCreator";
 
 export interface CreateInterfaceProps {
     onAdd: (node: React.JSX.Element) => void;
@@ -11,11 +12,10 @@ export interface CreateInterfaceProps {
     };
 }
 
-export interface CreateInterfaceState {
+export interface CreateInterfaceState extends BaseObjectCreatorState {
     interfaceName: string;
     constants: ParamInput[];
     methods: MethodInput[];
-    errors: Record<string, string>;
     constantDraft: Omit<ParamInput, 'id'>;
     methodDraft: Omit<MethodInput, 'id'>;
 }
