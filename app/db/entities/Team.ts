@@ -5,13 +5,6 @@ export class Team {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({
-        type: "enum",
-        enum: TeamRole,
-        default: TeamRole.MEMBER
-    })
-    role: TeamRole;
-
     @Column({nullable: false})
     name: string
 
