@@ -117,7 +117,7 @@ describe('Team Entity', () => {
 
       vi.mocked(rules.canCreate).mockReturnValue(true)
 
-      const result = team.canPerform(TeamRole.ADMIN, 'create', 'file')
+      team.canPerform(TeamRole.ADMIN, 'create', 'file')
 
       // Custom rules don't have 'file', so should fall back
       expect(rules.canCreate).toHaveBeenCalled()
@@ -212,7 +212,7 @@ describe('Team Entity', () => {
         create: { file: false }
       }
 
-      const effectiveRules = team.getEffectiveRules(TeamRole.ADMIN) as any
+      const effectiveRules = team.getEffectiveRules(TeamRole.ADMIN)
 
       expect(effectiveRules.create.file).toBe(false)
     })
@@ -223,13 +223,13 @@ describe('Team Entity', () => {
         create: { bucket: false, file: false, folder: false }
       }
 
-      const effectiveRules = team.getEffectiveRules(TeamRole.ADMIN) as any
+      const effectiveRules = team.getEffectiveRules(TeamRole.ADMIN)
 
       expect(effectiveRules.create).toEqual({ bucket: false, file: false, folder: false })
     })
 
     it('should include all action types', () => {
-      const effectiveRules = team.getEffectiveRules(TeamRole.MEMBER) as any
+      const effectiveRules = team.getEffectiveRules(TeamRole.MEMBER)
 
       expect(effectiveRules).toHaveProperty('create')
       expect(effectiveRules).toHaveProperty('read')
