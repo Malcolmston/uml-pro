@@ -532,7 +532,7 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
             ],
             errors: (() => {
                 const newErrors = { ...prev.errors };
-                delete (newErrors as any).constructor; // Clear constructor error on success
+                delete newErrors["constructor"]; // Clear constructor error on success
                 return newErrors;
             })()
         }));
