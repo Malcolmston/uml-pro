@@ -317,3 +317,16 @@ async function moveFile(sourceBucket: string, sourcePath: string, destinationBuc
 }
 
 export default supabase
+export {
+    createBucket,
+    bucketExsists,
+    deleteBucket,
+    renameBucket,
+    fileExists,
+    uploadFile,
+    deleteFile,
+    renameFile,
+    moveFile,
+    getFile,
+    getAllFiles
+}
