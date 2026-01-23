@@ -2,10 +2,10 @@ import adminRules from './chart/admin.json'
 import memberRules from './chart/member.json'
 import viewRules from './chart/view.json'
 
-type RoleType = 'admin' | 'member' | 'viewer'
-type ActionType = 'create' | 'read' | 'update' | 'write' | 'execute' | 'delete' | 'list' | 'rule'
-type ResourceType = 'bucket' | 'file' | 'folder'
-type RuleActionType = 'modify' | 'limit' | 'list'
+export type RoleType = 'admin' | 'member' | 'viewer'
+export type ActionType = 'create' | 'read' | 'update' | 'write' | 'execute' | 'delete' | 'list' | 'rule'
+export type ResourceType = 'bucket' | 'file' | 'folder'
+export type RuleActionType = 'modify' | 'limit' | 'list'
 
 interface Rules {
   [key: string]: {
@@ -145,4 +145,4 @@ export function canListRule(role: RoleType): boolean | null {
   return rules.rule['list'] ?? false
 }
 
-export { rulesMap, RoleType, ActionType, ResourceType, RuleActionType }
+export { rulesMap }

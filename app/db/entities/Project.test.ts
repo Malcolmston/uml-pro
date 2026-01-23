@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Project } from './Project'
 import * as s3 from '../../utils/s3'
 
@@ -17,6 +17,7 @@ describe('Project Entity', () => {
     project = new Project()
     project.name = 'Test Project'
     project.description = 'A test project'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     project.visibility = 'public' as any
   })
 
@@ -40,8 +41,8 @@ describe('Project Entity', () => {
 
   describe('@BeforeInsert Hook - S3 Bucket Creation', () => {
     it('should create three S3 buckets on insert', async () => {
-      vi.mocked(s3.bucketExsists).mockReturnValue(false)
-      vi.mocked(s3.createBucket).mockReturnValue(true)
+      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
+      vi.mocked(s3.createBucket).mockResolvedValue({ data: { name: 'test' }, error: null })
 
       await project.beforeInsert()
 
@@ -52,7 +53,7 @@ describe('Project Entity', () => {
     })
 
     it('should throw error if files bucket already exists', async () => {
-      vi.mocked(s3.bucketExsists).mockImplementation((name: string) => {
+      vi.mocked(s3.bucketExsists).mockImplementation(async (name: string) => {
         return name === 'project/Test Project-files'
       })
 
@@ -60,7 +61,7 @@ describe('Project Entity', () => {
     })
 
     it('should throw error if rules bucket already exists', async () => {
-      vi.mocked(s3.bucketExsists).mockImplementation((name: string) => {
+      vi.mocked(s3.bucketExsists).mockImplementation(async (name: string) => {
         return name === 'project/Test Project-rules'
       })
 
@@ -68,7 +69,7 @@ describe('Project Entity', () => {
     })
 
     it('should throw error if backups bucket already exists', async () => {
-      vi.mocked(s3.bucketExsists).mockImplementation((name: string) => {
+      vi.mocked(s3.bucketExsists).mockImplementation(async (name: string) => {
         return name === 'project/Test Project-backups'
       })
 
@@ -76,8 +77,8 @@ describe('Project Entity', () => {
     })
 
     it('should store original name after insert', async () => {
-      vi.mocked(s3.bucketExsists).mockReturnValue(false)
-      vi.mocked(s3.createBucket).mockReturnValue(true)
+      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
+      vi.mocked(s3.createBucket).mockResolvedValue({ data: { name: 'test' }, error: null })
 
       await project.beforeInsert()
 
@@ -92,8 +93,8 @@ describe('Project Entity', () => {
     })
 
     it('should rename buckets when project name changes', async () => {
-      vi.mocked(s3.bucketExsists).mockReturnValue(false)
-      vi.mocked(s3.renameBucket).mockResolvedValue({ data: {}, error: null })
+      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
+      vi.mocked(s3.renameBucket).mockResolvedValue({ data: { message: 'Renamed' }, error: null })
 
       await project.beforeUpdate()
 
@@ -113,7 +114,7 @@ describe('Project Entity', () => {
     })
 
     it('should throw error if new bucket name already exists', async () => {
-      vi.mocked(s3.bucketExsists).mockImplementation((name: string) => {
+      vi.mocked(s3.bucketExsists).mockImplementation(async (name: string) => {
         return name === 'project/New Project-files'
       })
 
@@ -121,18 +122,19 @@ describe('Project Entity', () => {
     })
 
     it('should throw error if rename fails', async () => {
-      vi.mocked(s3.bucketExsists).mockReturnValue(false)
+      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
       vi.mocked(s3.renameBucket).mockResolvedValue({
         data: null,
-        error: new Error('S3 rename failed')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        error: { name: 'StorageError', message: 'S3 rename failed', __isStorageError: true } as any
       })
 
       await expect(project.beforeUpdate()).rejects.toThrow('Failed to rename bucket')
     })
 
     it('should update original name after successful rename', async () => {
-      vi.mocked(s3.bucketExsists).mockReturnValue(false)
-      vi.mocked(s3.renameBucket).mockResolvedValue({ data: {}, error: null })
+      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
+      vi.mocked(s3.renameBucket).mockResolvedValue({ data: { message: 'Renamed' }, error: null })
 
       await project.beforeUpdate()
 
@@ -142,8 +144,8 @@ describe('Project Entity', () => {
 
   describe('@BeforeRemove Hook - S3 Bucket Deletion', () => {
     it('should delete all three buckets on remove', async () => {
-      vi.mocked(s3.bucketExsists).mockReturnValue(true)
-      vi.mocked(s3.deleteBucket).mockResolvedValue({ data: {}, error: null })
+      vi.mocked(s3.bucketExsists).mockResolvedValue(true)
+      vi.mocked(s3.deleteBucket).mockResolvedValue({ data: { message: 'Deleted' }, error: null })
 
       await project.beforeRemove()
 
@@ -154,17 +156,18 @@ describe('Project Entity', () => {
     })
 
     it('should not throw if bucket does not exist', async () => {
-      vi.mocked(s3.bucketExsists).mockReturnValue(false)
+      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
 
       await expect(project.beforeRemove()).resolves.not.toThrow()
       expect(s3.deleteBucket).not.toHaveBeenCalled()
     })
 
     it('should throw error if deletion fails', async () => {
-      vi.mocked(s3.bucketExsists).mockReturnValue(true)
+      vi.mocked(s3.bucketExsists).mockResolvedValue(true)
       vi.mocked(s3.deleteBucket).mockResolvedValue({
         data: null,
-        error: new Error('Delete failed')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        error: { name: 'StorageError', message: 'Delete failed', __isStorageError: true } as any
       })
 
       await expect(project.beforeRemove()).rejects.toThrow('Failed to delete bucket')
@@ -173,16 +176,19 @@ describe('Project Entity', () => {
 
   describe('Visibility Enum', () => {
     it('should accept public visibility', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       project.visibility = 'public' as any
       expect(project.visibility).toBe('public')
     })
 
     it('should accept private visibility', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       project.visibility = 'private' as any
       expect(project.visibility).toBe('private')
     })
 
     it('should accept internal visibility', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       project.visibility = 'internal' as any
       expect(project.visibility).toBe('internal')
     })

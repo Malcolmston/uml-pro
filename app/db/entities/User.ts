@@ -33,6 +33,9 @@ export class User {
   @DeleteDateColumn()
   deletedAt: Date
 
+  // Internal property to track original password for change detection
+  originalPassword?: string
+
   @BeforeInsert()
   async beforeInsert() {
     if (this.age < 12) {

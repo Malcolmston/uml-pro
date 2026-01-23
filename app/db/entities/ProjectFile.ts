@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn, BeforeInsert, BeforeUpdate, BeforeRemove, AfterLoad } from "typeorm"
 import { Project } from "./Project"
-import { uploadFile, deleteFile, renameFile } from "../../utils/s3"
+import { deleteFile, renameFile } from "../../utils/s3"
 
 @Entity()
 export class ProjectFile {

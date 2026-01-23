@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createClient } from '@supabase/supabase-js'
 
 const mockUpload = vi.fn()
 const mockDownload = vi.fn()
@@ -37,7 +36,7 @@ describe('s3.ts - Supabase Storage Client', () => {
       mockStorage.getBucket.mockReturnValue(null)
       mockStorage.createBucket.mockReturnValue(true)
 
-      const { createBucket } = await import('./s3.ts')
+      const { createBucket } = await import('./s3')
       const result = createBucket('test-bucket')
 
       expect(mockStorage.getBucket).toHaveBeenCalledWith('test-bucket')
@@ -48,7 +47,7 @@ describe('s3.ts - Supabase Storage Client', () => {
     it('should not create a bucket when it already exists', async () => {
       mockStorage.getBucket.mockReturnValue({ name: 'test-bucket' })
 
-      const { createBucket } = await import('./s3.ts')
+      const { createBucket } = await import('./s3')
       const result = createBucket('test-bucket')
 
       expect(mockStorage.getBucket).toHaveBeenCalledWith('test-bucket')
@@ -59,7 +58,7 @@ describe('s3.ts - Supabase Storage Client', () => {
     it('should delete a bucket', async () => {
       mockStorage.deleteBucket.mockResolvedValue({ data: { message: 'deleted' }, error: null })
 
-      const { deleteBucket } = await import('./s3.ts')
+      const { deleteBucket } = await import('./s3')
       const result = await deleteBucket('test-bucket')
 
       expect(mockStorage.deleteBucket).toHaveBeenCalledWith('test-bucket')
@@ -69,7 +68,7 @@ describe('s3.ts - Supabase Storage Client', () => {
     it('should check if bucket exists', async () => {
       mockStorage.getBucket.mockReturnValue({ name: 'test-bucket' })
 
-      const { bucketExsists } = await import('./s3.ts')
+      const { bucketExsists } = await import('./s3')
       const result = bucketExsists('test-bucket')
 
       expect(mockStorage.getBucket).toHaveBeenCalledWith('test-bucket')
@@ -82,7 +81,7 @@ describe('s3.ts - Supabase Storage Client', () => {
       mockList.mockResolvedValue({ data: [], error: null })
       mockUpload.mockResolvedValue({ data: { path: 'test.txt' }, error: null })
 
-      const { uploadFile } = await import('./s3.ts')
+      const { uploadFile } = await import('./s3')
       const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' })
       const result = await uploadFile('bucket', mockFile)
 
@@ -94,7 +93,7 @@ describe('s3.ts - Supabase Storage Client', () => {
       const mockBlob = new Blob(['content'])
       mockDownload.mockResolvedValue({ data: mockBlob, error: null })
 
-      const { getFile } = await import('./s3.ts')
+      const { getFile } = await import('./s3')
       const result = await getFile('bucket', 'test.txt')
 
       expect(mockDownload).toHaveBeenCalledWith('test.txt')
@@ -105,7 +104,7 @@ describe('s3.ts - Supabase Storage Client', () => {
     it('should delete a file', async () => {
       mockRemove.mockResolvedValue({ data: {}, error: null })
 
-      const { deleteFile } = await import('./s3.ts')
+      const { deleteFile } = await import('./s3')
       const result = await deleteFile('bucket', 'test.txt')
 
       expect(mockRemove).toHaveBeenCalledWith(['test.txt'])
@@ -115,7 +114,7 @@ describe('s3.ts - Supabase Storage Client', () => {
     it('should rename a file', async () => {
       mockMove.mockResolvedValue({ data: {}, error: null })
 
-      const { renameFile } = await import('./s3.ts')
+      const { renameFile } = await import('./s3')
       const result = await renameFile('bucket', 'old.txt', 'new.txt')
 
       expect(mockMove).toHaveBeenCalledWith('old.txt', 'new.txt')
@@ -126,7 +125,7 @@ describe('s3.ts - Supabase Storage Client', () => {
       const mockFiles = [{ name: 'file1.txt' }, { name: 'file2.txt' }]
       mockList.mockResolvedValue({ data: mockFiles, error: null })
 
-      const { getAllFiles } = await import('./s3.ts')
+      const { getAllFiles } = await import('./s3')
       const result = await getAllFiles('bucket')
 
       expect(mockList).toHaveBeenCalled()
@@ -137,7 +136,7 @@ describe('s3.ts - Supabase Storage Client', () => {
     it('should check if file exists', async () => {
       mockList.mockResolvedValue({ data: [{ name: 'test.txt' }], error: null })
 
-      const { fileExists } = await import('./s3.ts')
+      const { fileExists } = await import('./s3')
       const result = await fileExists('bucket', 'test.txt')
 
       expect(result).toBe(true)

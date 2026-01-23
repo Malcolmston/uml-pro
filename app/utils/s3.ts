@@ -13,29 +13,32 @@ const supabase = createClient(
  * Creates a new storage bucket with the specified name.
  *
  * @param {string} name - The name of the bucket to be created. It must be a non-empty string.
- * @return {boolean} Returns true if the bucket is successfully created, or false if a bucket with the specified name already exists.
+ * @return {Promise<{data: {name: string}, error: null} | {data: null, error: Error}>} Returns the created bucket or error.
  * @throws {Error} Throws an error if the bucket name is not provided.
  */
-function createBucket(name: string): boolean {
+async function createBucket(name: string) {
     if (!name) {
         throw new Error('Bucket name is required')
     }
 
-    if (bucketExsists(name)) {
-        return false
+    const { data, error } = await supabase.storage.createBucket(name)
+
+    if (error) {
+        return { data: null, error }
     }
 
-    return supabase.storage.createBucket(name)
+    return { data, error: null }
 }
 
 /**
  * Checks if a bucket with the specified name exists.
  *
  * @param {string} name - The name of the bucket to check.
- * @return {boolean} Returns true if the bucket exists, false otherwise.
+ * @return {Promise<boolean>} Returns true if the bucket exists, false otherwise.
  */
-function bucketExsists(name: string): boolean {
-    return supabase.storage.getBucket(name) !== null
+async function bucketExsists(name: string): Promise<boolean> {
+    const { data } = await supabase.storage.getBucket(name)
+    return data !== null
 }
 
 /**
@@ -354,7 +357,7 @@ async function createBucketWithRules(name: string, role: RoleType, isPublic: boo
         }
     }
 
-    if (bucketExsists(name)) {
+    if (await bucketExsists(name)) {
         return {
             data: null,
             error: new Error(`Bucket '${name}' already exists`)
@@ -372,6 +375,58 @@ async function createBucketWithRules(name: string, role: RoleType, isPublic: boo
     }
 
     return { data, error: null }
+}
+
+/**
+ * Renames a storage bucket by creating a new bucket, copying all files, and deleting the old bucket.
+ * Note: Supabase doesn't support direct bucket renaming.
+ *
+ * @param {string} oldName - The current name of the bucket.
+ * @param {string} newName - The new name for the bucket.
+ * @return {Promise<{data: {message: string}, error: null} | {data: null, error: Error}>} Returns success message or error.
+ */
+async function renameBucket(oldName: string, newName: string) {
+    if (!oldName || !newName) {
+        throw new Error('Both old and new bucket names are required')
+    }
+
+    if (oldName === newName) {
+        return { data: { message: 'Bucket names are the same' }, error: null }
+    }
+
+    // Create new bucket
+    const createResult = await createBucket(newName)
+    if (createResult.error) {
+        return { data: null, error: createResult.error }
+    }
+
+    // Get all files from old bucket
+    const { data: files, error: listError } = await getAllFiles(oldName)
+    if (listError) {
+        // Clean up new bucket if list fails
+        await deleteBucket(newName)
+        return { data: null, error: listError }
+    }
+
+    // Copy each file to new bucket
+    if (files && files.length > 0) {
+        for (const file of files) {
+            const moveResult = await moveFile(oldName, file.name, newName, file.name)
+            if (moveResult.error) {
+                // Clean up new bucket if move fails
+                await deleteBucket(newName)
+                return { data: null, error: moveResult.error }
+            }
+        }
+    }
+
+    // Delete old bucket
+    const deleteResult = await deleteBucket(oldName)
+    if (deleteResult.error) {
+        return { data: null, error: deleteResult.error }
+    }
+
+    return { data: { message: `Bucket renamed from '${oldName}' to '${newName}'` }, error: null }
 }
 
 export default supabase
