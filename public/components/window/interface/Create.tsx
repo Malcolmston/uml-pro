@@ -157,12 +157,6 @@ export default class CreateInterface extends ObjectCreator<CreateInterfaceProps,
         }));
     };
 
-    handleRemoveMethod = (id: string) => {
-        this.setState(prev => ({
-            methods: prev.methods.filter(m => m.id !== id)
-        }));
-    };
-
     handleAddInterface = () => {
         const { interfaceName, constants, methods } = this.state;
         const { onAdd, onClose } = this.props;
