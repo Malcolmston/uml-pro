@@ -296,7 +296,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
             delete newErrors[name];
         }
 
-        this.setState({ errors: newErrors } as any);
+        this.setState({ errors: newErrors } as Partial<CreateEnumState>);
         return !newErrors[name];
     };
 
@@ -672,7 +672,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
         }
 
         this.setState(prev => {
-            const { constructor, ...remainingErrors } = prev.errors;
+            const { constructor: _constructorError, ...remainingErrors } = prev.errors;
             return {
                 constructors: [...prev.constructors, {
                     id: this.generateId(),
@@ -1333,7 +1333,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
             </button>
 
                 {errors.constructor && (
-                    <p className="text-xs text-red-500">{errors.constructor as any}</p>
+                    <p className="text-xs text-red-500">{String(errors.constructor)}</p>
                 )}
                 </div>
 
@@ -1365,7 +1365,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
                 <li>• Enum constants should be in UPPER_CASE</li>
             <li>• Constructors are always private in enums</li>
             <li>• Each constant can have constructor arguments</li>
-            <li>• Use enums for fixed sets of constants that won't change</li>
+            <li>• Use enums for fixed sets of constants that won&apos;t change</li>
             <li>• Consider adding utility methods like fromString() for parsing</li>
                                                                         <li>• Enums are implicitly final and extend java.lang.Enum</li>
             </ul>
@@ -1399,16 +1399,16 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <h4 className="text-sm font-medium text-blue-800 mb-2">Usage Examples</h4>
                 <div className="text-xs text-blue-700 space-y-1 font-mono">
-                    <div>// Usage examples:</div>
+                    <div>{`// Usage examples:`}</div>
                         <div>{enumName} status = {enumName}.{enumConstants[0].name};</div>
                     {params.length > 0 && methods.length > 0 && (
                         <>
                             <div>String value = status.{methods[0]?.name || 'getValue'}();</div>
-                    <div>// Switch statement:</div>
+                    <div>{`// Switch statement:`}</div>
                     <div>switch (status) {`{`}</div>
                     {enumConstants.slice(0, 2).map((constant, index) => (
                     <div key={index} className="ml-4">
-                    case {constant.name}: // handle {constant.name.toLowerCase()}; break;
+                    case {constant.name}: {`// handle ${constant.name.toLowerCase()}; break;`}
                     </div>
                     ))}
                     <div>{`}`}</div>
