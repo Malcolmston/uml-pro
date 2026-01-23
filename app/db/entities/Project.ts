@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, BeforeUpdate } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, Generated } from "typeorm"
 import Visibility from "../visibility";
 import {bucketExsists, createBucket} from "../../utils/s3";
 
@@ -10,14 +10,14 @@ export class Project {
 
     @Column()
     @Generated("uuid")
-    uuid: string;
+    uuid: string
 
     @Column({
         type: "enum",
         enum: Visibility,
         default: Visibility.PUBLIC
     })
-    visibility: Visibility;
+    visibility: Visibility
 
     @Column({nullable: false})
     name: string
@@ -35,16 +35,22 @@ export class Project {
     deletedAt: Date
 
     @BeforeInsert()
-    beforeInsert() {
-        Project.createBuckets(this.name);
+    async beforeInsert() {
+        await Project.createBuckets(this.name)
     }
 
-    private static createBuckets (name: string) {
-        if( bucketExsists(`project/${name}-files`) ) throw new Error("Bucket already exists");
-        else createBucket( `project/${name}-files`)
-        if( bucketExsists(`project/${name}-rules`) ) throw new Error("Bucket already exists");
-        else createBucket( `project/${name}-rules`)
-        if( bucketExsists(`project/${name}-backups`) ) throw new Error("Bucket already exists");
-        else createBucket( `project/${name}-backups`)
+    private static async createBuckets(name: string) {
+        const buckets = [
+            `project/${name}-files`,
+            `project/${name}-rules`,
+            `project/${name}-backups`
+        ]
+
+        for (const bucketName of buckets) {
+            if (bucketExsists(bucketName)) {
+                throw new Error(`Bucket '${bucketName}' already exists`)
+            }
+            createBucket(bucketName)
+        }
     }
 }
