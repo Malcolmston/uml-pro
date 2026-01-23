@@ -158,7 +158,6 @@ describe('CreateClass component', () => {
 
     it('shows error for empty parameter name or type', () => {
       render(<CreateClass onAdd={mockOnAdd} onClose={mockOnClose} />)
-      const paramSection = screen.getByRole('heading', { name: /Parameters/i }).parentElement
       const addButton = screen.getByRole('button', { name: /\+ Add Parameter/i })
 
       fireEvent.click(addButton)
@@ -562,7 +561,6 @@ describe('CreateClass component', () => {
       const paramSection = screen.getByRole('heading', { name: /^Parameters$/i }).parentElement
       const nameInput = paramSection?.querySelector('input[placeholder="Name"]') as HTMLInputElement
       const typeInput = paramSection?.querySelector('input[placeholder="Type"]') as HTMLInputElement
-      const staticCheck = paramSection?.querySelector('input[type="checkbox"][checked="false"]') // This is brittle, use labels
       const labels = Array.from(paramSection!.querySelectorAll('label'))
       const staticLabel = labels.find(l => l.textContent?.includes('static'))
       const finalLabel = labels.find(l => l.textContent?.includes('final'))

@@ -6,7 +6,7 @@ export interface CreateClassProps {
     onAdd: (node: React.JSX.Element) => void;
     onClose?: () => void;
     onDelete?: () => void;
-    onInspect?: (nodeData: any) => void;
+    onInspect?: (nodeData: Record<string, unknown>) => void;
     onExport?: (code: string, fileName: string) => void;
 
     // Add the missing initialData prop
