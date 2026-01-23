@@ -4,7 +4,7 @@ import React from "react";
  * Abstract base class for all UML object creator components.
  * Provides shared functionality for validation, ID generation, and event handling.
  */
-export default abstract class ObjectCreator<P = {}, S = {}> extends React.Component<P, S> {
+export default abstract class ObjectCreator<P = object, S = object> extends React.Component<P, S> {
     idRef: { current: number };
 
     constructor(props: P) {
@@ -27,8 +27,8 @@ export default abstract class ObjectCreator<P = {}, S = {}> extends React.Compon
      * @returns true if valid, false if invalid
      */
     validateInput = (name: string, value: string, type: string): boolean => {
-        const state = this.state as any;
-        const newErrors = { ...state.errors };
+        const state = this.state as { errors?: Record<string, string> };
+        const newErrors = { ...(state.errors || {}) };
 
         if (!value.trim()) {
             newErrors[name] = `${type} name is required`;
@@ -38,7 +38,7 @@ export default abstract class ObjectCreator<P = {}, S = {}> extends React.Compon
             delete newErrors[name];
         }
 
-        this.setState({ errors: newErrors } as any);
+        this.setState({ errors: newErrors } as unknown as S);
         return !newErrors[name];
     };
 
