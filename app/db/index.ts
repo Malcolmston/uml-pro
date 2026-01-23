@@ -13,7 +13,7 @@ import Database from "./connect"
  * @returns {Promise<void>} A promise that resolves when the database connection
  * is successfully initialized or rejects with an error if the connection fails.
  */
-const Init = () => {
+export const Init = () => {
     return Database.initialize()
         .then(() => {
             console.log('✓ Database connected successfully')
