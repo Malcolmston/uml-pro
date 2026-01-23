@@ -53,19 +53,23 @@ describe('CreateEnum component', () => {
         expect(screen.getByText('ACTIVE')).toBeInTheDocument();
     });
 
-    it('enforces UPPER_CASE for constants', async () => {
+    it('automatically converts constants to UPPER_CASE', () => {
         render(<CreateEnum {...defaultProps} />);
 
-        const constantNameInput = screen.getByPlaceholderText(/Constant Name/i);
+        const constantNameInput = screen.getByPlaceholderText(/Constant Name/i) as HTMLInputElement;
         const addButton = screen.getByRole('button', { name: /\+ Add Constant/i });
 
-        // Try to add lowercase constant
+        // Type lowercase and it should be converted to uppercase
         fireEvent.change(constantNameInput, { target: { value: 'lowercase' } });
+
+        // The input value should be uppercase
+        expect(constantNameInput.value).toBe('LOWERCASE');
+
+        // Add the constant
         fireEvent.click(addButton);
 
-        await waitFor(() => {
-            expect(screen.getByText(/should be in UPPER_CASE/i)).toBeInTheDocument();
-        });
+        // Should be added as uppercase
+        expect(screen.getByText('LOWERCASE')).toBeInTheDocument();
     });
 
     it('prevents duplicate constant names', async () => {
@@ -144,7 +148,7 @@ describe('CreateEnum component', () => {
     it('applies common enum patterns', () => {
         render(<CreateEnum {...defaultProps} />);
 
-        const statusButton = screen.getByRole('button', { name: /Status/i });
+        const statusButton = screen.getByRole('button', { name: 'Status' });
         fireEvent.click(statusButton);
 
         // Should populate with status constants
