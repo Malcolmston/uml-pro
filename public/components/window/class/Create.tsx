@@ -49,11 +49,13 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
             this.props.initialData && this.props.initialData !== prevProps.initialData
         ) {
             const { initialData } = this.props;
-            if (initialData.className) this.setState({ className: initialData.className });
-            if (initialData.params) this.setState({ params: initialData.params });
-            if (initialData.methods) this.setState({ methods: initialData.methods });
-            if (initialData.constructors) this.setState({ constructors: initialData.constructors });
-            if (typeof initialData.autoGettersSetters === 'boolean') this.setState({ autoGettersSetters: initialData.autoGettersSetters });
+            this.setState({
+                ...(initialData.className && { className: initialData.className }),
+                ...(initialData.params && { params: initialData.params }),
+                ...(initialData.methods && { methods: initialData.methods }),
+                ...(initialData.constructors && { constructors: initialData.constructors }),
+                ...(typeof initialData.autoGettersSetters === 'boolean' && { autoGettersSetters: initialData.autoGettersSetters })
+            });
         }
     }
 
@@ -493,14 +495,14 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
         const { params, constructors, className } = this.state;
 
         if (params.length === 0) {
-            this.setState(prev => ({
-                errors: {
-                    ...prev.errors,
-                    constructor: 'Add parameters first to create a constructor'
-                }
-            }));
-            return;
-        }
+                this.setState(prev => ({
+                    errors: {
+                        ...prev.errors,
+                        constructorError: 'Add parameters first to create a constructor'
+                    }
+                }));
+                return;
+            }
 
         const constructorName = className.trim() || 'Constructor';
 
@@ -511,14 +513,14 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
         );
 
         if (isDuplicate) {
-            this.setState(prev => ({
-                errors: {
-                    ...prev.errors,
-                    constructor: 'Constructor with same parameters already exists'
-                }
-            }));
-            return;
-        }
+                this.setState(prev => ({
+                    errors: {
+                        ...prev.errors,
+                        constructorError: 'Constructor with same parameters already exists'
+                    }
+                }));
+                return;
+            }
 
         // Clear any existing constructor error and add the new constructor
         this.setState(prev => ({
@@ -532,7 +534,7 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
             ],
             errors: (() => {
                 const newErrors = { ...prev.errors };
-                delete newErrors["constructor"]; // Clear constructor error on success
+                delete newErrors["constructorError"]; // Clear constructor error on success
                 return newErrors;
             })()
         }));
@@ -746,7 +748,7 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
         const isFormValid = className.trim() && Object.keys(errors).length === 0;
 
         return (
-            <div className="absolute top-4 left-4 p-6 bg-white rounded-lg shadow-lg w-[36rem] space-y-6 overflow-y-auto max-h-[90vh] z-10 border" style={{overflowY: "auto"}}>
+            <div className="p-6 bg-white rounded-lg shadow-lg w-full space-y-6 overflow-y-auto max-h-[90vh] border" style={{overflowY: "auto"}}>
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-gray-800">Create New Class</h2>
@@ -1025,21 +1027,21 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
                             + Use current parameters as constructor
                         </button>
 
-                        {errors.constructor && (
-                            <p className="text-xs text-red-500">{String(errors.constructor)}</p>
+                        {errors.constructorError && (
+                            <p className="text-xs text-red-500">{String(errors.constructorError)}</p>
                         )}
                     </div>
 
                     {/* Constructor List */}
                     {constructors.length > 0 && (
                         <div className="space-y-1 max-h-32 overflow-y-auto">
-                            {constructors.map((constructor) => (
-                                <div key={constructor.id} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
+                            {constructors.map((ctor) => (
+                                <div key={ctor.id} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
                                     <span>
-                                        {constructor.name}({constructor.params.map(p => `${p.name}: ${p.type}`).join(', ')})
+                                        {ctor.name}({ctor.params.map(p => `${p.name}: ${p.type}`).join(', ')})
                                     </span>
                                     <button
-                                        onClick={() => this.handleRemoveConstructor(constructor.id)}
+                                        onClick={() => this.handleRemoveConstructor(ctor.id)}
                                         className="text-red-500 hover:text-red-700 ml-2"
                                         aria-label="Remove constructor"
                                     >
