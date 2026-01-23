@@ -18,11 +18,21 @@ function createBucket(name: string): boolean {
         throw new Error('Bucket name is required')
     }
 
-    if (supabase.storage.getBucket(name)) {
+    if (bucketExsists(name)) {
         return false
     }
 
     return supabase.storage.createBucket(name)
+}
+
+/**
+ * Checks if a bucket with the specified name exists.
+ *
+ * @param {string} name - The name of the bucket to check.
+ * @return {boolean} Returns true if the bucket exists, false otherwise.
+ */
+function bucketExsists(name: string): boolean {
+    return supabase.storage.getBucket(name) !== null
 }
 
 export default supabase
