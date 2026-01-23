@@ -66,4 +66,25 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
      * @returns {string} A unique identifier string.
      */
     generateId = () => `item-${Date.now()}-${Math.random()}`;
+
+    /**
+     * Validates the provided input value based on its type and updates the error state accordingly.
+     *
+     * @param {string} name - The name of the input field to validate.
+     * @param {string} value - The value of the input field to validate.
+     * @param {'class' | 'param' | 'method'} type - The type of the input, used for error messaging (e.g., 'class', 'param', or 'method').
+     * @returns {boolean} - Returns `true` if the input is valid, otherwise `false`.
+     */
+    validateInput = (name: string, value: string, type: 'class' | 'param' | 'method') => {
+        const newErrors = { ...this.state.errors };
+        if (!value.trim()) {
+            newErrors[name] = `${type} name is required`;
+        } else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value.trim())) {
+            newErrors[name] = `${type} name must be a valid identifier`;
+        } else {
+            delete newErrors[name];
+        }
+        this.setState({ errors: newErrors });
+        return !newErrors[name];
+    };
 }
