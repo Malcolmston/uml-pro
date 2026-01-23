@@ -151,11 +151,11 @@ export default class CreateInterface extends ObjectCreator<CreateInterfaceProps,
         }
     };
 
-    handleCancelEditParam = () => super.handleCancelEditParam();
-    handleCancelEditMethod = () => super.handleCancelEditMethod();
-
-    handleRemoveConstant = (id: string) => super.handleRemoveParam(id);
-    handleRemoveMethod = (id: string) => super.handleRemoveMethod(id);
+    handleRemoveConstant = (id: string) => {
+        this.setState(prev => ({
+            constants: prev.constants.filter(c => c.id !== id)
+        }));
+    };
 
     handleAddInterface = () => {
         const { interfaceName, constants, methods } = this.state;

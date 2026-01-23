@@ -119,13 +119,6 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
     };
 
     /**
-     * Updates the component state to enable editing of a specific parameter based on its ID.
-     *
-     * @param {string} id - Identifier of the parameter to be edited.
-     */
-    handleEditParam = (id: string) => super.handleEditParam(this.state.params, id);
-
-    /**
      * Handles the update operation for a parameter being edited.
      *
      * This function validates the updated parameter's name and type, ensuring that the input data meets the necessary requirements.
@@ -208,7 +201,6 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
     /**
      * Resets the parameter editing state to its default values.
      */
-    handleCancelEditParam = () => super.handleCancelEditParam();
 
     /**
      * Handles the addition of a new method to the application's state.
@@ -278,7 +270,6 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
      *
      * @param {string} id - The unique identifier of the method to be edited.
      */
-    handleEditMethod = (id: string) => super.handleEditMethod(this.state.methods, id);
 
     /**
      * Handles the process of updating an existing method in the state based on the current `methodDraft`.
@@ -353,7 +344,6 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
     /**
      * Resets the editing state for a method in a form or editor.
      */
-    handleCancelEditMethod = () => super.handleCancelEditMethod();
 
     /**
      * Handles the addition of a new constructor to the state.
@@ -428,7 +418,6 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
      *
      * @param {string} id - The unique identifier of the parameter to be removed.
      */
-    handleRemoveParam = (id: string) => super.handleRemoveParam(id);
 
     /**
      * Handles the removal of a method by its unique identifier.
@@ -441,7 +430,6 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
      *
      * @param {string} id - The unique identifier of the method to be removed.
      */
-    handleRemoveMethod = (id: string) => super.handleRemoveMethod(id);
 
     /**
      * Handles the removal of a constructor by its unique identifier.
@@ -452,7 +440,6 @@ export default class CreateClass extends ObjectCreator<CreateClassProps, CreateC
      *
      * @param {string} id - The unique identifier of the constructor to be removed.
      */
-    handleRemoveConstructor = (id: string) => super.handleRemoveConstructor(id);
 
     /**
      * Handles the addition of a new class element to the application's state and triggers relevant updates.

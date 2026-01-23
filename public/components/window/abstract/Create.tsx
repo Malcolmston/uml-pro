@@ -73,14 +73,6 @@ export default class CreateAbstract extends CreateClass {
         this.props.onClose?.();
     };
 
-    handleEditParam = (id: string) => super.handleEditParam(this.state.params, id);
-    handleCancelEditParam = () => super.handleCancelEditParam();
-    handleEditMethod = (id: string) => super.handleEditMethod(this.state.methods, id);
-    handleCancelEditMethod = () => super.handleCancelEditMethod();
-    handleRemoveParam = (id: string) => super.handleRemoveParam(id);
-    handleRemoveMethod = (id: string) => super.handleRemoveMethod(id);
-    handleRemoveConstructor = (id: string) => super.handleRemoveConstructor(id);
-
     render() {
         const {
             className, params, constructors, methods, errors,

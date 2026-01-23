@@ -2,7 +2,6 @@ import {CreateAnnotationProps, CreateAnnotationState} from "@/public/components/
 import React from "react";
 import ObjectCreator from "@/public/components/window/ObjectCreator";
 import Annotation from "@/public/components/annotation/Annotation";
-import MethodInput from "@/public/components/window/method_input";
 
 export default class CreateAnnotation extends ObjectCreator<CreateAnnotationProps, CreateAnnotationState> {
     commonTypes: string[];
@@ -75,9 +74,80 @@ export default class CreateAnnotation extends ObjectCreator<CreateAnnotationProp
         }
     };
 
-    handleEditElement = (id: string) => super.handleEditMethod(this.state.elements as unknown as MethodInput[], id);
-    handleCancelEditElement = () => super.handleCancelEditMethod();
-    handleRemoveElement = (id: string) => super.handleRemoveMethod(id);
+    handleEditElement = (id: string) => {
+        const element = this.state.elements.find(e => e.id === id);
+        if (element) {
+            this.setState({
+                elementDraft: {
+                    name: element.name,
+                    type: element.type,
+                    defaultValue: element.defaultValue || ""
+                },
+                editingElement: id
+            });
+        }
+    };
+
+    handleUpdateElement = () => {
+        const { elementDraft, elements, editingElement } = this.state;
+        if (!editingElement) return;
+
+        const isNameValid = this.validateInput('elementName', elementDraft.name, 'element');
+        const isTypeValid = this.validateInput('elementType', elementDraft.type, 'element');
+        if (isNameValid && isTypeValid) {
+            const isDuplicate = elements.some(e => e.name === elementDraft.name.trim() && e.id !== editingElement);
+            if (isDuplicate) {
+                this.setState(prev => ({
+                    errors: { ...prev.errors, elementName: 'Element name already exists' }
+                }));
+                return;
+            }
+
+            this.setState(prev => ({
+                elements: prev.elements.map(e =>
+                    e.id === editingElement
+                        ? {
+                            ...e,
+                            name: elementDraft.name.trim(),
+                            type: elementDraft.type.trim(),
+                            defaultValue: elementDraft.defaultValue?.trim() || undefined
+                        }
+                        : e
+                ),
+                elementDraft: { name: "", type: "", defaultValue: "" },
+                editingElement: null,
+                errors: (() => {
+                    const newErrors = { ...prev.errors };
+                    delete newErrors.elementName;
+                    delete newErrors.elementType;
+                    return newErrors;
+                })()
+            }));
+        }
+    };
+
+    handleCancelEditElement = () => {
+        this.setState(prev => ({
+            elementDraft: { name: "", type: "", defaultValue: "" },
+            editingElement: null,
+            errors: (() => {
+                const newErrors = { ...prev.errors };
+                delete newErrors.elementName;
+                delete newErrors.elementType;
+                return newErrors;
+            })()
+        }));
+    };
+
+    handleRemoveElement = (id: string) => {
+        this.setState(prev => ({
+            elements: prev.elements.filter(e => e.id !== id)
+        }), () => {
+            if (this.state.editingElement === id) {
+                this.handleCancelEditElement();
+            }
+        });
+    };
 
     handleAddAnnotation = () => {
         const { annotationName, elements } = this.state;
