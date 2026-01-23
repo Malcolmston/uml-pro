@@ -2,11 +2,13 @@ import ParamInput from "@/public/components/window/param_input";
 import MethodInput from "@/public/components/window/method_input";
 import ConstructorInput from "@/public/components/window/constructor_input";
 
+export type ClassNodeData = Record<string, unknown>;
+
 export interface CreateClassProps {
     onAdd: (node: React.JSX.Element) => void;
     onClose?: () => void;
     onDelete?: () => void;
-    onInspect?: (nodeData: Record<string, unknown>) => void;
+    onInspect?: (nodeData: ClassNodeData) => void;
     onExport?: (code: string, fileName: string) => void;
 
     // Add the missing initialData prop
