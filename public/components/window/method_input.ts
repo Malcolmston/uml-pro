@@ -1,6 +1,5 @@
-import {Property} from "csstype";
-import Visibility = Property.Visibility;
 import type ParamInput from "@/public/components/window/param_input";
+import Visibility from "@/public/components/visibility";
 
 type MethodInput = {
     id: string;
