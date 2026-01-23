@@ -2,6 +2,7 @@ import React from "react";
 import ParamInput from "@/public/components/window/param_input";
 import MethodInput from "@/public/components/window/method_input";
 import ConstructorInput from "@/public/components/window/constructor_input";
+import Visibility from "@/public/components/visibility";
 
 /**
  * Common state interface for UML object creators.
@@ -161,7 +162,7 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
             paramDraft: {
                 name: "",
                 type: "",
-                visibility: (this.state.paramDraft as { visibility?: string } | undefined)?.visibility || 'private',
+                visibility: (this.state.paramDraft as { visibility?: Visibility } | undefined)?.visibility || Visibility.PRIVATE,
                 isStatic: false,
                 isFinal: false
             },
@@ -194,7 +195,7 @@ export default abstract class ObjectCreator<P = object, S extends BaseObjectCrea
             methodDraft: {
                 name: "",
                 returnType: "",
-                visibility: (this.state.methodDraft as { visibility?: string } | undefined)?.visibility || 'public',
+                visibility: (this.state.methodDraft as { visibility?: Visibility } | undefined)?.visibility || Visibility.PUBLIC,
                 isStatic: false
             },
             editingMethod: null,

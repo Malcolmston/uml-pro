@@ -8,7 +8,7 @@ export default class CreateAnnotation extends ObjectCreator<CreateAnnotationProp
 
     constructor(props: CreateAnnotationProps) {
         super(props);
-        this.state = {
+        const baseState: CreateAnnotationState = {
             annotationName: "",
             elements: [],
             errors: {},
@@ -19,10 +19,31 @@ export default class CreateAnnotation extends ObjectCreator<CreateAnnotationProp
             },
             editingElement: null
         };
+        this.state = {
+            ...baseState,
+            ...this.seedInitialState(props.initialData)
+        };
         this.commonTypes = [
             "String", "int", "boolean", "Class<?>", "String[]", "int[]",
             "Class<?>[]", "ElementType", "RetentionPolicy"
         ];
+    }
+
+    private seedInitialState(initialData?: CreateAnnotationProps['initialData']) {
+        if (!initialData) return {};
+        const seeded: Partial<CreateAnnotationState> = {};
+
+        if (initialData.annotationName) {
+            seeded.annotationName = initialData.annotationName;
+        }
+        if (initialData.elements) {
+            seeded.elements = initialData.elements.map(element => ({
+                ...element,
+                id: element.id || this.generateId()
+            }));
+        }
+
+        return seeded;
     }
 
     componentDidUpdate(prevProps: CreateAnnotationProps) {
@@ -31,9 +52,10 @@ export default class CreateAnnotation extends ObjectCreator<CreateAnnotationProp
             this.props.initialData &&
             this.props.initialData !== prevProps.initialData
         ) {
-            const { initialData } = this.props;
-            if (initialData.annotationName) this.setState({ annotationName: initialData.annotationName });
-            if (initialData.elements) this.setState({ elements: initialData.elements });
+            const seeded = this.seedInitialState(this.props.initialData);
+            if (Object.keys(seeded).length > 0) {
+                this.setState(seeded as Pick<CreateAnnotationState, keyof CreateAnnotationState>);
+            }
         }
     }
 
