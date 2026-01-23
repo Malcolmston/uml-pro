@@ -154,4 +154,36 @@ async function deleteFile(bucket: string, filePath: string) {
     return { data, error: null }
 }
 
+/**
+ * Renames a file in the specified Supabase storage bucket.
+ *
+ * @param {string} bucket - The name of the bucket containing the file.
+ * @param {string} oldPath - The current path of the file.
+ * @param {string} newPath - The new path for the file.
+ * @return {Promise<{data: {}, error: null} | {data: null, error: Error}>} Returns success data or error.
+ */
+async function renameFile(bucket: string, oldPath: string, newPath: string) {
+    if (!bucket) {
+        throw new Error('Bucket name is required')
+    }
+
+    if (!oldPath) {
+        throw new Error('Old file path is required')
+    }
+
+    if (!newPath) {
+        throw new Error('New file path is required')
+    }
+
+    const { data, error } = await supabase.storage
+        .from(bucket)
+        .move(oldPath, newPath)
+
+    if (error) {
+        return { data: null, error }
+    }
+
+    return { data, error: null }
+}
+
 export default supabase
