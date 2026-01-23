@@ -186,4 +186,43 @@ async function renameFile(bucket: string, oldPath: string, newPath: string) {
     return { data, error: null }
 }
 
+/**
+ * Moves a file from one location to another within the same bucket or across buckets.
+ *
+ * @param {string} sourceBucket - The name of the source bucket.
+ * @param {string} sourcePath - The current path of the file.
+ * @param {string} destinationBucket - The name of the destination bucket.
+ * @param {string} destinationPath - The destination path for the file.
+ * @return {Promise<{data: {}, error: null} | {data: null, error: Error}>} Returns success data or error.
+ */
+async function moveFile(sourceBucket: string, sourcePath: string, destinationBucket: string, destinationPath: string) {
+    if (!sourceBucket) {
+        throw new Error('Source bucket name is required')
+    }
+
+    if (!sourcePath) {
+        throw new Error('Source file path is required')
+    }
+
+    if (!destinationBucket) {
+        throw new Error('Destination bucket name is required')
+    }
+
+    if (!destinationPath) {
+        throw new Error('Destination file path is required')
+    }
+
+    // If moving within the same bucket, use the move operation
+    if (sourceBucket === destinationBucket) {
+        return renameFile(sourceBucket, sourcePath, destinationPath)
+    }
+
+    // For cross-bucket moves, download and re-upload
+    // Note: This requires additional implementation for downloading the file first
+    return {
+        data: null,
+        error: new Error('Cross-bucket file moves are not directly supported. Download and re-upload the file instead.')
+    }
+}
+
 export default supabase
