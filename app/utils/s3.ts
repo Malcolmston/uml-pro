@@ -36,7 +36,7 @@ const getSupabase = () => {
 let cachedS3Client: S3Client | null = null
 let cachedS3Key = ''
 const getS3Client = () => {
-    if (!useS3Override()) {
+    if (!isS3Enabled()) {
         return null
     }
 
@@ -74,7 +74,7 @@ const isNotFoundError = (error: unknown) => {
     return err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404
 }
 
-const useS3Override = () => process.env.USE_S3 === 'true'
+const isS3Enabled = () => process.env.USE_S3 === 'true'
 
 
 /**
