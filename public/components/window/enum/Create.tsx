@@ -296,7 +296,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
             delete newErrors[name];
         }
 
-        this.setState({ errors: newErrors } as Partial<CreateEnumState>);
+        this.setState({ errors: newErrors } as Pick<CreateEnumState, 'errors'>);
         return !newErrors[name];
     };
 
@@ -672,7 +672,8 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
         }
 
         this.setState(prev => {
-            const { constructor: _constructorError, ...remainingErrors } = prev.errors;
+            const { constructor: constructorError, ...remainingErrors } = prev.errors;
+            void constructorError;
             return {
                 constructors: [...prev.constructors, {
                     id: this.generateId(),
