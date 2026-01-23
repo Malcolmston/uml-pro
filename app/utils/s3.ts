@@ -83,6 +83,15 @@ async function uploadFile(bucket: string, file: File, path?: string) {
 
     const filePath = path || file.name
 
+    // Check if file already exists
+    const exists = await fileExists(bucket, filePath)
+    if (exists) {
+        return {
+            data: null,
+            error: new Error(`File '${filePath}' already exists in bucket '${bucket}'`)
+        }
+    }
+
     const { data, error } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
