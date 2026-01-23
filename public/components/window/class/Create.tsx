@@ -49,13 +49,17 @@ export default class CreateClass extends React.Component<CreateClassProps, Creat
             this.props.initialData && this.props.initialData !== prevProps.initialData
         ) {
             const { initialData } = this.props;
-            this.setState({
-                ...(initialData.className && { className: initialData.className }),
-                ...(initialData.params && { params: initialData.params }),
-                ...(initialData.methods && { methods: initialData.methods }),
-                ...(initialData.constructors && { constructors: initialData.constructors }),
-                ...(typeof initialData.autoGettersSetters === 'boolean' && { autoGettersSetters: initialData.autoGettersSetters })
-            });
+            const nextState: Partial<CreateClassState> = {};
+            if (initialData.className) nextState.className = initialData.className;
+            if (initialData.params) nextState.params = initialData.params;
+            if (initialData.methods) nextState.methods = initialData.methods;
+            if (initialData.constructors) nextState.constructors = initialData.constructors;
+            if (typeof initialData.autoGettersSetters === 'boolean') {
+                nextState.autoGettersSetters = initialData.autoGettersSetters;
+            }
+            if (Object.keys(nextState).length > 0) {
+                this.setState(nextState as Pick<CreateClassState, keyof CreateClassState>);
+            }
         }
     }
 
