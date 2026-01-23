@@ -34,5 +34,11 @@
     "bucket": false,
     "folder": true,
     "file": true
+  },
+
+  "rule": {
+    "modify": false,
+    "limit": false,
+    "list": true
   }
 }
