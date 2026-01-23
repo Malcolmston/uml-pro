@@ -187,11 +187,13 @@ describe('ProjectFile Entity', () => {
     })
 
     it('should allow null file size', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       projectFile.fileSize = null as any
       expect(projectFile.fileSize).toBeNull()
     })
 
     it('should allow null mime type', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       projectFile.mimeType = null as any
       expect(projectFile.mimeType).toBeNull()
     })
