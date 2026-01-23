@@ -407,8 +407,8 @@ export default class CreateAbstract extends CreateClass {
                         >
                             + Use current parameters as constructor
                         </button>
-                        {errors.constructor && (
-                            <p className="text-xs text-red-500">{String(errors.constructor)}</p>
+                        {errors.constructorError && (
+                            <p className="text-xs text-red-500">{String(errors.constructorError)}</p>
                         )}
                     </div>
                     {/* Constructor List */}
