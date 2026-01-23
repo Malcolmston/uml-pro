@@ -36,6 +36,35 @@ function bucketExsists(name: string): boolean {
 }
 
 /**
+ * Checks if a file exists in the specified bucket.
+ *
+ * @param {string} bucket - The name of the bucket to check.
+ * @param {string} fileName - The name/path of the file to check.
+ * @return {Promise<boolean>} Returns true if the file exists, false otherwise.
+ */
+async function fileExists(bucket: string, fileName: string): Promise<boolean> {
+    if (!bucket) {
+        throw new Error('Bucket name is required')
+    }
+
+    if (!fileName) {
+        throw new Error('File name is required')
+    }
+
+    const { data, error } = await supabase.storage
+        .from(bucket)
+        .list(fileName.split('/').slice(0, -1).join('/') || '', {
+            search: fileName.split('/').pop()
+        })
+
+    if (error) {
+        return false
+    }
+
+    return data.length > 0
+}
+
+/**
  * Uploads a file to the specified Supabase storage bucket.
  *
  * @param {string} bucket - The name of the bucket to upload the file to.
