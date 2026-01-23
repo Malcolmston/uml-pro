@@ -36,6 +36,27 @@ function bucketExsists(name: string): boolean {
 }
 
 /**
+ * Deletes a storage bucket with the specified name.
+ *
+ * @param {string} name - The name of the bucket to delete.
+ * @return {Promise<{data: {message: string}, error: null} | {data: null, error: Error}>} Returns success message or error.
+ * @throws {Error} Throws an error if the bucket name is not provided.
+ */
+async function deleteBucket(name: string) {
+    if (!name) {
+        throw new Error('Bucket name is required')
+    }
+
+    const { data, error } = await supabase.storage.deleteBucket(name)
+
+    if (error) {
+        return { data: null, error }
+    }
+
+    return { data, error: null }
+}
+
+/**
  * Checks if a file exists in the specified bucket.
  *
  * @param {string} bucket - The name of the bucket to check.
