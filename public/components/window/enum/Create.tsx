@@ -35,6 +35,31 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
         };
     }
 
+    private getPatternResetState() {
+        return {
+            constructors: [],
+            editingConstant: null,
+            editingParam: null,
+            editingMethod: null,
+            errors: {},
+            constantDraft: { name: "", values: [] },
+            constantValues: "",
+            paramDraft: {
+                name: "",
+                type: "",
+                visibility: Visibility.PRIVATE,
+                isFinal: true,
+                isStatic: false
+            },
+            methodDraft: {
+                name: "",
+                returnType: "",
+                visibility: Visibility.PUBLIC,
+                isStatic: false
+            }
+        };
+    }
+
     componentDidMount() {
         const { initialData } = this.props;
         if (initialData) {
@@ -119,9 +144,11 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
 
     // Quick template methods for common enum patterns
     applyCommonPatterns = (pattern: string) => {
+        const resetState = this.getPatternResetState();
         switch (pattern) {
             case 'status':
                 this.setState({
+                    ...resetState,
                     enumConstants: [
                         { id: this.generateId(), name: 'ACTIVE' },
                         { id: this.generateId(), name: 'INACTIVE' },
@@ -133,6 +160,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
 
             case 'priority':
                 this.setState({
+                    ...resetState,
                     enumConstants: [
                         { id: this.generateId(), name: 'LOW', values: ['1'] },
                         { id: this.generateId(), name: 'MEDIUM', values: ['2'] },
@@ -150,6 +178,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
 
             case 'color':
                 this.setState({
+                    ...resetState,
                     enumConstants: [
                         { id: this.generateId(), name: 'RED', values: ['255', '0', '0'] },
                         { id: this.generateId(), name: 'GREEN', values: ['0', '255', '0'] },
@@ -173,6 +202,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
 
             case 'day':
                 this.setState({
+                    ...resetState,
                     enumConstants: [
                         { id: this.generateId(), name: 'MONDAY', values: ['1'] },
                         { id: this.generateId(), name: 'TUESDAY', values: ['2'] },
@@ -194,6 +224,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
 
             case 'size':
                 this.setState({
+                    ...resetState,
                     enumConstants: [
                         { id: this.generateId(), name: 'SMALL', values: ['"S"'] },
                         { id: this.generateId(), name: 'MEDIUM', values: ['"M"'] },
@@ -211,6 +242,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
 
             case 'operation':
                 this.setState({
+                    ...resetState,
                     enumConstants: [
                         { id: this.generateId(), name: 'ADD', values: ['"+"'] },
                         { id: this.generateId(), name: 'SUBTRACT', values: ['"-"'] },
@@ -229,6 +261,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
 
             case 'http-status':
                 this.setState({
+                    ...resetState,
                     enumConstants: [
                         { id: this.generateId(), name: 'OK', values: ['200', '"OK"'] },
                         { id: this.generateId(), name: 'NOT_FOUND', values: ['404', '"Not Found"'] },
@@ -285,11 +318,14 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
     // Override validateInput to add enum-specific validation
     validateInput = (name: string, value: string, type: string) => {
         const newErrors = { ...this.state.errors };
+        const isTypeField = name.toLowerCase().includes('type');
 
         if (!value.trim()) {
-            newErrors[name] = `${type} name is required`;
-        } else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value.trim())) {
+            newErrors[name] = isTypeField ? `${type} type is required` : `${type} name is required`;
+        } else if (!isTypeField && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value.trim())) {
             newErrors[name] = `${type} name must be a valid identifier`;
+        } else if (isTypeField && !/^[a-zA-Z_][\w$.<>\[\],\s?]*$/.test(value.trim())) {
+            newErrors[name] = `${type} type must be a valid identifier`;
         } else if (type === 'constant' && !/^[A-Z][A-Z0-9_]*$/.test(value.trim())) {
             newErrors[name] = `Enum constant should be in UPPER_CASE`;
         } else {
@@ -813,7 +849,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
             editingConstant, editingParam, editingMethod, constantDraft, constantValues, paramDraft, methodDraft
         } = this.state;
         const { initialData } = this.props;
-        const isFormValid = enumName.trim() && enumConstants.length > 0 && Object.keys(errors).length === 0;
+        const isFormValid = enumName.trim() && Object.keys(errors).length === 0;
 
         return (
             <div className="absolute top-4 left-4 p-6 bg-white rounded-lg shadow-lg w-[38rem] space-y-6 overflow-y-auto max-h-[90vh] z-10 border" style={{overflowY: "auto"}}>
@@ -1342,13 +1378,13 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
                 {/* Constructor List */}
                 {constructors.length > 0 && (
                     <div className="space-y-1 max-h-32 overflow-y-auto">
-                        {constructors.map((constructor) => (
-                                <div key={constructor.id} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
+                        {constructors.map((ctor) => (
+                                <div key={ctor.id} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
                             <span>
-                                <span className="text-gray-500">private</span> {constructor.name}({constructor.params.map(p => `${p.name}: ${p.type}`).join(', ')})
+                                <span className="text-gray-500">private</span> {ctor.name}({ctor.params.map(p => `${p.name}: ${p.type}`).join(', ')})
                                 </span>
                                 <button
-                            onClick={() => this.handleRemoveConstructor(constructor.id)}
+                            onClick={() => this.handleRemoveConstructor(ctor.id)}
                     className="text-red-500 hover:text-red-700 ml-2"
                     aria-label="Remove constructor"
                         >
