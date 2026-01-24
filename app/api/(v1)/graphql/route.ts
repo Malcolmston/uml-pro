@@ -4,6 +4,7 @@ import fs from "node:fs"
 import path from "node:path"
 import Database from "@/app/db/connect"
 import { User } from "@/app/db/entities/User"
+
 const schemaSDL = fs.readFileSync(
     path.join(process.cwd(), "app/api/(v1)/graphql/schema.graphql"),
     "utf8"
@@ -30,7 +31,6 @@ const getUserRepo = async () => {
 }
 
 const root = {
-    ping: () => "pong",
     users: async () => {
         const repo = await getUserRepo()
         const users = await repo.find()
