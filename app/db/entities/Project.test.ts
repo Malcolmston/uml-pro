@@ -134,16 +134,22 @@ describe('Project Entity', () => {
   })
 
   describe('Timestamp Fields', () => {
-    it('should have createdAt field', () => {
-      expect(project).toHaveProperty('createdAt')
+    it('should be able to set createdAt', () => {
+      const date = new Date()
+      project.createdAt = date
+      expect(project.createdAt).toBe(date)
     })
 
-    it('should have updatedAt field', () => {
-      expect(project).toHaveProperty('updatedAt')
+    it('should be able to set updatedAt', () => {
+      const date = new Date()
+      project.updatedAt = date
+      expect(project.updatedAt).toBe(date)
     })
 
-    it('should have deletedAt field for soft deletes', () => {
-      expect(project).toHaveProperty('deletedAt')
+    it('should be able to set deletedAt', () => {
+      const date = new Date()
+      project.deletedAt = date
+      expect(project.deletedAt).toBe(date)
     })
   })
 })

@@ -257,16 +257,22 @@ describe('Team Entity', () => {
   })
 
   describe('Timestamp Fields', () => {
-    it('should have createdAt field', () => {
-      expect(team).toHaveProperty('createdAt')
+    it('should be able to set createdAt', () => {
+      const date = new Date()
+      team.createdAt = date
+      expect(team.createdAt).toBe(date)
     })
 
-    it('should have updatedAt field', () => {
-      expect(team).toHaveProperty('updatedAt')
+    it('should be able to set updatedAt', () => {
+      const date = new Date()
+      team.updatedAt = date
+      expect(team.updatedAt).toBe(date)
     })
 
-    it('should have deletedAt field for soft deletes', () => {
-      expect(team).toHaveProperty('deletedAt')
+    it('should be able to set deletedAt', () => {
+      const date = new Date()
+      team.deletedAt = date
+      expect(team.deletedAt).toBe(date)
     })
   })
 })

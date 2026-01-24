@@ -8,7 +8,7 @@ interface CustomRules {
     }
 }
 
-@Entity()
+@Entity('teams')
 export class Team {
     @PrimaryGeneratedColumn()
     id: number | null = null
@@ -30,13 +30,13 @@ export class Team {
     defaultRole: TeamRole = TeamRole.MEMBER
 
     @CreateDateColumn()
-    createdAt: Date | null = null
+    createdAt: Date
 
     @UpdateDateColumn()
-    updatedAt: Date | null = null
+    updatedAt: Date
 
     @DeleteDateColumn()
-    deletedAt: Date | null = null
+    deletedAt: Date | null
 
     /**
      * Check if a team member with a specific role can perform an action on a resource

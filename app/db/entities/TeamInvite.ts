@@ -13,7 +13,7 @@ import { User } from "./User"
 import TeamRole from "../teamRole"
 import Invite from "../invite"
 
-@Entity()
+@Entity('team_invites')
 export class TeamInvite {
   @PrimaryGeneratedColumn()
   id: number | null = null
@@ -56,11 +56,11 @@ export class TeamInvite {
   acceptedAt: Date | null = null
 
   @CreateDateColumn()
-  createdAt: Date | null = null
+  createdAt: Date
 
   @UpdateDateColumn()
-  updatedAt: Date | null = null
+  updatedAt: Date
 
   @DeleteDateColumn()
-  deletedAt: Date | null = null
+  deletedAt: Date | null
 }

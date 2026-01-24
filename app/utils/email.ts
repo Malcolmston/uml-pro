@@ -7,6 +7,9 @@ type SendEmailParams = {
 
 const getResendApiKey = () => process.env.RESEND_MAIL_API
 
+const getResendFrom = () =>
+    process.env.RESEND_FROM ?? "UML Pro <onboarding@resend.dev>"
+
 const getAppUrl = () =>
     process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
@@ -35,7 +38,7 @@ export const sendEmail = async ({ to, subject, html, text }: SendEmailParams) =>
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            from: "UML Pro <noreply@umlpro.app>",
+            from: getResendFrom(),
             to: [to],
             subject,
             html,

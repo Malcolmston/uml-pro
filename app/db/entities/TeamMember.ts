@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn, Unique } from "typeorm"
 import { User } from "./User"
 import { Team } from "./Team"
 import TeamRole from "../teamRole"
 
-@Entity()
+@Entity('team_members')
+@Unique(['team', 'user']) // Prevent duplicate members in the same team
 export class TeamMember {
 
     @PrimaryGeneratedColumn()
@@ -31,11 +32,11 @@ export class TeamMember {
     role: TeamRole = TeamRole.MEMBER
 
     @CreateDateColumn()
-    createdAt: Date | null = null
+    createdAt: Date
 
     @UpdateDateColumn()
-    updatedAt: Date | null = null
+    updatedAt: Date
 
     @DeleteDateColumn()
-    deletedAt: Date | null = null
+    deletedAt: Date | null
 }
