@@ -1,36 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import jwt from "jsonwebtoken"
 import Database from "@/app/db/connect"
 import { User } from "@/app/db/entities/User"
-
-const getJwtSecret = () => process.env.JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET
-
-const getUserIdFromRequest = (request: NextRequest): number | null => {
-    const authHeader = request.headers.get("authorization")
-    if (!authHeader?.startsWith("Bearer ")) {
-        return null
-    }
-
-    const jwtSecret = getJwtSecret()
-    if (!jwtSecret) {
-        return null
-    }
-
-    const token = authHeader.slice("Bearer ".length)
-    const payload = jwt.verify(token, jwtSecret)
-    if (typeof payload === "string" || !payload?.sub) {
-        return null
-    }
-
-    const userId = Number(payload.sub)
-    return Number.isFinite(userId) ? userId : null
-}
+import { getUserIdFromRequest } from "@/app/utils/jwt-node"
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { item: string } }
+    context: { params: Promise<{ item: string }> }
 ) {
-    const item = params.item
+    const { item } = await context.params
     if (!["firstname", "lastname", "email", "username", "password"].includes(item)) {
         return NextResponse.json({ error: "Unsupported field" }, { status: 400 })
     }
