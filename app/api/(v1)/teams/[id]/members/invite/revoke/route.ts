@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Database from "@/app/db/connect"
 import { TeamInvite } from "@/app/db/entities/TeamInvite"
+import Invite from "@/app/db/invite"
 import TeamRole from "@/app/db/teamRole"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
 import { ensureDb, getMembership } from "../../../../_helpers"
@@ -40,7 +41,7 @@ export async function POST(
         return NextResponse.json({ error: "Invite not found" }, { status: 404 })
     }
 
-    invite.status = "revoked"
+    invite.status = Invite.REVOKED
     await inviteRepo.save(invite)
 
     return NextResponse.json({ success: true }, { status: 200 })
