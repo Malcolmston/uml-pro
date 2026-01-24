@@ -12,6 +12,21 @@ type User {
 
 type Query {
     ping: String!
+    status: Status!
     users: [User!]!
     user(id: ID!): User
+}
+
+type ServiceStatus {
+    ok: Boolean!
+    configured: Boolean!
+    error: String
+}
+
+type Status {
+    db: ServiceStatus!
+    redis: ServiceStatus!
+    s3: ServiceStatus!
+    ok: Boolean!
+    timestamp: String!
 }
