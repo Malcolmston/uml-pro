@@ -61,7 +61,7 @@ const isJwtValid = async (token: string): Promise<boolean> => {
     }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     if (request.method === "OPTIONS") {
         return NextResponse.next()
     }
