@@ -1,0 +1,44 @@
+{
+  "create": {
+    "bucket": false,
+    "file": false,
+    "folder": false
+  },
+
+  "read": {
+    "bucket": true,
+    "file": true
+  },
+
+  "update": {
+    "bucket": false,
+    "file": false
+  },
+
+  "write": {
+    "bucket": false,
+    "file": false
+  },
+
+  "execute": {
+    "bucket": false,
+    "file": false
+  },
+
+  "delete": {
+    "bucket": false,
+    "file": false
+  },
+
+  "list": {
+    "bucket": true,
+    "folder": true,
+    "file": true
+  },
+
+  "rule": {
+    "modify": false,
+    "limit": false,
+    "list": true
+  }
+}
