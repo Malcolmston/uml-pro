@@ -22,11 +22,17 @@ export async function POST(
         return NextResponse.json({ error: "Invalid team id" }, { status: 400 })
     }
 
-    const body = await request.json()
+    let body
+    try {
+        body = await request.json()
+    } catch (e) {
+        return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+    }
+
     const { email, role } = body ?? {}
 
-    if (!email || typeof email !== "string") {
-        return NextResponse.json({ error: "Email is required" }, { status: 400 })
+    if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return NextResponse.json({ error: "Valid email is required" }, { status: 400 })
     }
 
     if (role && !Object.values(TeamRole).includes(role)) {
@@ -62,9 +68,17 @@ export async function POST(
         })
     } catch (error) {
         console.error("Invite email error:", error)
-        await Database.getRepository(TeamInvite).delete(invite.id ?? 0)
+        try {
+            if (invite.id) {
+                await Database.getRepository(TeamInvite).delete(invite.id)
+            } else {
+                await Database.getRepository(TeamInvite).delete({ token: invite.token })
+            }
+        } catch (deleteError) {
+            console.error("Failed to rollback invite:", deleteError)
+        }
         return NextResponse.json(
-            { error: "Invite created but email failed to send" },
+            { error: "Invite created but email failed to send and invite was deleted" },
             { status: 500 }
         )
     }
