@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { User } from "@/app/db/entities/User"
 import Database from "@/app/db/connect"
 import { signJwt } from "@/app/utils/jwt-node"
+import { sendWelcomeEmail } from "@/app/utils/email"
 
 export async function POST(request: NextRequest) {
     try {
@@ -79,6 +80,17 @@ export async function POST(request: NextRequest) {
         if (!token) {
             return NextResponse.json(
                 { error: "JWT secret not configured" },
+                { status: 500 }
+            )
+        }
+
+        try {
+            await sendWelcomeEmail(newUser.email, newUser.firstname)
+        } catch (error) {
+            console.error("Welcome email error:", error)
+            await userRepo.delete(newUser.id)
+            return NextResponse.json(
+                { error: "Failed to send welcome email" },
                 { status: 500 }
             )
         }
