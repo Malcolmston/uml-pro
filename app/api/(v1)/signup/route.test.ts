@@ -8,11 +8,18 @@ import { Repository } from 'typeorm'
 import { User } from '@/app/db/entities/User'
 
 // Mock dependencies
+const { mockedTransaction } = vi.hoisted(() => {
+    return { mockedTransaction: vi.fn() }
+})
+
 vi.mock('@/app/db/connect', () => ({
     default: {
         isInitialized: true,
         initialize: vi.fn(),
         getRepository: vi.fn(),
+        manager: {
+            transaction: mockedTransaction
+        }
     }
 }))
 
@@ -30,6 +37,9 @@ describe('POST /api/v1/signup', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         vi.mocked(Database.getRepository).mockReturnValue(mockUserRepo as unknown as Repository<User>)
+        mockedTransaction.mockImplementation(async (cb: any) => {
+            return cb(mockUserRepo)
+        })
         vi.mocked(jwtNode.signJwt).mockReturnValue('mock-token')
         
         mockUserRepo.findOne.mockResolvedValue(null)
