@@ -10,6 +10,18 @@ const getResendApiKey = () => process.env.RESEND_MAIL_API
 const getAppUrl = () =>
     process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
+/**
+ * Sends an email using the Resend API.
+ *
+ * @param {Object} params - The parameters for sending the email.
+ * @param {string} params.to - The recipient's email address.
+ * @param {string} params.subject - The subject line of the email.
+ * @param {string} [params.html] - The HTML content of the email (optional).
+ * @param {string} [params.text] - The plain text content of the email (optional).
+ * @throws {Error} If the Resend API key is not configured.
+ * @throws {Error} If the Resend API returns a non-OK response.
+ * @returns {Promise<Object>} Resolves with the response from the Resend API in JSON format.
+ */
 export const sendEmail = async ({ to, subject, html, text }: SendEmailParams) => {
     const apiKey = getResendApiKey()
     if (!apiKey) {
@@ -39,6 +51,16 @@ export const sendEmail = async ({ to, subject, html, text }: SendEmailParams) =>
     return await response.json()
 }
 
+/**
+ * Sends an email invitation to a user to join a specified team.
+ *
+ * @param {Object} params - Parameters for the email invitation.
+ * @param {string} params.email - The email address of the user to invite.
+ * @param {string} params.teamName - The name of the team the user is invited to join.
+ * @param {string} params.token - A unique token used to accept the invitation.
+ * @returns {Promise<void>} A promise that resolves once the email has been successfully sent.
+ * @throws {Error} Throws an error if sending the email fails.
+ */
 export const sendTeamInviteEmail = async ({
     email,
     teamName,
