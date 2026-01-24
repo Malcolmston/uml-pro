@@ -16,3 +16,29 @@ type Query {
     status: Status!
     ping: String!
 }
+
+type AuthUser {
+    id: ID!
+    email: String!
+    username: String!
+}
+
+type SignupPayload {
+    success: Boolean!
+    token: String!
+    user: AuthUser!
+}
+
+input SignupInput {
+    firstName: String!
+    lastName: String!
+    email: String!
+    username: String!
+    password: String!
+    cofPassword: String!
+    age: Int!
+}
+
+type Mutation {
+    signup(input: SignupInput!): SignupPayload!
+}
