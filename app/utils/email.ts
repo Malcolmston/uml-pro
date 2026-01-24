@@ -93,3 +93,128 @@ export const sendTeamInviteEmail = async ({
 
     return await sendEmail({ to: email, subject, html, text })
 }
+
+/**
+ * Sends a welcome email to a user when they sign up for the UML Pro service.
+ *
+ * The email includes a personalized greeting if the user's first name is provided,
+ * alongside a standard welcome message and contact information for additional support.
+ *
+ * @param {string} email - The email address of the recipient.
+ * @param {string} [firstName] - An optional first name of the recipient for personalization.
+ * @returns {Promise<void>} A promise that resolves when the email has been successfully sent.
+ * @throws {Error} If there is an issue sending the email.
+ */
+export const sendWelcomeEmail = async (email: string, firstName?: string) => {
+    const subject = "Welcome to UML Pro"
+    const greeting = firstName ? `Hi ${firstName},` : "Hi,"
+    const text = [
+        greeting,
+        "",
+        "Welcome to UML Pro. Your workspace is ready.",
+        "If you need anything, just reply to this email.",
+    ].join("\n")
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <p>${greeting}</p>
+            <p>Welcome to UML Pro. Your workspace is ready.</p>
+            <p>If you need anything, just reply to this email.</p>
+        </div>
+    `
+
+    return await sendEmail({ to: email, subject, html, text })
+}
+
+/**
+ * Sends an email notification when a user's password is successfully changed.
+ *
+ * This function sends an email to the specified email address with the
+ * subject line "Your UML Pro password was changed" along with a plain text
+ * and HTML version of the content. The email informs the recipient that their
+ * password was changed and provides instructions on what to do if the change
+ * was unauthorized.
+ *
+ * @param {string} email - The recipient's email address.
+ * @returns {Promise<void>} A promise that resolves after the email is sent successfully.
+ */
+export const sendPasswordChangedEmail = async (email: string) => {
+    const subject = "Your UML Pro password was changed"
+    const text = [
+        "Your password was changed successfully.",
+        "If this wasn't you, reset your password immediately.",
+    ].join("\n")
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <p>Your password was changed successfully.</p>
+            <p>If this wasn't you, reset your password immediately.</p>
+        </div>
+    `
+
+    return await sendEmail({ to: email, subject, html, text })
+}
+
+/**
+ * Sends an email notification when a user's account email address has been changed.
+ *
+ * @param {Object} params - The parameters for the email.
+ * @param {string} params.email - The new email address for the account.
+ * @param {string} params.oldEmail - The previous email address for the account.
+ * @returns {Promise<void>} A promise that resolves when the email has been sent successfully.
+ */
+export const sendEmailChangedEmail = async ({
+    email,
+    oldEmail,
+}: {
+    email: string
+    oldEmail: string
+}) => {
+    const subject = "Your UML Pro email was updated"
+    const text = [
+        "Your account email was updated.",
+        `Previous email: ${oldEmail}`,
+        `New email: ${email}`,
+    ].join("\n")
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <p>Your account email was updated.</p>
+            <p>Previous email: ${oldEmail}</p>
+            <p>New email: ${email}</p>
+        </div>
+    `
+
+    return await sendEmail({ to: email, subject, html, text })
+}
+
+/**
+ * Sends an email notification to inform the user that their username has been updated.
+ *
+ * @param {Object} params - The parameters for the email.
+ * @param {string} params.email - The recipient's email address.
+ * @param {string} params.username - The updated username to include in the email.
+ * @returns {Promise<void>} A promise that resolves when the email has been successfully sent.
+ */
+export const sendUsernameChangedEmail = async ({
+    email,
+    username,
+}: {
+    email: string
+    username: string
+}) => {
+    const subject = "Your UML Pro username was updated"
+    const text = [
+        "Your username was updated successfully.",
+        `New username: ${username}`,
+    ].join("\n")
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <p>Your username was updated successfully.</p>
+            <p>New username: ${username}</p>
+        </div>
+    `
+
+    return await sendEmail({ to: email, subject, html, text })
+}
