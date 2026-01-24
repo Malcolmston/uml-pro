@@ -9,10 +9,10 @@ export async function proxy(request: NextRequest) {
 
     const pathname = request.nextUrl.pathname
     const publicPaths = [
-        "/api/(v1)/signin",
-        "/api/(v1)/signup",
-        "/api/(v1)/status",
-        "/api/(v1)/(public)/graphql",
+        "/api/signin",
+        "/api/signup",
+        "/api/status",
+        "/api/public/graphql",
     ]
     if (publicPaths.includes(pathname)) {
         return NextResponse.next()
@@ -27,5 +27,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/api/(public)/graphql/:path*", "/api/(v1)/:path*"],
+    matcher: ["/api/:path*"],
 }
