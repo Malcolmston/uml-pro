@@ -22,7 +22,13 @@ export async function POST(
         return NextResponse.json({ error: "Invalid team id" }, { status: 400 })
     }
 
-    const body = await request.json()
+    let body
+    try {
+        body = await request.json()
+    } catch (e) {
+        return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
+    
     const { token } = body ?? {}
     if (!token || typeof token !== "string") {
         return NextResponse.json({ error: "Invite token is required" }, { status: 400 })
@@ -46,19 +52,39 @@ export async function POST(
         return NextResponse.json({ error: "Invite email mismatch" }, { status: 403 })
     }
 
-    const memberRepo = Database.getRepository(TeamMember)
-    const existing = await memberRepo.findOne({ where: { teamId, userId } })
-    if (!existing) {
-        const member = new TeamMember()
-        member.teamId = teamId
-        member.userId = userId
-        member.role = invite.role
-        await memberRepo.save(member)
-    }
+    try {
+        await Database.transaction(async (entityManager) => {
+            const memberRepo = entityManager.getRepository(TeamMember)
+            const existing = await memberRepo.findOne({ where: { teamId, userId } })
+            
+            if (!existing) {
+                const member = new TeamMember()
+                member.teamId = teamId
+                member.userId = userId
+                member.role = invite.role
+                try {
+                    await memberRepo.save(member)
+                } catch (error: any) {
+                    // Ignore duplicate key error (concurrent insert)
+                    if (error.code === '23505') {
+                        console.log(`User ${userId} already member of team ${teamId} (race condition caught)`)
+                    } else {
+                        throw error
+                    }
+                }
+            } else {
+                // Log that we are ignoring the role for existing member
+                console.log(`User ${userId} already member of team ${teamId}, ignoring invite role ${invite.role}`)
+            }
 
-    invite.status = Invite.ACCEPTED
-    invite.acceptedAt = new Date()
-    await inviteRepo.save(invite)
+            invite.status = Invite.ACCEPTED
+            invite.acceptedAt = new Date()
+            await entityManager.getRepository(TeamInvite).save(invite)
+        })
+    } catch (error) {
+        console.error("Invite acceptance transaction failed:", error)
+        return NextResponse.json({ error: "Failed to process invite acceptance" }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true }, { status: 200 })
 }
