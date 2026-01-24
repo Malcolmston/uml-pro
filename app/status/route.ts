@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getStatusResponse } from "@/app/utils/status"
+import { getStatusResponse } from "../utils/status"
 
 export async function GET() {
   const { status, body } = await getStatusResponse()
