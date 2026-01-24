@@ -34,13 +34,13 @@ export class Project {
     description: string | null = null
 
     @CreateDateColumn()
-    createdAt: Date | null = null
+    createdAt: Date
 
     @UpdateDateColumn()
-    updatedAt: Date | null = null
+    updatedAt: Date
 
     @DeleteDateColumn()
-    deletedAt: Date | null = null
+    deletedAt: Date | null
 
     @BeforeInsert()
     async beforeInsert() {

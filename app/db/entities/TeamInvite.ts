@@ -56,11 +56,11 @@ export class TeamInvite {
   acceptedAt: Date | null = null
 
   @CreateDateColumn()
-  createdAt: Date | null = null
+  createdAt: Date
 
   @UpdateDateColumn()
-  updatedAt: Date | null = null
+  updatedAt: Date
 
   @DeleteDateColumn()
-  deletedAt: Date | null = null
+  deletedAt: Date | null
 }

@@ -34,13 +34,13 @@ export class ProjectFile {
     s3Url: string | null = null
 
     @CreateDateColumn()
-    createdAt: Date | null = null
+    createdAt: Date
 
     @UpdateDateColumn()
-    updatedAt: Date | null = null
+    updatedAt: Date
 
     @DeleteDateColumn()
-    deletedAt: Date | null = null
+    deletedAt: Date | null
 
     // Store the original file name to detect changes
     private originalFileName?: string

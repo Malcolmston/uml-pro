@@ -172,16 +172,22 @@ describe('TeamMember Entity', () => {
   })
 
   describe('Timestamp Fields', () => {
-    it('should have createdAt field', () => {
-      expect(teamMember).toHaveProperty('createdAt')
+    it('should be able to set createdAt', () => {
+      const date = new Date()
+      teamMember.createdAt = date
+      expect(teamMember.createdAt).toBe(date)
     })
 
-    it('should have updatedAt field', () => {
-      expect(teamMember).toHaveProperty('updatedAt')
+    it('should be able to set updatedAt', () => {
+      const date = new Date()
+      teamMember.updatedAt = date
+      expect(teamMember.updatedAt).toBe(date)
     })
 
-    it('should have deletedAt field for soft deletes', () => {
-      expect(teamMember).toHaveProperty('deletedAt')
+    it('should be able to set deletedAt', () => {
+      const date = new Date()
+      teamMember.deletedAt = date
+      expect(teamMember.deletedAt).toBe(date)
     })
   })
 
