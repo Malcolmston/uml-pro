@@ -25,13 +25,13 @@ export class User {
   password: string = ''
 
   @CreateDateColumn()
-  createdAt: Date | null = null
+  createdAt: Date
 
   @UpdateDateColumn()
-  updatedAt: Date | null = null
+  updatedAt: Date
 
   @DeleteDateColumn()
-  deletedAt: Date | null = null
+  deletedAt: Date | null
 
   // Internal property to track original password for change detection
   originalPassword?: string

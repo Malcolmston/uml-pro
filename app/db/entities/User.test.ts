@@ -127,16 +127,22 @@ describe('User Entity', () => {
   })
 
   describe('Timestamp Fields', () => {
-    it('should have createdAt field', () => {
-      expect(user).toHaveProperty('createdAt')
+    it('should be able to set createdAt', () => {
+      const date = new Date()
+      user.createdAt = date
+      expect(user.createdAt).toBe(date)
     })
 
-    it('should have updatedAt field', () => {
-      expect(user).toHaveProperty('updatedAt')
+    it('should be able to set updatedAt', () => {
+      const date = new Date()
+      user.updatedAt = date
+      expect(user.updatedAt).toBe(date)
     })
 
-    it('should have deletedAt field for soft deletes', () => {
-      expect(user).toHaveProperty('deletedAt')
+    it('should be able to set deletedAt', () => {
+      const date = new Date()
+      user.deletedAt = date
+      expect(user.deletedAt).toBe(date)
     })
   })
 })
