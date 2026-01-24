@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Fraunces, Space_Grotesk } from "next/font/google"
 
 const display = Fraunces({ subsets: ["latin"], weight: ["600", "700"] })
 const ui = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600"] })
 
 export default function SignupPage() {
+    const router = useRouter()
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -54,8 +56,15 @@ export default function SignupPage() {
                 return
             }
 
-            setSuccess("Account created. You can sign in now.")
+            if (data?.token) {
+                window.localStorage.setItem("token", data.token)
+            }
+
+            setSuccess("Account created. Redirecting to dashboard.")
             event.currentTarget.reset()
+            setTimeout(() => {
+                router.push("/dashboard")
+            }, 600)
         } catch {
             setError("Network error. Try again.")
         } finally {
