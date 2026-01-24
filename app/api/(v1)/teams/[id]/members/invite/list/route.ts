@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Database from "@/app/db/connect"
 import { TeamInvite } from "@/app/db/entities/TeamInvite"
+import Invite from "@/app/db/invite"
 import TeamRole from "@/app/db/teamRole"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
 import { ensureDb, getMembership } from "../../../../_helpers"
@@ -28,7 +29,7 @@ export async function GET(
     }
 
     const invites = await Database.getRepository(TeamInvite).find({
-        where: { teamId, status: "pending" },
+        where: { teamId, status: Invite.PENDING },
         order: { createdAt: "DESC" },
     })
 
