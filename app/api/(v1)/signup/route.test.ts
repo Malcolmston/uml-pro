@@ -37,7 +37,7 @@ describe('POST /api/v1/signup', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         vi.mocked(Database.getRepository).mockReturnValue(mockUserRepo as unknown as Repository<User>)
-        mockedTransaction.mockImplementation(async (cb: any) => {
+        mockedTransaction.mockImplementation(async (cb: (entityManager: unknown) => unknown) => {
             return cb(mockUserRepo)
         })
         vi.mocked(jwtNode.signJwt).mockReturnValue('mock-token')
