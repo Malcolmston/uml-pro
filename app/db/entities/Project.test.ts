@@ -40,122 +40,60 @@ describe('Project Entity', () => {
   })
 
   describe('@BeforeInsert Hook - S3 Bucket Creation', () => {
-    it('should create three S3 buckets on insert', async () => {
+    it('should generate uuid if missing', async () => {
       vi.mocked(s3.bucketExsists).mockResolvedValue(false)
       vi.mocked(s3.createBucket).mockResolvedValue({ data: { name: 'test' }, error: null })
 
+      project.uuid = ''
+      await project.beforeInsert()
+      expect(project.uuid).toBeDefined()
+      expect(project.uuid).not.toBe('')
+    })
+
+    it('should create three S3 buckets on insert with uuid', async () => {
+      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
+      vi.mocked(s3.createBucket).mockResolvedValue({ data: { name: 'test' }, error: null })
+
+      const uuid = '123e4567-e89b-12d3-a456-426614174000'
+      project.uuid = uuid
       await project.beforeInsert()
 
       expect(s3.createBucket).toHaveBeenCalledTimes(3)
-      expect(s3.createBucket).toHaveBeenCalledWith('project/Test Project-files')
-      expect(s3.createBucket).toHaveBeenCalledWith('project/Test Project-rules')
-      expect(s3.createBucket).toHaveBeenCalledWith('project/Test Project-backups')
+      expect(s3.createBucket).toHaveBeenCalledWith(`project-${uuid}-files`)
+      expect(s3.createBucket).toHaveBeenCalledWith(`project-${uuid}-rules`)
+      expect(s3.createBucket).toHaveBeenCalledWith(`project-${uuid}-backups`)
     })
 
     it('should throw error if files bucket already exists', async () => {
+      const uuid = '123e4567-e89b-12d3-a456-426614174000'
+      project.uuid = uuid
+
       vi.mocked(s3.bucketExsists).mockImplementation(async (name: string) => {
-        return name === 'project/Test Project-files'
+        return name === `project-${uuid}-files`
       })
 
-      await expect(project.beforeInsert()).rejects.toThrow("Bucket 'project/Test Project-files' already exists")
-    })
-
-    it('should throw error if rules bucket already exists', async () => {
-      vi.mocked(s3.bucketExsists).mockImplementation(async (name: string) => {
-        return name === 'project/Test Project-rules'
-      })
-
-      await expect(project.beforeInsert()).rejects.toThrow("Bucket 'project/Test Project-rules' already exists")
-    })
-
-    it('should throw error if backups bucket already exists', async () => {
-      vi.mocked(s3.bucketExsists).mockImplementation(async (name: string) => {
-        return name === 'project/Test Project-backups'
-      })
-
-      await expect(project.beforeInsert()).rejects.toThrow("Bucket 'project/Test Project-backups' already exists")
-    })
-
-    it('should store original name after insert', async () => {
-      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
-      vi.mocked(s3.createBucket).mockResolvedValue({ data: { name: 'test' }, error: null })
-
-      await project.beforeInsert()
-
-      expect(project['originalName']).toBe('Test Project')
-    })
-  })
-
-  describe('@BeforeUpdate Hook - S3 Bucket Renaming', () => {
-    beforeEach(() => {
-      project['originalName'] = 'Old Project'
-      project.name = 'New Project'
-    })
-
-    it('should rename buckets when project name changes', async () => {
-      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
-      vi.mocked(s3.renameBucket).mockResolvedValue({ data: { message: 'Renamed' }, error: null })
-
-      await project.beforeUpdate()
-
-      expect(s3.renameBucket).toHaveBeenCalledTimes(3)
-      expect(s3.renameBucket).toHaveBeenCalledWith('project/Old Project-files', 'project/New Project-files')
-      expect(s3.renameBucket).toHaveBeenCalledWith('project/Old Project-rules', 'project/New Project-rules')
-      expect(s3.renameBucket).toHaveBeenCalledWith('project/Old Project-backups', 'project/New Project-backups')
-    })
-
-    it('should not rename buckets if name unchanged', async () => {
-      project['originalName'] = 'Test Project'
-      project.name = 'Test Project'
-
-      await project.beforeUpdate()
-
-      expect(s3.renameBucket).not.toHaveBeenCalled()
-    })
-
-    it('should throw error if new bucket name already exists', async () => {
-      vi.mocked(s3.bucketExsists).mockImplementation(async (name: string) => {
-        return name === 'project/New Project-files'
-      })
-
-      await expect(project.beforeUpdate()).rejects.toThrow("Bucket 'project/New Project-files' already exists")
-    })
-
-    it('should throw error if rename fails', async () => {
-      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
-      vi.mocked(s3.renameBucket).mockResolvedValue({
-        data: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        error: { name: 'StorageError', message: 'S3 rename failed', __isStorageError: true } as any
-      })
-
-      await expect(project.beforeUpdate()).rejects.toThrow('Failed to rename bucket')
-    })
-
-    it('should update original name after successful rename', async () => {
-      vi.mocked(s3.bucketExsists).mockResolvedValue(false)
-      vi.mocked(s3.renameBucket).mockResolvedValue({ data: { message: 'Renamed' }, error: null })
-
-      await project.beforeUpdate()
-
-      expect(project['originalName']).toBe('New Project')
+      await expect(project.beforeInsert()).rejects.toThrow(`Bucket 'project-${uuid}-files' already exists`)
     })
   })
 
   describe('@BeforeRemove Hook - S3 Bucket Deletion', () => {
     it('should delete all three buckets on remove', async () => {
+      const uuid = '123e4567-e89b-12d3-a456-426614174000'
+      project.uuid = uuid
+
       vi.mocked(s3.bucketExsists).mockResolvedValue(true)
       vi.mocked(s3.deleteBucket).mockResolvedValue({ data: { message: 'Deleted' }, error: null })
 
       await project.beforeRemove()
 
       expect(s3.deleteBucket).toHaveBeenCalledTimes(3)
-      expect(s3.deleteBucket).toHaveBeenCalledWith('project/Test Project-files')
-      expect(s3.deleteBucket).toHaveBeenCalledWith('project/Test Project-rules')
-      expect(s3.deleteBucket).toHaveBeenCalledWith('project/Test Project-backups')
+      expect(s3.deleteBucket).toHaveBeenCalledWith(`project-${uuid}-files`)
+      expect(s3.deleteBucket).toHaveBeenCalledWith(`project-${uuid}-rules`)
+      expect(s3.deleteBucket).toHaveBeenCalledWith(`project-${uuid}-backups`)
     })
 
     it('should not throw if bucket does not exist', async () => {
+      project.uuid = '123e4567-e89b-12d3-a456-426614174000'
       vi.mocked(s3.bucketExsists).mockResolvedValue(false)
 
       await expect(project.beforeRemove()).resolves.not.toThrow()
@@ -163,6 +101,7 @@ describe('Project Entity', () => {
     })
 
     it('should throw error if deletion fails', async () => {
+      project.uuid = '123e4567-e89b-12d3-a456-426614174000'
       vi.mocked(s3.bucketExsists).mockResolvedValue(true)
       vi.mocked(s3.deleteBucket).mockResolvedValue({
         data: null,
