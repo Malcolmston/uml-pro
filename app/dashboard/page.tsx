@@ -35,6 +35,8 @@ export default function DashboardPage() {
     const [loadingTeams, setLoadingTeams] = useState(false)
     const [loadingProjects, setLoadingProjects] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [creatingTeam, setCreatingTeam] = useState(false)
+    const [teamName, setTeamName] = useState("")
 
     const selectedTeam = useMemo(
         () => teams.find((team) => team.id === selectedTeamId) ?? null,
@@ -93,6 +95,42 @@ export default function DashboardPage() {
             setError("Network error while loading projects.")
         } finally {
             setLoadingProjects(false)
+        }
+    }
+
+    const createTeam = async (name: string) => {
+        const trimmed = name.trim()
+        if (!trimmed) {
+            setError("Team name is required.")
+            return
+        }
+        setCreatingTeam(true)
+        setError(null)
+        try {
+            const token = getToken()
+            const response = await fetch("/api/teams/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ name: trimmed }),
+            })
+            const data = await response.json()
+            if (!response.ok) {
+                setError(data?.error ?? "Failed to create team.")
+                return
+            }
+            await fetchTeams()
+            if (data?.team?.id) {
+                setSelectedTeamId(data.team.id)
+                setActiveTab("projects")
+            }
+            setTeamName("")
+        } catch {
+            setError("Network error while creating team.")
+        } finally {
+            setCreatingTeam(false)
         }
     }
 
@@ -186,6 +224,34 @@ export default function DashboardPage() {
                                     {loadingTeams
                                         ? "Loading teams..."
                                         : `${teams.length} team(s) available.`}
+                                </div>
+                                <div className="mt-6 grid gap-3">
+                                    <label className="text-xs uppercase tracking-[0.2em] text-[#cfd5d2]">
+                                        Team name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={teamName}
+                                        onChange={(event) => setTeamName(event.target.value)}
+                                        placeholder="New team name"
+                                        className="h-11 w-full rounded-2xl border border-white/10 bg-[#0d1114] px-4 text-sm text-[#f4f1ea] placeholder:text-[#6f7572] focus:border-[#f2c078] focus:outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078] disabled:cursor-not-allowed disabled:opacity-60"
+                                        onClick={() => createTeam("personal-team")}
+                                        disabled={creatingTeam}
+                                    >
+                                        Create personal team
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078] disabled:cursor-not-allowed disabled:opacity-60"
+                                        onClick={() => createTeam(teamName)}
+                                        disabled={creatingTeam}
+                                    >
+                                        Create team
+                                    </button>
                                 </div>
                             </div>
 
