@@ -114,12 +114,7 @@ export async function PUT(
                 })
             } catch (error) {
                 console.error("Email change notification error:", error)
-                user.email = previousEmail
-                await userRepo.save(user)
-                return NextResponse.json(
-                    { error: "Failed to send email change notice" },
-                    { status: 500 }
-                )
+                // Treat notification failure as non-blocking
             }
         }
 
@@ -131,8 +126,21 @@ export async function PUT(
                 })
             } catch (error) {
                 console.error("Username change notification error:", error)
-                user.username = previousUsername
-                await userRepo.save(user)
+                try {
+                    // Load fresh copy to avoid overwriting concurrent changes
+                    const freshUser = await userRepo.findOne({ where: { id: userId } })
+                    if (freshUser) {
+                        freshUser.username = previousUsername
+                        await userRepo.save(freshUser)
+                    }
+                } catch (rollbackError) {
+                    console.error("Failed to rollback username change:", rollbackError)
+                    return NextResponse.json(
+                        { error: "Failed to send username change notice and rollback failed" },
+                        { status: 500 }
+                    )
+                }
+                
                 return NextResponse.json(
                     { error: "Failed to send username change notice" },
                     { status: 500 }
