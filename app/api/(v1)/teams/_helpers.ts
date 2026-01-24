@@ -1,4 +1,5 @@
 import Database from "@/app/db/connect"
+import { Project } from "@/app/db/entities/Project"
 import { Team } from "@/app/db/entities/Team"
 import { TeamMember } from "@/app/db/entities/TeamMember"
 import TeamRole from "@/app/db/teamRole"
@@ -45,4 +46,9 @@ export const getMembership = async (userId: number, teamId: number) => {
 export const getTeamById = async (teamId: number) => {
     const teamRepo = Database.getRepository(Team)
     return await teamRepo.findOne({ where: { id: teamId } })
+}
+
+export const getTeamProjectById = async (teamId: number, projectId: number) => {
+    const projectRepo = Database.getRepository(Project)
+    return await projectRepo.findOne({ where: { id: projectId, teamId } })
 }
