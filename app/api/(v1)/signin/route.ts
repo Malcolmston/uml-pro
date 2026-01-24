@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
-import User from "@/app/db/entities/User"
+import { User } from "@/app/db/entities/User"
+import Database from "@/app/db/connect"
 
 export async function POST(request: NextRequest) {
     try {
@@ -14,7 +15,12 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const user = await User.findOne({
+        if (!Database.isInitialized) {
+            await Database.initialize()
+        }
+
+        const userRepo = Database.getRepository(User)
+        const user = await userRepo.findOne({
             withDeleted: true,
             where: [{ email: identifier }, { username: identifier }],
         })
