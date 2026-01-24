@@ -74,7 +74,7 @@ export class User {
    * @param {string} hash - The hashed password to compare against.
    * @return {Promise<boolean>} A promise that resolves to `true` if the passwords match, otherwise `false`.
    */
-  private static async comparePassword(attempt: string, hash: string): Promise<boolean> {
+  public static async comparePassword(attempt: string, hash: string): Promise<boolean> {
       return await bcrypt.compare(attempt, hash);
   }
 }
