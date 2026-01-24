@@ -7,12 +7,16 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
-        const { firstName, lastName, email, username, password, cofPassword, age} = body
+        const { firstName, lastName, email, username, password, cofPassword, age } =
+            body
 
-        if ( Number(age) === null || Number(age) < 13 || !age ) return NextResponse.json(
-            { error: "You must be at least 13 years old to sign up" },
-            { status: 400 }
-        )
+        const normalizedAge = Number(age)
+        if (!Number.isFinite(normalizedAge) || normalizedAge < 13) {
+            return NextResponse.json(
+                { error: "You must be at least 13 years old to sign up" },
+                { status: 400 }
+            )
+        }
 
         if (!firstName || !lastName || !email || !username || !password || !cofPassword) {
             return NextResponse.json(
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
         newUser.email = email
         newUser.username = username
         newUser.password = password
-        newUser.age = age
+        newUser.age = normalizedAge
         await userRepo.save(newUser)
 
         if (newUser.id === null) {
