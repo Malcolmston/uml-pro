@@ -21,7 +21,13 @@ export async function POST(
         return NextResponse.json({ error: "Invalid team id" }, { status: 400 })
     }
 
-    const body = await request.json()
+    let body
+    try {
+        body = await request.json()
+    } catch (e) {
+        return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
+
     const { inviteId } = body ?? {}
     const targetInviteId = Number(inviteId)
     if (!Number.isFinite(targetInviteId)) {
