@@ -5,6 +5,7 @@ import { Project } from "./entities/Project"
 import { ProjectFile } from "./entities/ProjectFile"
 import { Team } from "./entities/Team"
 import { TeamMember } from "./entities/TeamMember"
+import { TeamInvite } from "./entities/TeamInvite"
 
 const normalizePostgresUrl = (url: string) => {
     try {
@@ -41,7 +42,7 @@ const Database = new DataSource({
     ...connectionConfig,
     synchronize: true, // Auto-create tables
     logging: false, // Disable logging in tests
-    entities: [User, Project, ProjectFile, Team, TeamMember],
+    entities: [User, Project, ProjectFile, Team, TeamMember, TeamInvite],
     migrations: [],
     subscribers: [],
     ssl: {
