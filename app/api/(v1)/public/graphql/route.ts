@@ -5,7 +5,7 @@ import path from "node:path"
 import Database from "@/app/db/connect"
 import { User } from "@/app/db/entities/User"
 import { signJwt } from "@/app/utils/jwt-node"
-import { getStatusSnapshot } from "@/app/utils/status"
+import { getStatusSnapshot } from "../../../../utils/status"
 
 const schemaSDL = fs.readFileSync(
     path.join(process.cwd(), "app/api/(v1)/public/graphql/schema.graphql"),
