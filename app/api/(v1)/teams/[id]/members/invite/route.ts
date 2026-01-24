@@ -1,0 +1,67 @@
+import { NextRequest, NextResponse } from "next/server"
+import crypto from "node:crypto"
+import Database from "@/app/db/connect"
+import { TeamInvite } from "@/app/db/entities/TeamInvite"
+import { getUserIdFromRequest } from "@/app/utils/jwt-node"
+import TeamRole from "@/app/db/teamRole"
+import { ensureDb, getMembership, getTeamById } from "../../_helpers"
+
+export async function POST(
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    const userId = getUserIdFromRequest(request)
+    if (!userId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id } = await context.params
+    const teamId = Number(id)
+    if (!Number.isFinite(teamId)) {
+        return NextResponse.json({ error: "Invalid team id" }, { status: 400 })
+    }
+
+    const body = await request.json()
+    const { email, role } = body ?? {}
+
+    if (!email || typeof email !== "string") {
+        return NextResponse.json({ error: "Email is required" }, { status: 400 })
+    }
+
+    if (role && !Object.values(TeamRole).includes(role)) {
+        return NextResponse.json({ error: "Invalid role" }, { status: 400 })
+    }
+
+    await ensureDb()
+
+    const membership = await getMembership(userId, teamId)
+    if (!membership || membership.role !== TeamRole.ADMIN) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const team = await getTeamById(teamId)
+    if (!team) {
+        return NextResponse.json({ error: "Team not found" }, { status: 404 })
+    }
+
+    const invite = new TeamInvite()
+    invite.teamId = teamId
+    invite.invitedById = userId
+    invite.email = email
+    invite.role = role ?? TeamRole.MEMBER
+    invite.token = crypto.randomBytes(32).toString("hex")
+
+    await Database.getRepository(TeamInvite).save(invite)
+
+    return NextResponse.json(
+        {
+            invite: {
+                id: invite.id,
+                email: invite.email,
+                role: invite.role,
+                token: invite.token,
+            },
+        },
+        { status: 201 }
+    )
+}
