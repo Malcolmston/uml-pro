@@ -85,9 +85,10 @@ export async function POST(request: NextRequest) {
 
                 return { newUser, token }
             })
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Internal Server Error"
             return NextResponse.json(
-                { error: error.message || "Internal Server Error" },
+                { error: errorMessage },
                 { status: 500 }
             )
         }
