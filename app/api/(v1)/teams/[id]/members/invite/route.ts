@@ -5,7 +5,7 @@ import { TeamInvite } from "@/app/db/entities/TeamInvite"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
 import { sendTeamInviteEmail } from "@/app/utils/email"
 import TeamRole from "@/app/db/teamRole"
-import { ensureDb, getMembership, getTeamById } from "../../_helpers"
+import { ensureDb, getMembership, getTeamById } from "../../../_helpers"
 
 export async function POST(
     request: NextRequest,
