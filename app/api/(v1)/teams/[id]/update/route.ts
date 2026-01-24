@@ -55,6 +55,10 @@ export async function PATCH(
         return NextResponse.json({ error: "Team not found" }, { status: 404 })
     }
 
+    if ((name !== undefined || defaultRole !== undefined) && membership.role !== TeamRole.ADMIN) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     if (name !== undefined) {
         if (!name || typeof name !== "string") {
             return NextResponse.json(
