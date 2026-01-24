@@ -37,6 +37,9 @@ export async function PUT(
 
         user.originalPassword = user.password
 
+        const previousEmail = user.email
+        const previousUsername = user.username
+
         if (item === "password") {
             const { currentPassword, newPassword } = body
             if (!currentPassword || !newPassword) {
@@ -66,9 +69,6 @@ export async function PUT(
                     { status: 400 }
                 )
             }
-
-            const previousEmail = user.email
-            const previousUsername = user.username
 
             if (item === "email") {
                 const existing = await userRepo.findOne({ where: { email: value } })
@@ -102,42 +102,43 @@ export async function PUT(
                 user.lastname = value
             }
 
-            if (item === "email") {
-                try {
-                    await sendEmailChangedEmail({
-                        email: user.email,
-                        oldEmail: previousEmail,
-                    })
-                } catch (error) {
-                    console.error("Email change notification error:", error)
-                    user.email = previousEmail
-                    await userRepo.save(user)
-                    return NextResponse.json(
-                        { error: "Failed to send email change notice" },
-                        { status: 500 }
-                    )
-                }
-            }
-
-            if (item === "username") {
-                try {
-                    await sendUsernameChangedEmail({
-                        email: user.email,
-                        username: user.username,
-                    })
-                } catch (error) {
-                    console.error("Username change notification error:", error)
-                    user.username = previousUsername
-                    await userRepo.save(user)
-                    return NextResponse.json(
-                        { error: "Failed to send username change notice" },
-                        { status: 500 }
-                    )
-                }
-            }
         }
 
         await userRepo.save(user)
+
+        if (item === "email") {
+            try {
+                await sendEmailChangedEmail({
+                    email: user.email,
+                    oldEmail: previousEmail,
+                })
+            } catch (error) {
+                console.error("Email change notification error:", error)
+                user.email = previousEmail
+                await userRepo.save(user)
+                return NextResponse.json(
+                    { error: "Failed to send email change notice" },
+                    { status: 500 }
+                )
+            }
+        }
+
+        if (item === "username") {
+            try {
+                await sendUsernameChangedEmail({
+                    email: user.email,
+                    username: user.username,
+                })
+            } catch (error) {
+                console.error("Username change notification error:", error)
+                user.username = previousUsername
+                await userRepo.save(user)
+                return NextResponse.json(
+                    { error: "Failed to send username change notice" },
+                    { status: 500 }
+                )
+            }
+        }
 
         if (item === "password") {
             try {
