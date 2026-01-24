@@ -108,7 +108,7 @@ describe('POST /api/v1/signup', () => {
         const req = createRequest(validBody)
         const res = await POST(req)
         expect(res.status).toBe(500)
-        expect(await res.json()).toEqual({ error: "JWT secret not configured" })
+        expect(await res.json()).toEqual({ error: "Internal Server Error" })
     })
 
     it('should successfully create user and send email', async () => {
