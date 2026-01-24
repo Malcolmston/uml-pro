@@ -50,6 +50,11 @@ export async function POST(
         return NextResponse.json({ error: "Team not found" }, { status: 404 })
     }
 
+    const allowed = team.canPerform(membership.role, "create", "bucket")
+    if (allowed === false) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const project = new Project()
     project.name = name
     project.description = description ?? null
