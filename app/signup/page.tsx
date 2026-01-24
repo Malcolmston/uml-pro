@@ -1,9 +1,68 @@
+"use client"
+
+import { useState } from "react"
 import { Fraunces, Space_Grotesk } from "next/font/google"
 
 const display = Fraunces({ subsets: ["latin"], weight: ["600", "700"] })
 const ui = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600"] })
 
 export default function SignupPage() {
+    const [error, setError] = useState<string | null>(null)
+    const [success, setSuccess] = useState<string | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        setError(null)
+        setSuccess(null)
+
+        const form = new FormData(event.currentTarget)
+        const payload = {
+            firstName: form.get("firstName"),
+            lastName: form.get("lastName"),
+            email: form.get("email"),
+            username: form.get("username"),
+            password: form.get("password"),
+            cofPassword: form.get("cofPassword"),
+            age: Number(form.get("age")),
+        }
+
+        if (
+            !payload.firstName ||
+            !payload.lastName ||
+            !payload.email ||
+            !payload.username ||
+            !payload.password ||
+            !payload.cofPassword ||
+            !Number.isFinite(payload.age)
+        ) {
+            setError("Please fill out every field.")
+            return
+        }
+
+        setIsSubmitting(true)
+        try {
+            const response = await fetch("/api/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            })
+            const data = await response.json()
+
+            if (!response.ok) {
+                setError(data?.error ?? "Signup failed.")
+                return
+            }
+
+            setSuccess("Account created. You can sign in now.")
+            event.currentTarget.reset()
+        } catch {
+            setError("Network error. Try again.")
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     return (
         <div
             className={`${ui.className} min-h-screen bg-[#0f1417] text-[#f4f1ea]`}
@@ -64,7 +123,7 @@ export default function SignupPage() {
                                 blueprints.
                             </p>
 
-                            <form className="mt-8 grid gap-4">
+                            <form className="mt-8 grid gap-4" onSubmit={handleSubmit}>
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <label className="grid gap-2 text-sm">
                                         First name
@@ -137,11 +196,20 @@ export default function SignupPage() {
                                 </div>
                                 <button
                                     type="submit"
-                                    className="mt-2 flex h-12 items-center justify-center rounded-2xl bg-[#f2c078] text-sm font-semibold text-[#1a1a1a] transition hover:translate-y-[-1px] hover:bg-[#f4b562]"
+                                    className="mt-2 flex h-12 items-center justify-center rounded-2xl bg-[#f2c078] text-sm font-semibold text-[#1a1a1a] transition hover:translate-y-[-1px] hover:bg-[#f4b562] disabled:cursor-not-allowed disabled:opacity-70"
+                                    disabled={isSubmitting}
                                 >
-                                    Create account
+                                    {isSubmitting ? "Creating..." : "Create account"}
                                 </button>
                             </form>
+
+                            {(error || success) && (
+                                <div className="mt-4 rounded-2xl border border-white/10 bg-[#0d1114] px-4 py-3 text-xs">
+                                    <p className={error ? "text-[#f4b1a6]" : "text-[#b7e4c7]"}>
+                                        {error ?? success}
+                                    </p>
+                                </div>
+                            )}
 
                             <p className="mt-6 text-xs text-[#9ba3a0]">
                                 By continuing you agree to UML Pro terms and

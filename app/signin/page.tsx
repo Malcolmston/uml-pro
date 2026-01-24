@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { Fraunces, Space_Grotesk } from "next/font/google"
 
@@ -5,6 +8,48 @@ const display = Fraunces({ subsets: ["latin"], weight: ["600", "700"] })
 const ui = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600"] })
 
 export default function SigninPage() {
+    const [error, setError] = useState<string | null>(null)
+    const [success, setSuccess] = useState<string | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        setError(null)
+        setSuccess(null)
+
+        const form = new FormData(event.currentTarget)
+        const payload = {
+            identifier: form.get("identifier"),
+            password: form.get("password"),
+        }
+
+        if (!payload.identifier || !payload.password) {
+            setError("Enter your email/username and password.")
+            return
+        }
+
+        setIsSubmitting(true)
+        try {
+            const response = await fetch("/api/signin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            })
+            const data = await response.json()
+
+            if (!response.ok) {
+                setError(data?.error ?? "Signin failed.")
+                return
+            }
+
+            setSuccess("Signed in. Redirecting soon.")
+        } catch {
+            setError("Network error. Try again.")
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     return (
         <div
             className={`${ui.className} min-h-screen bg-[#0f1417] text-[#f4f1ea]`}
@@ -63,7 +108,7 @@ export default function SigninPage() {
                                 Use your email or username to access your account.
                             </p>
 
-                            <form className="mt-8 grid gap-4">
+                            <form className="mt-8 grid gap-4" onSubmit={handleSubmit}>
                                 <label className="grid gap-2 text-sm">
                                     Email or username
                                     <input
@@ -99,11 +144,20 @@ export default function SigninPage() {
                                 </div>
                                 <button
                                     type="submit"
-                                    className="mt-2 flex h-12 items-center justify-center rounded-2xl bg-[#f2c078] text-sm font-semibold text-[#1a1a1a] transition hover:translate-y-[-1px] hover:bg-[#f4b562]"
+                                    className="mt-2 flex h-12 items-center justify-center rounded-2xl bg-[#f2c078] text-sm font-semibold text-[#1a1a1a] transition hover:translate-y-[-1px] hover:bg-[#f4b562] disabled:cursor-not-allowed disabled:opacity-70"
+                                    disabled={isSubmitting}
                                 >
-                                    Sign in
+                                    {isSubmitting ? "Signing in..." : "Sign in"}
                                 </button>
                             </form>
+
+                            {(error || success) && (
+                                <div className="mt-4 rounded-2xl border border-white/10 bg-[#0d1114] px-4 py-3 text-xs">
+                                    <p className={error ? "text-[#f4b1a6]" : "text-[#b7e4c7]"}>
+                                        {error ?? success}
+                                    </p>
+                                </div>
+                            )}
 
                             <p className="mt-6 text-xs text-[#9ba3a0]">
                                 New to UML Pro?{" "}
