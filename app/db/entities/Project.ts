@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, BeforeUpdate, BeforeRemove, Generated } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, BeforeInsert, BeforeUpdate, BeforeRemove, Generated, ManyToOne, JoinColumn } from "typeorm"
 import Visibility from "../visibility";
 import {bucketExsists, createBucket, deleteBucket, renameBucket} from "../../utils/s3";
+import { Team } from "./Team";
 
 
 @Entity()
@@ -21,6 +22,13 @@ export class Project {
 
     @Column({ type: 'varchar', nullable: false })
     name: string = ''
+
+    @ManyToOne(() => Team, { nullable: true })
+    @JoinColumn()
+    team: Team | null = null
+
+    @Column({ type: 'int', nullable: true })
+    teamId: number | null = null
 
     @Column({ type: 'text', nullable: true })
     description: string | null = null
