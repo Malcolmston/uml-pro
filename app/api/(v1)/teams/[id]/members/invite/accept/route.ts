@@ -38,7 +38,7 @@ export async function POST(
 
     const inviteRepo = Database.getRepository(TeamInvite)
     const invite = await inviteRepo.findOne({ where: { teamId, token } })
-    if (!invite || invite.status !== "pending") {
+    if (!invite || invite.status !== Invite.PENDING) {
         return NextResponse.json({ error: "Invite not found" }, { status: 404 })
     }
 
