@@ -62,6 +62,7 @@ export async function POST(
         })
     } catch (error) {
         console.error("Invite email error:", error)
+        await Database.getRepository(TeamInvite).delete(invite.id ?? 0)
         return NextResponse.json(
             { error: "Invite created but email failed to send" },
             { status: 500 }
