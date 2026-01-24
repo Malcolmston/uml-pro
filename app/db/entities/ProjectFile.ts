@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { Project } from "./Project"
 import { deleteFile, renameFile } from "../../utils/s3"
 
-@Entity()
+@Entity('project_files')
 export class ProjectFile {
 
     @PrimaryGeneratedColumn()
@@ -40,9 +40,7 @@ export class ProjectFile {
     updatedAt: Date
 
     @DeleteDateColumn()
-    deletedAt: Date | null
-
-    // Store the original file name to detect changes
+    deletedAt: Date | null // Store the original file name to detect changes
     private originalFileName?: string
     private originalS3Key?: string
 

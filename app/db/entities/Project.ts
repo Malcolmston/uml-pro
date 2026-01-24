@@ -5,7 +5,7 @@ import { Team } from "./Team";
 import { randomUUID } from "node:crypto";
 
 
-@Entity()
+@Entity('projects')
 export class Project {
     @PrimaryGeneratedColumn()
     id: number | null = null

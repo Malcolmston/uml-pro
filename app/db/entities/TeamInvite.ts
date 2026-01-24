@@ -13,7 +13,7 @@ import { User } from "./User"
 import TeamRole from "../teamRole"
 import Invite from "../invite"
 
-@Entity()
+@Entity('team_invites')
 export class TeamInvite {
   @PrimaryGeneratedColumn()
   id: number | null = null
