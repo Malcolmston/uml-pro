@@ -8,7 +8,7 @@ import {
     getTeamById,
     isValidCustomRules,
     toTeamDTO,
-} from "../_helpers"
+} from "../../_helpers"
 
 export async function PATCH(
     request: NextRequest,
