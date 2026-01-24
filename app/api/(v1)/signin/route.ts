@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import jwt from "jsonwebtoken"
 import { User } from "@/app/db/entities/User"
 import Database from "@/app/db/connect"
+import { signJwt } from "@/app/utils/jwt-node"
 
 export async function POST(request: NextRequest) {
     try {
@@ -40,19 +40,23 @@ export async function POST(request: NextRequest) {
         )
 
 
-        const jwtSecret = process.env.JWT_SECRET
-        if (!jwtSecret) {
+        if (user.id === null) {
+            return NextResponse.json(
+                { error: "User ID missing" },
+                { status: 500 }
+            )
+        }
+
+        const token = signJwt(
+            { sub: String(user.id), email: user.email, username: user.username },
+            { expiresIn: "7d" }
+        )
+        if (!token) {
             return NextResponse.json(
                 { error: "JWT secret not configured" },
                 { status: 500 }
             )
         }
-
-        const token = jwt.sign(
-            { sub: user.id, email: user.email, username: user.username },
-            jwtSecret,
-            { expiresIn: "7d" }
-        )
 
         return NextResponse.json(
             {
