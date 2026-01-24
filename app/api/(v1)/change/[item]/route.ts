@@ -108,13 +108,32 @@ export async function PUT(
 
         if (item === "email") {
             try {
+                // Notify new email
                 await sendEmailChangedEmail({
-                    email: user.email,
+                    to: user.email,
+                    newEmail: user.email,
                     oldEmail: previousEmail,
+                    context: 'notify-new',
+                })
+
+                // Notify old email
+                await sendEmailChangedEmail({
+                    to: previousEmail,
+                    newEmail: user.email,
+                    oldEmail: previousEmail,
+                    context: 'notify-old',
                 })
             } catch (error) {
                 console.error("Email change notification error:", error)
-                // Treat notification failure as non-blocking
+                
+                // Rollback email change
+                user.email = previousEmail
+                await userRepo.save(user)
+                
+                return NextResponse.json(
+                    { error: "Failed to send email change notice" },
+                    { status: 500 }
+                )
             }
         }
 
