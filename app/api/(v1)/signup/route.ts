@@ -57,32 +57,42 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const newUser = new User()
-        newUser.firstname = firstName
-        newUser.lastname = lastName
-        newUser.email = email
-        newUser.username = username
-        newUser.password = password
-        newUser.age = normalizedAge
-        await userRepo.save(newUser)
+        let result
+        try {
+            result = await Database.manager.transaction(async (entityManager) => {
+                const newUser = new User()
+                newUser.firstname = firstName
+                newUser.lastname = lastName
+                newUser.email = email
+                newUser.username = username
+                newUser.password = password
+                newUser.age = normalizedAge
+                
+                await entityManager.save(newUser)
 
-        if (newUser.id === null) {
+                if (newUser.id === null) {
+                    throw new Error("User ID missing")
+                }
+
+                const token = signJwt(
+                    { sub: String(newUser.id), email: newUser.email, username: newUser.username },
+                    { expiresIn: "1h" }
+                )
+
+                if (!token) {
+                    throw new Error("JWT secret not configured")
+                }
+
+                return { newUser, token }
+            })
+        } catch (error: any) {
             return NextResponse.json(
-                { error: "User ID missing" },
+                { error: error.message || "Internal Server Error" },
                 { status: 500 }
             )
         }
 
-        const token = signJwt(
-            { sub: String(newUser.id), email: newUser.email, username: newUser.username },
-            { expiresIn: "1h" }
-        )
-        if (!token) {
-            return NextResponse.json(
-                { error: "JWT secret not configured" },
-                { status: 500 }
-            )
-        }
+        const { newUser, token } = result
 
         try {
             await sendWelcomeEmail(newUser.email, newUser.firstname)
