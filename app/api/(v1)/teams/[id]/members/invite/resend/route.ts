@@ -4,7 +4,8 @@ import Database from "@/app/db/connect"
 import { TeamInvite } from "@/app/db/entities/TeamInvite"
 import TeamRole from "@/app/db/teamRole"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
-import { ensureDb, getMembership } from "../../../../_helpers"
+import { sendTeamInviteEmail } from "@/app/utils/email"
+import { ensureDb, getMembership, getTeamById } from "../../../../_helpers"
 
 export async function POST(
     request: NextRequest,
@@ -47,6 +48,25 @@ export async function POST(
 
     invite.token = crypto.randomBytes(32).toString("hex")
     await inviteRepo.save(invite)
+
+    const team = await getTeamById(teamId)
+    if (!team) {
+        return NextResponse.json({ error: "Team not found" }, { status: 404 })
+    }
+
+    try {
+        await sendTeamInviteEmail({
+            email: invite.email,
+            teamName: team.name,
+            token: invite.token,
+        })
+    } catch (error) {
+        console.error("Invite email error:", error)
+        return NextResponse.json(
+            { error: "Invite updated but email failed to send" },
+            { status: 500 }
+        )
+    }
 
     return NextResponse.json(
         {

@@ -3,6 +3,7 @@ import crypto from "node:crypto"
 import Database from "@/app/db/connect"
 import { TeamInvite } from "@/app/db/entities/TeamInvite"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
+import { sendTeamInviteEmail } from "@/app/utils/email"
 import TeamRole from "@/app/db/teamRole"
 import { ensureDb, getMembership, getTeamById } from "../../_helpers"
 
@@ -52,6 +53,20 @@ export async function POST(
     invite.token = crypto.randomBytes(32).toString("hex")
 
     await Database.getRepository(TeamInvite).save(invite)
+
+    try {
+        await sendTeamInviteEmail({
+            email: invite.email,
+            teamName: team.name,
+            token: invite.token,
+        })
+    } catch (error) {
+        console.error("Invite email error:", error)
+        return NextResponse.json(
+            { error: "Invite created but email failed to send" },
+            { status: 500 }
+        )
+    }
 
     return NextResponse.json(
         {
