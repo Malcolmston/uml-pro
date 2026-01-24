@@ -11,7 +11,7 @@ import {
 import { Team } from "./Team"
 import { User } from "./User"
 import TeamRole from "../teamRole"
-import Invite from "../invite";
+import Invite from "../invite"
 
 @Entity()
 export class TeamInvite {
@@ -50,7 +50,7 @@ export class TeamInvite {
     enum: Invite,
     default: Invite.PENDING,
   })
-  status: InviteStatus = "pending"
+  status: Invite = Invite.PENDING
 
   @Column({ type: "timestamptz", nullable: true })
   acceptedAt: Date | null = null
