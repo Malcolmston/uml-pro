@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import Database from "@/app/db/connect"
 import { User } from "@/app/db/entities/User"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
+import {
+    sendEmailChangedEmail,
+    sendPasswordChangedEmail,
+    sendUsernameChangedEmail,
+} from "@/app/utils/email"
 
 export async function PUT(
     request: NextRequest,
@@ -31,6 +36,9 @@ export async function PUT(
         }
 
         user.originalPassword = user.password
+
+        const previousEmail = user.email
+        const previousUsername = user.username
 
         if (item === "password") {
             const { currentPassword, newPassword } = body
@@ -93,9 +101,85 @@ export async function PUT(
             if (item === "lastname") {
                 user.lastname = value
             }
+
         }
 
         await userRepo.save(user)
+
+        if (item === "email") {
+            try {
+                // Notify new email
+                await sendEmailChangedEmail({
+                    to: user.email,
+                    newEmail: user.email,
+                    oldEmail: previousEmail,
+                    context: 'notify-new',
+                })
+
+                // Notify old email
+                await sendEmailChangedEmail({
+                    to: previousEmail,
+                    newEmail: user.email,
+                    oldEmail: previousEmail,
+                    context: 'notify-old',
+                })
+            } catch (error) {
+                console.error("Email change notification error:", error)
+                
+                // Rollback email change
+                user.email = previousEmail
+                await userRepo.save(user)
+                
+                return NextResponse.json(
+                    { error: "Failed to send email change notice" },
+                    { status: 500 }
+                )
+            }
+        }
+
+        if (item === "username") {
+            try {
+                await sendUsernameChangedEmail({
+                    email: user.email,
+                    username: user.username,
+                })
+            } catch (error) {
+                console.error("Username change notification error:", error)
+                try {
+                    // Load fresh copy to avoid overwriting concurrent changes
+                    const freshUser = await userRepo.findOne({ where: { id: userId } })
+                    if (freshUser) {
+                        freshUser.username = previousUsername
+                        await userRepo.save(freshUser)
+                    }
+                } catch (rollbackError) {
+                    console.error("Failed to rollback username change:", rollbackError)
+                    return NextResponse.json(
+                        { error: "Failed to send username change notice and rollback failed" },
+                        { status: 500 }
+                    )
+                }
+                
+                return NextResponse.json(
+                    { error: "Failed to send username change notice" },
+                    { status: 500 }
+                )
+            }
+        }
+
+        if (item === "password") {
+            try {
+                await sendPasswordChangedEmail(user.email)
+            } catch (error) {
+                console.error("Password change notification error:", error)
+                user.password = user.originalPassword ?? user.password
+                await userRepo.save(user)
+                return NextResponse.json(
+                    { error: "Failed to send password change notice" },
+                    { status: 500 }
+                )
+            }
+        }
 
         return NextResponse.json(
             {
