@@ -25,7 +25,7 @@ export async function POST(
     let body
     try {
         body = await request.json()
-    } catch (e) {
+    } catch {
         return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
     }
     
@@ -64,9 +64,9 @@ export async function POST(
                 member.role = invite.role
                 try {
                     await memberRepo.save(member)
-                } catch (error: any) {
+                } catch (error: unknown) {
                     // Ignore duplicate key error (concurrent insert)
-                    if (error.code === '23505') {
+                    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === '23505') {
                         console.log(`User ${userId} already member of team ${teamId} (race condition caught)`)
                     } else {
                         throw error
