@@ -159,33 +159,59 @@ export const sendPasswordChangedEmail = async (email: string) => {
  * Sends an email notification when a user's account email address has been changed.
  *
  * @param {Object} params - The parameters for the email.
- * @param {string} params.email - The new email address for the account.
+ * @param {string} params.to - The recipient's email address.
+ * @param {string} params.newEmail - The new email address for the account.
  * @param {string} params.oldEmail - The previous email address for the account.
+ * @param {'notify-new' | 'notify-old'} params.context - Whether this notification is for the new or old email address.
  * @returns {Promise<void>} A promise that resolves when the email has been sent successfully.
  */
 export const sendEmailChangedEmail = async ({
-    email,
+    to,
+    newEmail,
     oldEmail,
+    context,
 }: {
-    email: string
+    to: string
+    newEmail: string
     oldEmail: string
+    context: 'notify-new' | 'notify-old'
 }) => {
-    const subject = "Your UML Pro email was updated"
-    const text = [
-        "Your account email was updated.",
-        `Previous email: ${oldEmail}`,
-        `New email: ${email}`,
-    ].join("\n")
+    const isNew = context === 'notify-new'
+    const subject = isNew 
+        ? "Your UML Pro email has been updated" 
+        : "Security Alert: Your UML Pro email was changed"
+    
+    const text = isNew 
+        ? [
+            "Your account email has been successfully updated.",
+            `New email: ${newEmail}`,
+            `Previous email: ${oldEmail}`,
+        ].join("\n")
+        : [
+            "Your account email was changed.",
+            `The email was changed to: ${newEmail}`,
+            `Previous email: ${oldEmail}`,
+            "If you did not authorize this change, please contact support immediately.",
+        ].join("\n")
 
-    const html = `
+    const html = isNew
+        ? `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <p>Your account email was updated.</p>
+            <p>Your account email has been successfully updated.</p>
+            <p>New email: ${newEmail}</p>
             <p>Previous email: ${oldEmail}</p>
-            <p>New email: ${email}</p>
+        </div>
+    `
+        : `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <p>Your account email was changed.</p>
+            <p>The email was changed to: ${newEmail}</p>
+            <p>Previous email: ${oldEmail}</p>
+            <p>If you did not authorize this change, please contact support immediately.</p>
         </div>
     `
 
-    return await sendEmail({ to: email, subject, html, text })
+    return await sendEmail({ to, subject, html, text })
 }
 
 /**
