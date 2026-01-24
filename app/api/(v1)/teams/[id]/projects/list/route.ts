@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Database from "@/app/db/connect"
 import { Project } from "@/app/db/entities/Project"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
-import { ensureDb, getMembership } from "../../../_helpers"
+import { ensureDb, getMembership, getTeamById } from "../../../_helpers"
 
 const toProjectDTO = (project: Project) => ({
     id: project.id,
@@ -34,6 +34,16 @@ export async function GET(
 
     const membership = await getMembership(userId, teamId)
     if (!membership) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const team = await getTeamById(teamId)
+    if (!team) {
+        return NextResponse.json({ error: "Team not found" }, { status: 404 })
+    }
+
+    const allowed = team.canPerform(membership.role, "list", "bucket")
+    if (allowed === false) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
