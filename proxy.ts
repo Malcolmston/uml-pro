@@ -110,6 +110,7 @@ export async function proxy(request: NextRequest) {
         "/api/(v1)/signin",
         "/api/(v1)/signup",
         "/api/(v1)/status",
+        "/api/(v1)/(public)/graphql",
     ]
     if (publicPaths.includes(pathname)) {
         return NextResponse.next()
@@ -128,5 +129,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/api/graphql/:path*", "/api/(v1)/:path*"],
+    matcher: ["/api/(public)/graphql/:path*", "/api/(v1)/:path*"],
 }
