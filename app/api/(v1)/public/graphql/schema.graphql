@@ -1,0 +1,18 @@
+type ServiceStatus {
+    ok: Boolean!
+    configured: Boolean!
+    error: String
+}
+
+type Status {
+    db: ServiceStatus!
+    redis: ServiceStatus!
+    s3: ServiceStatus!
+    ok: Boolean!
+    timestamp: String!
+}
+
+type Query {
+    status: Status!
+    ping: String!
+}
