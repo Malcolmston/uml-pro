@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import crypto from "node:crypto"
 import Database from "@/app/db/connect"
 import { TeamInvite } from "@/app/db/entities/TeamInvite"
+import Invite from "@/app/db/invite"
 import TeamRole from "@/app/db/teamRole"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
 import { sendTeamInviteEmail } from "@/app/utils/email"
@@ -42,10 +43,11 @@ export async function POST(
         return NextResponse.json({ error: "Invite not found" }, { status: 404 })
     }
 
-    if (invite.status !== "pending") {
+    if (invite.status !== Invite.PENDING) {
         return NextResponse.json({ error: "Invite is not pending" }, { status: 400 })
     }
 
+    const previousToken = invite.token
     invite.token = crypto.randomBytes(32).toString("hex")
     await inviteRepo.save(invite)
 
@@ -62,6 +64,8 @@ export async function POST(
         })
     } catch (error) {
         console.error("Invite email error:", error)
+        invite.token = previousToken
+        await inviteRepo.save(invite)
         return NextResponse.json(
             { error: "Invite updated but email failed to send" },
             { status: 500 }
