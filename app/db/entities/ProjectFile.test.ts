@@ -37,6 +37,26 @@ describe('ProjectFile Entity', () => {
     })
   })
 
+  describe('Timestamp Fields', () => {
+    it('should be able to set createdAt', () => {
+      const date = new Date()
+      projectFile.createdAt = date
+      expect(projectFile.createdAt).toBe(date)
+    })
+
+    it('should be able to set updatedAt', () => {
+      const date = new Date()
+      projectFile.updatedAt = date
+      expect(projectFile.updatedAt).toBe(date)
+    })
+
+    it('should be able to set deletedAt', () => {
+      const date = new Date()
+      projectFile.deletedAt = date
+      expect(projectFile.deletedAt).toBe(date)
+    })
+  })
+
   describe('@AfterLoad Hook', () => {
     it('should store original fileName and s3Key', () => {
       projectFile.afterLoad()
