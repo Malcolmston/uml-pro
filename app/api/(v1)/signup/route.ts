@@ -88,11 +88,7 @@ export async function POST(request: NextRequest) {
             await sendWelcomeEmail(newUser.email, newUser.firstname)
         } catch (error) {
             console.error("Welcome email error:", error)
-            await userRepo.delete(newUser.id)
-            return NextResponse.json(
-                { error: "Failed to send welcome email" },
-                { status: 500 }
-            )
+            // Log error but don't fail the signup
         }
 
         return NextResponse.json(
