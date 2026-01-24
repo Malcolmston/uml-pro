@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Database from "@/app/db/connect"
 import { TeamInvite } from "@/app/db/entities/TeamInvite"
+import Invite from "@/app/db/invite"
 import { TeamMember } from "@/app/db/entities/TeamMember"
 import { User } from "@/app/db/entities/User"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
@@ -55,7 +56,7 @@ export async function POST(
         await memberRepo.save(member)
     }
 
-    invite.status = "accepted"
+    invite.status = Invite.ACCEPTED
     invite.acceptedAt = new Date()
     await inviteRepo.save(invite)
 
