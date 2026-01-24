@@ -31,6 +31,7 @@ export default function DashboardPage() {
     const [teams, setTeams] = useState<Team[]>([])
     const [projects, setProjects] = useState<Project[]>([])
     const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
+    const [personalTeamId, setPersonalTeamId] = useState<number | null>(null)
     const [loadingTeams, setLoadingTeams] = useState(false)
     const [loadingProjects, setLoadingProjects] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -38,6 +39,11 @@ export default function DashboardPage() {
     const selectedTeam = useMemo(
         () => teams.find((team) => team.id === selectedTeamId) ?? null,
         [teams, selectedTeamId]
+    )
+
+    const personalTeam = useMemo(
+        () => teams.find((team) => team.name.endsWith("-team")) ?? null,
+        [teams]
     )
 
     const fetchTeams = async () => {
@@ -54,8 +60,13 @@ export default function DashboardPage() {
                 return
             }
             setTeams(data?.teams ?? [])
-            if (!selectedTeamId && data?.teams?.length) {
-                setSelectedTeamId(data.teams[0].id)
+            const fallbackTeamId = data?.teams?.[0]?.id ?? null
+            const detectedPersonal = (data?.teams ?? []).find((team: Team) =>
+                team.name.endsWith("-team")
+            )
+            setPersonalTeamId(detectedPersonal?.id ?? null)
+            if (!selectedTeamId && (detectedPersonal?.id ?? fallbackTeamId)) {
+                setSelectedTeamId(detectedPersonal?.id ?? fallbackTeamId)
             }
         } catch {
             setError("Network error while loading teams.")
@@ -190,6 +201,20 @@ export default function DashboardPage() {
                                     </span>
                                 </div>
                                 <div className="mt-6 grid gap-4">
+                                    {personalTeam &&
+                                        selectedTeamId === personalTeamId &&
+                                        projects.length === 0 &&
+                                        !loadingProjects && (
+                                            <div className="rounded-2xl border border-white/10 bg-[#0d1114] px-5 py-4">
+                                                <p className="text-xs uppercase tracking-[0.2em] text-[#f2c078]">
+                                                    Personal workspace
+                                                </p>
+                                                <p className="mt-2 text-sm text-[#cfd5d2]">
+                                                    No personal project yet. Create one to
+                                                    start modeling your first system.
+                                                </p>
+                                            </div>
+                                        )}
                                     {projects.length === 0 && !loadingProjects && (
                                         <p className="text-sm text-[#cfd5d2]">
                                             No projects yet. Create one from the API.
