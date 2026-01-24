@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import User from "@/app/db/entities/User";
+import jwt from "jsonwebtoken"
+import User from "@/app/db/entities/User"
 
 export async function POST(request: NextRequest) {
     try {
@@ -13,12 +14,9 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const user = await User.find({
+        const user = await User.findOne({
             withDeleted: true,
-            where: [
-                { email: identifier },
-                { username: identifier }
-            ]
+            where: [{ email: identifier }, { username: identifier }],
         })
 
         if (!user) {
@@ -36,9 +34,24 @@ export async function POST(request: NextRequest) {
         )
 
 
+        const jwtSecret = process.env.JWT_SECRET
+        if (!jwtSecret) {
+            return NextResponse.json(
+                { error: "JWT secret not configured" },
+                { status: 500 }
+            )
+        }
+
+        const token = jwt.sign(
+            { sub: user.id, email: user.email, username: user.username },
+            jwtSecret,
+            { expiresIn: "7d" }
+        )
+
         return NextResponse.json(
             {
                 success: true,
+                token,
                 user: {
                     id: user.id,
                     email: user.email,
