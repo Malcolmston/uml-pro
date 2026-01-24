@@ -12,6 +12,7 @@ export default function SignupPage() {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isRedirecting, setIsRedirecting] = useState(false)
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -62,6 +63,7 @@ export default function SignupPage() {
 
             setSuccess("Account created. Redirecting to dashboard.")
             event.currentTarget.reset()
+            setIsRedirecting(true)
             setTimeout(() => {
                 router.push("/dashboard")
             }, 600)
@@ -228,6 +230,14 @@ export default function SignupPage() {
                     </section>
                 </main>
             </div>
+            {isRedirecting && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1417]/80 backdrop-blur">
+                    <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-[#f4f1ea]">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#f2c078] border-t-transparent" />
+                        Redirecting to dashboard...
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
