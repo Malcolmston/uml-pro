@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import Database from "@/app/db/connect"
 import { User } from "@/app/db/entities/User"
 import { getUserIdFromRequest } from "@/app/utils/jwt-node"
+import {
+    sendEmailChangedEmail,
+    sendPasswordChangedEmail,
+    sendUsernameChangedEmail,
+} from "@/app/utils/email"
 
 export async function PUT(
     request: NextRequest,
@@ -62,6 +67,9 @@ export async function PUT(
                 )
             }
 
+            const previousEmail = user.email
+            const previousUsername = user.username
+
             if (item === "email") {
                 const existing = await userRepo.findOne({ where: { email: value } })
                 if (existing && existing.id !== user.id) {
@@ -93,9 +101,57 @@ export async function PUT(
             if (item === "lastname") {
                 user.lastname = value
             }
+
+            if (item === "email") {
+                try {
+                    await sendEmailChangedEmail({
+                        email: user.email,
+                        oldEmail: previousEmail,
+                    })
+                } catch (error) {
+                    console.error("Email change notification error:", error)
+                    user.email = previousEmail
+                    await userRepo.save(user)
+                    return NextResponse.json(
+                        { error: "Failed to send email change notice" },
+                        { status: 500 }
+                    )
+                }
+            }
+
+            if (item === "username") {
+                try {
+                    await sendUsernameChangedEmail({
+                        email: user.email,
+                        username: user.username,
+                    })
+                } catch (error) {
+                    console.error("Username change notification error:", error)
+                    user.username = previousUsername
+                    await userRepo.save(user)
+                    return NextResponse.json(
+                        { error: "Failed to send username change notice" },
+                        { status: 500 }
+                    )
+                }
+            }
         }
 
         await userRepo.save(user)
+
+        if (item === "password") {
+            try {
+                await sendPasswordChangedEmail(user.email)
+            } catch (error) {
+                console.error("Password change notification error:", error)
+                user.password = user.originalPassword ?? user.password
+                await userRepo.save(user)
+                return NextResponse.json(
+                    { error: "Failed to send password change notice" },
+                    { status: 500 }
+                )
+            }
+        }
 
         return NextResponse.json(
             {
