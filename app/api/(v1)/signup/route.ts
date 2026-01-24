@@ -7,14 +7,20 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
-        const {firstName, lastName, email, username, password, cofPassword} = body;
+        const { firstName, lastName, email, username, password, cofPassword } = body
 
-        if( !firstName || !lastName || !email || !username || !password || !cofPassword ) {
-            return new Response("Missing required fields", {status: 400})
+        if (!firstName || !lastName || !email || !username || !password || !cofPassword) {
+            return NextResponse.json(
+                { error: "Missing required fields" },
+                { status: 400 }
+            )
         }
 
-        if( password !== cofPassword ) {
-            return new Response("Passwords do not match", {status: 400})
+        if (password !== cofPassword) {
+            return NextResponse.json(
+                { error: "Passwords do not match" },
+                { status: 400 }
+            )
         }
 
         if (!Database.isInitialized) {
@@ -22,33 +28,34 @@ export async function POST(request: NextRequest) {
         }
 
         const userRepo = Database.getRepository(User)
-        const user = await userRepo.findOne({
+        const existingUser = await userRepo.findOne({
             withDeleted: true,
-            where: [{ email: identifier }, { username: identifier }]
+            where: [{ email }, { username }],
         })
 
-        if ( user.deletedAt ) {
-            return  NextResponse.json(
-                {error: "User was deleted", time: user.deletedAt},
-                {status: 400});
-        }
-
-        if( user != null ) {
-            returnNextResponse.json(
-                {error: "User already exists, please signin"},
-                {status: 400}
+        if (existingUser?.deletedAt) {
+            return NextResponse.json(
+                { error: "User was deleted", time: existingUser.deletedAt },
+                { status: 400 }
             )
         }
 
-        const user = new User();
-        user.firstName = firstName;
-        user.lastName = lastName;
-        user.email = email;
-        user.username = username;
-        user.password = password;
-        await userRepo.save(user);
+        if (existingUser) {
+            return NextResponse.json(
+                { error: "User already exists, please signin" },
+                { status: 400 }
+            )
+        }
 
-        const jwtSecret = process.env.JWT_SECRET
+        const newUser = new User()
+        newUser.firstname = firstName
+        newUser.lastname = lastName
+        newUser.email = email
+        newUser.username = username
+        newUser.password = password
+        await userRepo.save(newUser)
+
+        const jwtSecret = process.env.JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET
         if (!jwtSecret) {
             return NextResponse.json(
                 { error: "JWT secret not configured" },
@@ -56,16 +63,20 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username, email: user.email }, jwtSecret, { expiresIn: "1h" })
+        const token = jwt.sign(
+            { sub: newUser.id, email: newUser.email, username: newUser.username },
+            jwtSecret,
+            { expiresIn: "1h" }
+        )
 
         return NextResponse.json(
             {
                 success: true,
                 token,
                 user: {
-                    id: user.id,
-                    email: user.email,
-                    username: user.username
+                    id: newUser.id,
+                    email: newUser.email,
+                    username: newUser.username
                 }
             },
             { status: 201 }
