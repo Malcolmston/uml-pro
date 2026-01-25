@@ -37,6 +37,10 @@ export default function DashboardPage() {
     const [error, setError] = useState<string | null>(null)
     const [creatingTeam, setCreatingTeam] = useState(false)
     const [teamName, setTeamName] = useState("")
+    const [projectName, setProjectName] = useState("")
+    const [projectDescription, setProjectDescription] = useState("")
+    const [projectVisibility, setProjectVisibility] = useState("public")
+    const [creatingProject, setCreatingProject] = useState(false)
 
     const selectedTeam = useMemo(
         () => teams.find((team) => team.id === selectedTeamId) ?? null,
@@ -131,6 +135,52 @@ export default function DashboardPage() {
             setError("Network error while creating team.")
         } finally {
             setCreatingTeam(false)
+        }
+    }
+
+    const createProject = async () => {
+        if (!selectedTeamId) {
+            setError("Select a team before creating a project.")
+            return
+        }
+
+        const trimmedName = projectName.trim()
+        if (!trimmedName) {
+            setError("Project name is required.")
+            return
+        }
+
+        setCreatingProject(true)
+        setError(null)
+        try {
+            const token = getToken()
+            const response = await fetch(
+                `/api/teams/${selectedTeamId}/projects/create`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify({
+                        name: trimmedName,
+                        description: projectDescription.trim() || null,
+                        visibility: projectVisibility,
+                    }),
+                }
+            )
+            const data = await response.json()
+            if (!response.ok) {
+                setError(data?.error ?? "Failed to create project.")
+                return
+            }
+            setProjectName("")
+            setProjectDescription("")
+            await fetchProjects(selectedTeamId)
+        } catch {
+            setError("Network error while creating project.")
+        } finally {
+            setCreatingProject(false)
         }
     }
 
@@ -267,6 +317,51 @@ export default function DashboardPage() {
                                     </span>
                                 </div>
                                 <div className="mt-6 grid gap-4">
+                                    <div className="rounded-2xl border border-white/10 bg-[#0d1114] px-5 py-4">
+                                        <p className="text-xs uppercase tracking-[0.2em] text-[#f2c078]">
+                                            New project
+                                        </p>
+                                        <div className="mt-4 grid gap-3">
+                                            <input
+                                                type="text"
+                                                value={projectName}
+                                                onChange={(event) =>
+                                                    setProjectName(event.target.value)
+                                                }
+                                                placeholder="Project name"
+                                                className="h-11 w-full rounded-2xl border border-white/10 bg-[#0d1114] px-4 text-sm text-[#f4f1ea] placeholder:text-[#6f7572] focus:border-[#f2c078] focus:outline-none"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={projectDescription}
+                                                onChange={(event) =>
+                                                    setProjectDescription(event.target.value)
+                                                }
+                                                placeholder="Short description (optional)"
+                                                className="h-11 w-full rounded-2xl border border-white/10 bg-[#0d1114] px-4 text-sm text-[#f4f1ea] placeholder:text-[#6f7572] focus:border-[#f2c078] focus:outline-none"
+                                            />
+                                            <select
+                                                value={projectVisibility}
+                                                onChange={(event) =>
+                                                    setProjectVisibility(event.target.value)
+                                                }
+                                                className="h-11 w-full rounded-2xl border border-white/10 bg-[#0d1114] px-4 text-sm text-[#f4f1ea]"
+                                            >
+                                                <option value="public">Public</option>
+                                                <option value="private">Private</option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={createProject}
+                                                className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078] disabled:cursor-not-allowed disabled:opacity-60"
+                                                disabled={creatingProject}
+                                            >
+                                                {creatingProject
+                                                    ? "Creating..."
+                                                    : "Create project"}
+                                            </button>
+                                        </div>
+                                    </div>
                                     {personalTeam &&
                                         selectedTeamId === personalTeamId &&
                                         projects.length === 0 &&
@@ -287,9 +382,15 @@ export default function DashboardPage() {
                                         </p>
                                     )}
                                     {projects.map((project) => (
-                                        <div
+                                        <button
                                             key={project.id}
-                                            className="rounded-2xl border border-white/10 bg-[#0d1114] px-5 py-4"
+                                            type="button"
+                                            onClick={() =>
+                                                window.location.assign(
+                                                    `/project/${project.id}`
+                                                )
+                                            }
+                                            className="w-full rounded-2xl border border-white/10 bg-[#0d1114] px-5 py-4 text-left transition hover:border-[#f2c078]"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-lg font-semibold">
@@ -304,7 +405,7 @@ export default function DashboardPage() {
                                                     {project.description}
                                                 </p>
                                             )}
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             </div>
