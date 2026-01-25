@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { Fraunces, Space_Grotesk } from "next/font/google"
 
 const display = Fraunces({ subsets: ["latin"], weight: ["600", "700"] })
@@ -52,7 +52,7 @@ export default function DashboardPage() {
         [teams]
     )
 
-    const fetchTeams = async () => {
+    const fetchTeams = useCallback(async () => {
         setLoadingTeams(true)
         setError(null)
         try {
@@ -79,7 +79,7 @@ export default function DashboardPage() {
         } finally {
             setLoadingTeams(false)
         }
-    }
+    }, [selectedTeamId])
 
     const fetchProjects = async (teamId: number) => {
         setLoadingProjects(true)
@@ -186,7 +186,7 @@ export default function DashboardPage() {
 
     useEffect(() => {
         fetchTeams()
-    }, [])
+    }, [fetchTeams])
 
     useEffect(() => {
         if (selectedTeamId !== null) {
