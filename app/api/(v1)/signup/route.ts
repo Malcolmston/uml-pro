@@ -3,6 +3,9 @@ import { User } from "@/app/db/entities/User"
 import Database from "@/app/db/connect"
 import { signJwt } from "@/app/utils/jwt-node"
 import { sendWelcomeEmail } from "@/app/utils/email"
+import { Team } from "@/app/db/entities/Team"
+import { TeamMember } from "@/app/db/entities/TeamMember"
+import TeamRole from "@/app/db/teamRole"
 
 export async function POST(request: NextRequest) {
     try {
@@ -73,6 +76,16 @@ export async function POST(request: NextRequest) {
                 if (newUser.id === null) {
                     throw new Error("User ID missing")
                 }
+
+                const team = new Team()
+                team.name = `${firstName}${lastName}-team`
+                await entityManager.save(team)
+
+                const member = new TeamMember()
+                member.teamId = team.id
+                member.userId = newUser.id
+                member.role = TeamRole.ADMIN
+                await entityManager.save(member)
 
                 const token = signJwt(
                     { sub: String(newUser.id), email: newUser.email, username: newUser.username },

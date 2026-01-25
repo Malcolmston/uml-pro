@@ -1,22 +1,26 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Fraunces, Space_Grotesk } from "next/font/google"
 
 const display = Fraunces({ subsets: ["latin"], weight: ["600", "700"] })
 const ui = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600"] })
 
 export default function SignupPage() {
+    const router = useRouter()
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isRedirecting, setIsRedirecting] = useState(false)
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+        const formElement = event.currentTarget
         setError(null)
         setSuccess(null)
 
-        const form = new FormData(event.currentTarget)
+        const form = new FormData(formElement)
         const payload = {
             firstName: form.get("firstName"),
             lastName: form.get("lastName"),
@@ -54,8 +58,16 @@ export default function SignupPage() {
                 return
             }
 
-            setSuccess("Account created. You can sign in now.")
-            event.currentTarget.reset()
+            if (data?.token) {
+                window.localStorage.setItem("token", data.token)
+            }
+
+            setSuccess("Account created. Redirecting to dashboard.")
+            formElement.reset()
+            setIsRedirecting(true)
+            setTimeout(() => {
+                router.push("/dashboard")
+            }, 600)
         } catch {
             setError("Network error. Try again.")
         } finally {
@@ -219,6 +231,14 @@ export default function SignupPage() {
                     </section>
                 </main>
             </div>
+            {isRedirecting && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1417]/80 backdrop-blur">
+                    <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-[#f4f1ea]">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#f2c078] border-t-transparent" />
+                        Redirecting to dashboard...
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

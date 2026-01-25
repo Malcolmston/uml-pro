@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Fraunces, Space_Grotesk } from "next/font/google"
 
@@ -8,9 +9,11 @@ const display = Fraunces({ subsets: ["latin"], weight: ["600", "700"] })
 const ui = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600"] })
 
 export default function SigninPage() {
+    const router = useRouter()
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isRedirecting, setIsRedirecting] = useState(false)
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -42,7 +45,15 @@ export default function SigninPage() {
                 return
             }
 
+            if (data?.token) {
+                window.localStorage.setItem("token", data.token)
+            }
+
             setSuccess("Signed in. Redirecting soon.")
+            setIsRedirecting(true)
+            setTimeout(() => {
+                router.push("/dashboard")
+            }, 600)
         } catch {
             setError("Network error. Try again.")
         } finally {
@@ -172,6 +183,14 @@ export default function SigninPage() {
                     </section>
                 </main>
             </div>
+            {isRedirecting && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1417]/80 backdrop-blur">
+                    <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-[#f4f1ea]">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#f2c078] border-t-transparent" />
+                        Redirecting to dashboard...
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
