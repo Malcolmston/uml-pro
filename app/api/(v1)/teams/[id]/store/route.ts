@@ -99,9 +99,13 @@ export async function PUT(
         )
     }
 
+    if (!project.id) {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    }
+
     const projectFileRepo = Database.getRepository(ProjectFile)
     const existingFile = await projectFileRepo.findOne({
-        where: { projectId: project.id ?? null, fileName: filePath }
+        where: { projectId: project.id, fileName: filePath }
     })
 
     const fileSize = buffer.length
