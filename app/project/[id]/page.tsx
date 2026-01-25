@@ -33,9 +33,6 @@ export default function ProjectPage() {
     const [syncStatus, setSyncStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
     const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
-    const [status, setStatus] = useState<"idle" | "loading" | "error" | "saved">("idle")
-
-
     const projectId = useMemo(() => {
         const idValue = Number(params?.id);
         return Number.isFinite(idValue) ? idValue : null;
