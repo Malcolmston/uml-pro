@@ -382,9 +382,15 @@ export default function DashboardPage() {
                                         </p>
                                     )}
                                     {projects.map((project) => (
-                                        <div
+                                        <button
                                             key={project.id}
-                                            className="rounded-2xl border border-white/10 bg-[#0d1114] px-5 py-4"
+                                            type="button"
+                                            onClick={() =>
+                                                window.location.assign(
+                                                    `/project/${project.id}`
+                                                )
+                                            }
+                                            className="w-full rounded-2xl border border-white/10 bg-[#0d1114] px-5 py-4 text-left transition hover:border-[#f2c078]"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-lg font-semibold">
@@ -399,7 +405,7 @@ export default function DashboardPage() {
                                                     {project.description}
                                                 </p>
                                             )}
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             </div>
