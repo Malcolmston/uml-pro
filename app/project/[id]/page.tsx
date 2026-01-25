@@ -14,7 +14,7 @@ import CreateInterface from "@/public/components/window/interface/Create";
 import CreateRecord from "@/public/components/window/record/Create";
 
 import Background from "./background";
-import { listTeamProjects, listTeams, storeProjectSvg } from "./_api";
+import { getLatestProjectFile, listTeamProjects, listTeams, storeProjectFile } from "./_api";
 
 //import custom icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -28,6 +28,12 @@ export default function ProjectPage() {
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSerializedRef = useRef<string>("");
     const [teamId, setTeamId] = useState<number | null>(null);
+    const [loadedSvgMarkup, setLoadedSvgMarkup] = useState<string | null>(null);
+    const hasLoadedRef = useRef(false);
+
+    const [status, setStatus] = useState<"idle" | "loading" | "error" | "saved">("idle")
+
+
     const projectId = useMemo(() => {
         const idValue = Number(params?.id);
         return Number.isFinite(idValue) ? idValue : null;
@@ -252,6 +258,32 @@ export default function ProjectPage() {
         };
     }, [projectId]);
 
+    const createPreviewPng = useCallback(async (svgText: string) => {
+        const svgBlob = new Blob([svgText], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(svgBlob);
+        try {
+            const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error("Failed to load SVG preview"));
+                img.src = url;
+            });
+
+            const canvas = document.createElement("canvas");
+            canvas.width = viewBox.width;
+            canvas.height = viewBox.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                throw new Error("Canvas context unavailable");
+            }
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL("image/png");
+            return dataUrl.split(",")[1] || "";
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+    }, [viewBox.height, viewBox.width]);
+
     const scheduleSave = useCallback(() => {
         if (!svgRef.current || !teamId || !projectId) return;
         if (saveTimeoutRef.current) {
@@ -262,19 +294,32 @@ export default function ProjectPage() {
             const serialized = new XMLSerializer().serializeToString(svgRef.current);
             if (!serialized || serialized === lastSerializedRef.current) return;
             lastSerializedRef.current = serialized;
+            const folderName = new Date().toISOString().replace(/[:.]/g, "-");
             try {
-                await storeProjectSvg({
-                    teamId,
-                    projectId,
-                    filePath: `project-${projectId}.svg`,
-                    content: serialized,
-                    encoding: "utf8",
-                });
+                const previewBase64 = await createPreviewPng(serialized);
+                await Promise.all([
+                    storeProjectFile({
+                        teamId,
+                        projectId,
+                        filePath: `${folderName}/page.svg`,
+                        content: serialized,
+                        encoding: "utf8",
+                        mimeType: "image/svg+xml",
+                    }),
+                    storeProjectFile({
+                        teamId,
+                        projectId,
+                        filePath: `${folderName}/preview.png`,
+                        content: previewBase64,
+                        encoding: "base64",
+                        mimeType: "image/png",
+                    })
+                ]);
             } catch (error) {
                 console.error("Failed to store project SVG:", error);
             }
         }, 800);
-    }, [projectId, teamId]);
+    }, [createPreviewPng, projectId, teamId]);
 
     useEffect(() => {
         if (!svgRef.current) return;
@@ -295,6 +340,26 @@ export default function ProjectPage() {
     useEffect(() => {
         scheduleSave();
     }, [scheduleSave]);
+
+    useEffect(() => {
+        if (!teamId || !projectId || hasLoadedRef.current) return;
+        hasLoadedRef.current = true;
+        const loadSvg = async () => {
+            try {
+                const stored = await getLatestProjectFile(teamId, projectId);
+                const svgText = atob(stored.contentBase64);
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(svgText, "image/svg+xml");
+                const svgElement = doc.documentElement;
+                setLoadedSvgMarkup(svgElement.innerHTML);
+                setElements([]);
+            } catch (error) {
+                console.error("Failed to load stored SVG:", error);
+            }
+        };
+
+        void loadSvg();
+    }, [projectId, teamId]);
 
   return (
     <div className="flex min-h-screen bg-zinc-50 font-sans dark:bg-black overflow-hidden">
@@ -321,12 +386,15 @@ export default function ProjectPage() {
             >
                 <Background viewBox={viewBox} />
 
-                {/* Render all elements */}
-                {elements.map((element, index) => (
-                    <g key={`element-${element.key || index}`} id={`element-${element.key || index}`}>
-                        {element}
-                    </g>
-                ))}
+                {loadedSvgMarkup ? (
+                    <g dangerouslySetInnerHTML={{ __html: loadedSvgMarkup }} />
+                ) : (
+                    elements.map((element, index) => (
+                        <g key={`element-${element.key || index}`} id={`element-${element.key || index}`}>
+                            {element}
+                        </g>
+                    ))
+                )}
                 {/* Render connectors on top of elements */}
                 {connectors.map((connector, idx) => (
                     <g key={`connector-${idx}`} id={`connector-${connector.key}`}>
