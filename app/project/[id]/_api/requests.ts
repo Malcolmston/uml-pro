@@ -9,6 +9,7 @@ import {
   ProjectResponse,
   StoreFilePayload,
   StoreFileResponse,
+  StoredFileResponse,
   SuccessResponse,
   TeamListResponse,
   TeamResponse,
@@ -151,4 +152,17 @@ export const storeProjectSvg = async (payload: Omit<StoreFilePayload, "mimeType"
     ...payload,
     mimeType: "image/svg+xml",
   });
+};
+
+export const getLatestProjectFile = async (teamId: number, projectId: number) => {
+  const params = new URLSearchParams({ projectId: String(projectId) });
+  return requestJson<StoredFileResponse>(`${apiPaths.teamStore(teamId)}?${params}`);
+};
+
+export const getProjectFile = async (teamId: number, projectId: number, filePath: string) => {
+  const params = new URLSearchParams({
+    projectId: String(projectId),
+    filePath,
+  });
+  return requestJson<StoredFileResponse>(`${apiPaths.teamStore(teamId)}?${params}`);
 };
