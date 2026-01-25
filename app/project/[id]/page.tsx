@@ -2,9 +2,17 @@
 
 import React, {useState} from 'react';
 import { useParams } from "next/navigation";
+
 import Class from "@/public/components/class/Class";
+
 import Visibility from "@/public/components/visibility";
+
 import CreateClass from "@/public/components/window/class/Create";
+import CreateAbstract from "@/public/components/window/abstract/Create";
+import CreateAnnotation from "@/public/components/window/annotation/Create";
+import CreateEnum from "@/public/components/window/enum/Create";
+import CreateInterface from "@/public/components/window/interface/Create";
+
 import Background from "./background";
 
 //import custom icons
@@ -84,12 +92,19 @@ export default function ProjectPage() {
         />
     ]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [createType, setCreateType] = useState<
+        "class" | "abstract" | "annotation" | "enum" | "interface"
+    >("class");
+
     const connectors: React.ReactElement[] = [];
 
     const buttons: Array<React.ReactElement> = [
         (<button
             key={'create-class'}
-            onClick={() => setIsCreateOpen(true)}
+            onClick={() => {
+                setCreateType("class");
+                setIsCreateOpen(true);
+            }}
             className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
             title="Create New Class"
         >
@@ -102,7 +117,10 @@ export default function ProjectPage() {
 
         (<button
             key={'create-abstract-class'}
-            onClick={() => setIsCreateOpen(true)}
+            onClick={() => {
+                setCreateType("abstract");
+                setIsCreateOpen(true);
+            }}
             className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
             title="Create New Abstract Class"
         >
@@ -115,7 +133,10 @@ export default function ProjectPage() {
 
         (<button
             key={'create-annotation'}
-            onClick={() => setIsCreateOpen(true)}
+            onClick={() => {
+                setCreateType("annotation");
+                setIsCreateOpen(true);
+            }}
             className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
             title="Create New Annotation"
         >
@@ -129,7 +150,10 @@ export default function ProjectPage() {
         (
             <button
                 key={'create-enum'}
-                onClick={() => setIsCreateOpen(true)}
+                onClick={() => {
+                    setCreateType("enum");
+                    setIsCreateOpen(true);
+                }}
                 className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
                 title="Create New Enum"
             >
@@ -144,7 +168,10 @@ export default function ProjectPage() {
         (
             <button
                 key={'create-interface'}
-                onClick={() => setIsCreateOpen(true)}
+                onClick={() => {
+                    setCreateType("interface");
+                    setIsCreateOpen(true);
+                }}
                 className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
                 title="Create New Interface"
             >
@@ -171,11 +198,6 @@ export default function ProjectPage() {
 
             {buttons}
 
-            {isCreateOpen && (
-                <div className="mt-4 border-t pt-4 overflow-y-auto max-h-[calc(100vh-200px)]">
-                    <CreateClass onAdd={handleAddNode} onClose={() => setIsCreateOpen(false)} />
-                </div>
-            )}
         </div>
 
         {/* Main SVG Canvas */}
@@ -205,6 +227,51 @@ export default function ProjectPage() {
                 ))}
             </svg>
         </div>
+
+        {isCreateOpen && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
+                onClick={() => setIsCreateOpen(false)}
+            >
+                <div
+                    className="w-full max-w-4xl"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <div className="max-h-[85vh] overflow-y-auto">
+                        {createType === "class" && (
+                            <CreateClass
+                                onAdd={handleAddNode}
+                                onClose={() => setIsCreateOpen(false)}
+                            />
+                        )}
+                        {createType === "abstract" && (
+                            <CreateAbstract
+                                onAdd={handleAddNode}
+                                onClose={() => setIsCreateOpen(false)}
+                            />
+                        )}
+                        {createType === "annotation" && (
+                            <CreateAnnotation
+                                onAdd={handleAddNode}
+                                onClose={() => setIsCreateOpen(false)}
+                            />
+                        )}
+                        {createType === "enum" && (
+                            <CreateEnum
+                                onAdd={handleAddNode}
+                                onClose={() => setIsCreateOpen(false)}
+                            />
+                        )}
+                        {createType === "interface" && (
+                            <CreateInterface
+                                onAdd={handleAddNode}
+                                onClose={() => setIsCreateOpen(false)}
+                            />
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
 
     </div>
   );
