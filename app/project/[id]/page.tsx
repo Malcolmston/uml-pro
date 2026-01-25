@@ -14,7 +14,7 @@ import CreateInterface from "@/public/components/window/interface/Create";
 import CreateRecord from "@/public/components/window/record/Create";
 
 import Background from "./background";
-import { getProjectFile, listProjectHistory, listTeams, storeProjectFile } from "./_api";
+import { getLatestProjectFile, getProjectFile, listProjectHistory, listTeams, storeProjectFile } from "./_api";
 
 //import custom icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -32,6 +32,7 @@ export default function ProjectPage() {
     const [historyEntries, setHistoryEntries] = useState<Array<{ folder: string; pagePath?: string; previewPath?: string }>>([]);
     const [syncStatus, setSyncStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
     const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
     const projectId = useMemo(() => {
         const idValue = Number(params?.id);
@@ -248,6 +249,23 @@ export default function ProjectPage() {
                             setLoadedSvgMarkup(svgElement.innerHTML);
                             setElements([]);
                             setSyncStatus("saved");
+                            return;
+                        }
+                        try {
+                            const stored = await getLatestProjectFile(team.id, projectId);
+                            const svgText = atob(stored.contentBase64);
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(svgText, "image/svg+xml");
+                            const svgElement = doc.documentElement;
+                            setLoadedSvgMarkup(svgElement.innerHTML);
+                            setElements([]);
+                            setSyncStatus("saved");
+                        } catch (loadError) {
+                            if (loadError instanceof Error && loadError.message.includes("No saved project")) {
+                                setSyncStatus("idle");
+                            } else {
+                                throw loadError;
+                            }
                         }
                         return;
                     } catch (innerError) {
@@ -386,6 +404,19 @@ export default function ProjectPage() {
         }
     }, [syncStatus]);
 
+    const formatHistoryLabel = useCallback((folder: string) => {
+        const match = folder.match(/^(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})(?:-(\d{3}))?Z$/);
+        if (!match) return folder;
+        const [, datePart, hour, minute, second, millis = "000"] = match;
+        const iso = `${datePart}T${hour}:${minute}:${second}.${millis}Z`;
+        const parsed = new Date(iso);
+        if (Number.isNaN(parsed.getTime())) return folder;
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: "short",
+            timeStyle: "medium"
+        }).format(parsed);
+    }, []);
+
   return (
     <div className="flex min-h-screen bg-zinc-50 font-sans dark:bg-black overflow-hidden">
         {/* Sidebar/Toolbar */}
@@ -395,8 +426,18 @@ export default function ProjectPage() {
                     <h1 className="text-xl font-bold text-gray-800 mb-2">UML Pro Dev</h1>
                     <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Project {params?.id}</p>
                 </div>
-                <div className={`border px-2 py-1 text-[10px] uppercase tracking-[0.2em] rounded-full ${syncPill.classes}`}>
-                    {syncPill.label}
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setIsHistoryOpen(true)}
+                        className="h-8 w-8 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                        title="Project history"
+                    >
+                        <FontAwesomeIcon icon={byPrefixAndName.fas['clock-rotate-left']} />
+                    </button>
+                    <div className={`border px-2 py-1 text-[10px] uppercase tracking-[0.2em] rounded-full ${syncPill.classes}`}>
+                        {syncPill.label}
+                    </div>
                 </div>
             </div>
             {lastSavedAt && syncStatus === "saved" && (
@@ -404,41 +445,6 @@ export default function ProjectPage() {
             )}
 
             {buttons}
-
-            <div className="mt-4">
-                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-3">
-                    History
-                </h2>
-                <div className="space-y-2">
-                    {historyEntries.length === 0 && (
-                        <p className="text-xs text-gray-400">No saved snapshots yet.</p>
-                    )}
-                    {historyEntries.map((entry) => (
-                        <button
-                            key={entry.folder}
-                            type="button"
-                            className="w-full rounded-md border border-gray-200 px-3 py-2 text-left text-xs text-gray-700 hover:border-gray-400"
-                            onClick={async () => {
-                                if (!teamId || !projectId || !entry.pagePath) return;
-                                try {
-                                    const stored = await getProjectFile(teamId, projectId, entry.pagePath);
-                                    const svgText = atob(stored.contentBase64);
-                                    const parser = new DOMParser();
-                                    const doc = parser.parseFromString(svgText, "image/svg+xml");
-                                    const svgElement = doc.documentElement;
-                                    setLoadedSvgMarkup(svgElement.innerHTML);
-                                    setElements([]);
-                                } catch (error) {
-                                    console.error("Failed to load selected SVG:", error);
-                                }
-                            }}
-                        >
-                            <div className="text-[11px] font-medium text-gray-600">{entry.folder}</div>
-                            <div className="text-[10px] text-gray-400">{entry.pagePath ?? "Missing page.svg"}</div>
-                        </button>
-                    ))}
-                </div>
-            </div>
 
         </div>
 
@@ -514,6 +520,68 @@ export default function ProjectPage() {
                                 onClose={() => setIsCreateOpen(false)}
                             />
                         )}
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {isHistoryOpen && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
+                onClick={() => setIsHistoryOpen(false)}
+            >
+                <div
+                    className="w-full max-w-xl"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <div className="p-6 bg-white rounded-lg shadow-lg w-full space-y-6 overflow-y-auto max-h-[85vh] border">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-800">Project History</h2>
+                            <button
+                                onClick={() => setIsHistoryOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="space-y-2">
+                            {historyEntries.length === 0 && (
+                                <p className="text-sm text-gray-500">No saved snapshots yet.</p>
+                            )}
+                            {historyEntries.length > 0 && (
+                                <select
+                                    className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-gray-400 focus:outline-none"
+                                    defaultValue=""
+                                    onChange={async (event) => {
+                                        const folder = event.target.value;
+                                        const entry = historyEntries.find((item) => item.folder === folder);
+                                        if (!entry || !teamId || !projectId || !entry.pagePath) return;
+                                        try {
+                                            const stored = await getProjectFile(teamId, projectId, entry.pagePath);
+                                            const svgText = atob(stored.contentBase64);
+                                            const parser = new DOMParser();
+                                            const doc = parser.parseFromString(svgText, "image/svg+xml");
+                                            const svgElement = doc.documentElement;
+                                            setLoadedSvgMarkup(svgElement.innerHTML);
+                                            setElements([]);
+                                            setIsHistoryOpen(false);
+                                        } catch (error) {
+                                            console.error("Failed to load selected SVG:", error);
+                                        }
+                                    }}
+                                >
+                                    <option value="" disabled>
+                                        Select snapshot
+                                    </option>
+                                    {historyEntries.map((entry) => (
+                                        <option key={entry.folder} value={entry.folder}>
+                                            {formatHistoryLabel(entry.folder)}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
