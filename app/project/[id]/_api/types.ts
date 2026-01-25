@@ -71,6 +71,16 @@ export type StoredFileResponse = {
   mimeType: string;
 };
 
+export type ProjectHistoryEntry = {
+  folder: string;
+  pagePath?: string;
+  previewPath?: string;
+};
+
+export type ProjectHistoryResponse = {
+  history: ProjectHistoryEntry[];
+};
+
 export type CreateTeamPayload = {
   name: string;
   customRules?: CustomRules;
