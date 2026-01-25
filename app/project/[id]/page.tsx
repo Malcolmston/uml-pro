@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import { useParams } from "next/navigation";
 
 import Class from "@/public/components/class/Class";
@@ -28,7 +28,10 @@ export default function ProjectPage() {
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSerializedRef = useRef<string>("");
     const [teamId, setTeamId] = useState<number | null>(null);
-    const [projectId, setProjectId] = useState<number | null>(null);
+    const projectId = useMemo(() => {
+        const idValue = Number(params?.id);
+        return Number.isFinite(idValue) ? idValue : null;
+    }, [params?.id]);
     const [elements, setElements] = useState<React.ReactElement[]>([
         <Class
             key="class-1"
@@ -214,22 +217,18 @@ export default function ProjectPage() {
     };
 
     useEffect(() => {
-        const idValue = Number(params?.id);
-        if (!Number.isFinite(idValue)) {
-            setProjectId(null);
-            setTeamId(null);
-            return;
-        }
-        setProjectId(idValue);
-
         let isActive = true;
         const findProjectTeam = async () => {
+            if (!projectId) {
+                setTeamId(null);
+                return;
+            }
             try {
                 const { teams } = await listTeams();
                 for (const team of teams) {
                     if (!team.id) continue;
                     const { projects } = await listTeamProjects(team.id);
-                    const match = projects.find((project) => project.id === idValue);
+                    const match = projects.find((project) => project.id === projectId);
                     if (match && isActive) {
                         setTeamId(team.id);
                         return;
@@ -251,9 +250,9 @@ export default function ProjectPage() {
         return () => {
             isActive = false;
         };
-    }, [params?.id]);
+    }, [projectId]);
 
-    const scheduleSave = () => {
+    const scheduleSave = useCallback(() => {
         if (!svgRef.current || !teamId || !projectId) return;
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
@@ -275,7 +274,7 @@ export default function ProjectPage() {
                 console.error("Failed to store project SVG:", error);
             }
         }, 800);
-    };
+    }, [projectId, teamId]);
 
     useEffect(() => {
         if (!svgRef.current) return;
@@ -291,11 +290,11 @@ export default function ProjectPage() {
         return () => {
             observer.disconnect();
         };
-    }, [teamId, projectId]);
+    }, [scheduleSave]);
 
     useEffect(() => {
         scheduleSave();
-    }, [teamId, projectId]);
+    }, [scheduleSave]);
 
   return (
     <div className="flex min-h-screen bg-zinc-50 font-sans dark:bg-black overflow-hidden">
