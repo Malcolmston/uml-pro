@@ -65,6 +65,12 @@ export type StoreFileResponse = {
   };
 };
 
+export type StoredFileResponse = {
+  filePath: string;
+  contentBase64: string;
+  mimeType: string;
+};
+
 export type CreateTeamPayload = {
   name: string;
   customRules?: CustomRules;
