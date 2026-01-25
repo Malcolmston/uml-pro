@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { useParams } from "next/navigation";
 
 import Class from "@/public/components/class/Class";
@@ -14,6 +14,7 @@ import CreateInterface from "@/public/components/window/interface/Create";
 import CreateRecord from "@/public/components/window/record/Create";
 
 import Background from "./background";
+import { listTeamProjects, listTeams, storeProjectSvg } from "./_api";
 
 //import custom icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -23,6 +24,11 @@ import { byPrefixAndName } from '@awesome.me/kit-ab2f5093a4/icons'
 export default function ProjectPage() {
     const params = useParams<{ id: string }>();
     const viewBox = { x: -100, y: -100, width: 1800, height: 1400 };
+    const svgRef = useRef<SVGSVGElement | null>(null);
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastSerializedRef = useRef<string>("");
+    const [teamId, setTeamId] = useState<number | null>(null);
+    const [projectId, setProjectId] = useState<number | null>(null);
     const [elements, setElements] = useState<React.ReactElement[]>([
         <Class
             key="class-1"
@@ -207,6 +213,90 @@ export default function ProjectPage() {
         setIsCreateOpen(false);
     };
 
+    useEffect(() => {
+        const idValue = Number(params?.id);
+        if (!Number.isFinite(idValue)) {
+            setProjectId(null);
+            setTeamId(null);
+            return;
+        }
+        setProjectId(idValue);
+
+        let isActive = true;
+        const findProjectTeam = async () => {
+            try {
+                const { teams } = await listTeams();
+                for (const team of teams) {
+                    if (!team.id) continue;
+                    const { projects } = await listTeamProjects(team.id);
+                    const match = projects.find((project) => project.id === idValue);
+                    if (match && isActive) {
+                        setTeamId(team.id);
+                        return;
+                    }
+                }
+                if (isActive) {
+                    setTeamId(null);
+                }
+            } catch (error) {
+                if (isActive) {
+                    console.error("Failed to resolve project team:", error);
+                    setTeamId(null);
+                }
+            }
+        };
+
+        void findProjectTeam();
+
+        return () => {
+            isActive = false;
+        };
+    }, [params?.id]);
+
+    const scheduleSave = () => {
+        if (!svgRef.current || !teamId || !projectId) return;
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+        saveTimeoutRef.current = setTimeout(async () => {
+            if (!svgRef.current) return;
+            const serialized = new XMLSerializer().serializeToString(svgRef.current);
+            if (!serialized || serialized === lastSerializedRef.current) return;
+            lastSerializedRef.current = serialized;
+            try {
+                await storeProjectSvg({
+                    teamId,
+                    projectId,
+                    filePath: `project-${projectId}.svg`,
+                    content: serialized,
+                    encoding: "utf8",
+                });
+            } catch (error) {
+                console.error("Failed to store project SVG:", error);
+            }
+        }, 800);
+    };
+
+    useEffect(() => {
+        if (!svgRef.current) return;
+        const observer = new MutationObserver(() => {
+            scheduleSave();
+        });
+        observer.observe(svgRef.current, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            characterData: true,
+        });
+        return () => {
+            observer.disconnect();
+        };
+    }, [teamId, projectId]);
+
+    useEffect(() => {
+        scheduleSave();
+    }, [teamId, projectId]);
+
   return (
     <div className="flex min-h-screen bg-zinc-50 font-sans dark:bg-black overflow-hidden">
         {/* Sidebar/Toolbar */}
@@ -228,6 +318,7 @@ export default function ProjectPage() {
 
                 className="cursor-grab active:cursor-grabbing"
                 id="svg-background"
+                ref={svgRef}
             >
                 <Background viewBox={viewBox} />
 
