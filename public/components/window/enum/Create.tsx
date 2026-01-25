@@ -852,7 +852,7 @@ export default class CreateEnum extends ObjectCreator<CreateEnumProps, CreateEnu
         const isFormValid = enumName.trim() && Object.keys(errors).length === 0;
 
         return (
-            <div className="absolute top-4 left-4 p-6 bg-white rounded-lg shadow-lg w-[38rem] space-y-6 overflow-y-auto max-h-[90vh] z-10 border" style={{overflowY: "auto"}}>
+            <div className="p-6 bg-white rounded-lg shadow-lg w-full space-y-6 overflow-y-auto max-h-[90vh] border" style={{overflowY: "auto"}}>
         {/* Header */}
         <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">
