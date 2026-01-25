@@ -30,6 +30,8 @@ export default function ProjectPage() {
     const svgRef = useRef<SVGSVGElement | null>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSerializedRef = useRef<string>("");
+    const historyCacheRef = useRef<Map<string, Array<{ folder: string; pagePath?: string; previewPath?: string }>>>(new Map());
+    const fileCacheRef = useRef<Map<string, { contentBase64: string; mimeType: string }>>(new Map());
     const [teamId, setTeamId] = useState<number | null>(null);
     const [loadedSvgMarkup, setLoadedSvgMarkup] = useState<string | null>(null);
     const [historyEntries, setHistoryEntries] = useState<Array<{ folder: string; pagePath?: string; previewPath?: string }>>([]);
@@ -239,6 +241,22 @@ export default function ProjectPage() {
         setIsCreateOpen(false);
     };
 
+    const getCachedHistory = useCallback((team: number, project: number) => {
+        return historyCacheRef.current.get(`${team}:${project}`) ?? null;
+    }, []);
+
+    const setCachedHistory = useCallback((team: number, project: number, history: Array<{ folder: string; pagePath?: string; previewPath?: string }>) => {
+        historyCacheRef.current.set(`${team}:${project}`, history);
+    }, []);
+
+    const getCachedFile = useCallback((team: number, project: number, path: string) => {
+        return fileCacheRef.current.get(`${team}:${project}:${path}`) ?? null;
+    }, []);
+
+    const setCachedFile = useCallback((team: number, project: number, path: string, contentBase64: string, mimeType: string) => {
+        fileCacheRef.current.set(`${team}:${project}:${path}`, { contentBase64, mimeType });
+    }, []);
+
     useEffect(() => {
         let isActive = true;
         const resolveTeamAndHistory = async () => {
@@ -252,13 +270,22 @@ export default function ProjectPage() {
                 for (const team of teams) {
                     if (!team.id) continue;
                     try {
+                        const cachedHistory = getCachedHistory(team.id, projectId);
+                        if (cachedHistory && isActive) {
+                            setHistoryEntries(cachedHistory);
+                        }
                         const { history } = await listProjectHistory(team.id, projectId);
                         if (!isActive) return;
+                        setCachedHistory(team.id, projectId, history);
                         setTeamId(team.id);
                         setHistoryEntries(history);
                         const latest = history[0]?.pagePath;
                         if (latest) {
-                            const stored = await getProjectFile(team.id, projectId, latest);
+                            const cached = getCachedFile(team.id, projectId, latest);
+                            const stored = cached ?? await getProjectFile(team.id, projectId, latest);
+                            if (!cached) {
+                                setCachedFile(team.id, projectId, latest, stored.contentBase64, stored.mimeType);
+                            }
                             const svgText = atob(stored.contentBase64);
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(svgText, "image/svg+xml");
@@ -270,6 +297,7 @@ export default function ProjectPage() {
                         }
                         try {
                             const stored = await getLatestProjectFile(team.id, projectId);
+                            setCachedFile(team.id, projectId, stored.filePath, stored.contentBase64, stored.mimeType);
                             const svgText = atob(stored.contentBase64);
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(svgText, "image/svg+xml");
@@ -311,7 +339,7 @@ export default function ProjectPage() {
         return () => {
             isActive = false;
         };
-    }, [projectId]);
+    }, [getCachedFile, getCachedHistory, projectId, setCachedFile, setCachedHistory]);
 
     const createPreviewPng = useCallback(async (svgText: string) => {
         const svgBlob = new Blob([svgText], { type: "image/svg+xml" });
@@ -381,6 +409,7 @@ export default function ProjectPage() {
                 setLastSavedAt(new Date().toLocaleTimeString());
                 try {
                     const { history } = await listProjectHistory(teamId, projectId);
+                    setCachedHistory(teamId, projectId, history);
                     setHistoryEntries(history);
                 } catch (historyError) {
                     console.error("Failed to refresh history:", historyError);
@@ -390,7 +419,7 @@ export default function ProjectPage() {
                 setSyncStatus("error");
             }
         }, 800);
-    }, [projectId, saveSnapshot, teamId]);
+    }, [projectId, saveSnapshot, setCachedHistory, teamId]);
 
     useEffect(() => {
         if (!svgRef.current) return;
@@ -571,7 +600,11 @@ export default function ProjectPage() {
                 if (!teamId || !projectId) return;
                 try {
                     if (entry.previewPath) {
-                        const storedPreview = await getProjectFile(teamId, projectId, entry.previewPath);
+                        const cachedPreview = getCachedFile(teamId, projectId, entry.previewPath);
+                        const storedPreview = cachedPreview ?? await getProjectFile(teamId, projectId, entry.previewPath);
+                        if (!cachedPreview) {
+                            setCachedFile(teamId, projectId, entry.previewPath, storedPreview.contentBase64, storedPreview.mimeType);
+                        }
                         const dataUrl = `data:${storedPreview.mimeType};base64,${storedPreview.contentBase64}`;
                         setPreviewImage(dataUrl);
                     } else {
@@ -579,13 +612,18 @@ export default function ProjectPage() {
                     }
 
                     if (entry.pagePath) {
-                        const storedSelected = await getProjectFile(teamId, projectId, entry.pagePath);
+                        const cachedSelected = getCachedFile(teamId, projectId, entry.pagePath);
+                        const storedSelected = cachedSelected ?? await getProjectFile(teamId, projectId, entry.pagePath);
+                        if (!cachedSelected) {
+                            setCachedFile(teamId, projectId, entry.pagePath, storedSelected.contentBase64, storedSelected.mimeType);
+                        }
                         setSelectedSvgText(atob(storedSelected.contentBase64));
                     } else {
                         setSelectedSvgText(null);
                     }
 
                     const storedLatest = await getLatestProjectFile(teamId, projectId);
+                    setCachedFile(teamId, projectId, storedLatest.filePath, storedLatest.contentBase64, storedLatest.mimeType);
                     setLatestSvgText(atob(storedLatest.contentBase64));
 
                     setPreviewLabel(formatHistoryLabel(entry.folder));
@@ -598,7 +636,11 @@ export default function ProjectPage() {
             onRevert={async (entry) => {
                 if (!teamId || !projectId || !entry.pagePath) return;
                 try {
-                    const stored = await getProjectFile(teamId, projectId, entry.pagePath);
+                    const cached = getCachedFile(teamId, projectId, entry.pagePath);
+                    const stored = cached ?? await getProjectFile(teamId, projectId, entry.pagePath);
+                    if (!cached) {
+                        setCachedFile(teamId, projectId, entry.pagePath, stored.contentBase64, stored.mimeType);
+                    }
                     const svgText = atob(stored.contentBase64);
                     const folderLabel = `${entry.folder}-reverted`;
                     await saveSnapshot(svgText, folderLabel);
@@ -607,6 +649,7 @@ export default function ProjectPage() {
                     setSyncStatus("saved");
                     setLastSavedAt(new Date().toLocaleTimeString());
                     const { history } = await listProjectHistory(teamId, projectId);
+                    setCachedHistory(teamId, projectId, history);
                     setHistoryEntries(history);
                 } catch (error) {
                     console.error("Failed to revert snapshot:", error);
