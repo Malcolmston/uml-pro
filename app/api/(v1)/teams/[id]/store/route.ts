@@ -202,7 +202,20 @@ export async function GET(
         return NextResponse.json({ error: listResult.error.message }, { status: 500 })
     }
 
-    const files = (listResult.data || []).map((item) => item.name)
+    let files = (listResult.data || []).map((item) => item.name)
+    if (!files.some((name) => name.includes("/"))) {
+        const nestedFiles: string[] = []
+        for (const folder of files) {
+            if (!folder) continue
+            const nestedResult = await getAllFiles(bucketName, folder)
+            if (nestedResult.error) {
+                return NextResponse.json({ error: nestedResult.error.message }, { status: 500 })
+            }
+            const nested = (nestedResult.data || []).map((item) => `${folder}/${item.name}`)
+            nestedFiles.push(...nested)
+        }
+        files = nestedFiles
+    }
     if (listParam === "1" || listParam === "true") {
         const historyMap = new Map<string, { folder: string; pagePath?: string; previewPath?: string }>()
         for (const name of files) {
