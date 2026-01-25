@@ -12,6 +12,7 @@ import CreateAbstract from "@/public/components/window/abstract/Create";
 import CreateAnnotation from "@/public/components/window/annotation/Create";
 import CreateEnum from "@/public/components/window/enum/Create";
 import CreateInterface from "@/public/components/window/interface/Create";
+import CreateRecord from "@/public/components/window/record/Create";
 
 import Background from "./background";
 
@@ -93,7 +94,7 @@ export default function ProjectPage() {
     ]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [createType, setCreateType] = useState<
-        "class" | "abstract" | "annotation" | "enum" | "interface"
+        "class" | "abstract" | "annotation" | "enum" | "interface" | "record"
     >("class");
 
     const connectors: React.ReactElement[] = [];
@@ -181,7 +182,25 @@ export default function ProjectPage() {
                     Create New Interface
                 </span>
             </button>
-        )
+        ),
+
+        (
+            <button
+                key={'create-record'}
+                onClick={() => {
+                    setCreateType("record");
+                    setIsCreateOpen(true);
+                }}
+                className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
+                title="Create New Record"
+            >
+                <FontAwesomeIcon icon={byPrefixAndName.fakd['record']} size="2xl"/>
+                <span
+                    className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Create New Record
+                </span>
+            </button>
+        ),
 
     ];
     const handleAddNode = (node: React.JSX.Element) => {
@@ -256,14 +275,14 @@ export default function ProjectPage() {
                                 onClose={() => setIsCreateOpen(false)}
                             />
                         )}
-                        {createType === "enum" && (
-                            <CreateEnum
+                        {createType === "interface" && (
+                            <CreateInterface
                                 onAdd={handleAddNode}
                                 onClose={() => setIsCreateOpen(false)}
                             />
                         )}
-                        {createType === "interface" && (
-                            <CreateInterface
+                        {createType === "record" && (
+                            <CreateRecord
                                 onAdd={handleAddNode}
                                 onClose={() => setIsCreateOpen(false)}
                             />
