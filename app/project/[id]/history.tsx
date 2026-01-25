@@ -14,6 +14,7 @@ type HistoryProps = {
   onClose: () => void;
   onSelect: (entry: HistoryEntry) => Promise<void> | void;
   onPreview: (entry: HistoryEntry) => void;
+  onRevert: (entry: HistoryEntry) => void;
   formatLabel: (folder: string) => string;
 };
 
@@ -23,6 +24,7 @@ export default function HistoryPopup({
   onClose,
   onSelect,
   onPreview,
+  onRevert,
   formatLabel,
 }: HistoryProps) {
   if (!isOpen) return null;
@@ -83,14 +85,24 @@ export default function HistoryPopup({
                             </div>
                             <div className="text-xs text-gray-500">Click date to load snapshot</div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => onPreview(entry)}
-                            className="h-8 w-8 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-800"
-                            title="Preview snapshot"
-                          >
-                            <FontAwesomeIcon icon={byPrefixAndName.fawsb["images"]} />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => onRevert(entry)}
+                              className="h-8 w-8 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                              title="Revert to this snapshot"
+                            >
+                              <FontAwesomeIcon icon={byPrefixAndName.fawsb["arrow-rotate-left"]} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onPreview(entry)}
+                              className="h-8 w-8 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                              title="Preview snapshot"
+                            >
+                              <FontAwesomeIcon icon={byPrefixAndName.fawsb["images"]} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

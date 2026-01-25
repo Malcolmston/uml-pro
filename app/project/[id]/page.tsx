@@ -338,6 +338,30 @@ export default function ProjectPage() {
         }
     }, [viewBox.height, viewBox.width]);
 
+    const saveSnapshot = useCallback(async (svgText: string, folderLabel?: string) => {
+        if (!teamId || !projectId) return;
+        const previewBase64 = await createPreviewPng(svgText);
+        const folderName = folderLabel || new Date().toISOString().replace(/[:.]/g, "-");
+        await Promise.all([
+            storeProjectFile({
+                teamId,
+                projectId,
+                filePath: `${folderName}/page.svg`,
+                content: svgText,
+                encoding: "utf8",
+                mimeType: "image/svg+xml",
+            }),
+            storeProjectFile({
+                teamId,
+                projectId,
+                filePath: `${folderName}/preview.png`,
+                content: previewBase64,
+                encoding: "base64",
+                mimeType: "image/png",
+            })
+        ]);
+    }, [createPreviewPng, projectId, teamId]);
+
     const scheduleSave = useCallback(() => {
         if (!svgRef.current || !teamId || !projectId) return;
         if (saveTimeoutRef.current) {
@@ -349,28 +373,9 @@ export default function ProjectPage() {
             const serialized = new XMLSerializer().serializeToString(svgRef.current);
             if (!serialized || serialized === lastSerializedRef.current) return;
             lastSerializedRef.current = serialized;
-            const folderName = new Date().toISOString().replace(/[:.]/g, "-");
             try {
                 setSyncStatus("saving");
-                const previewBase64 = await createPreviewPng(serialized);
-                await Promise.all([
-                    storeProjectFile({
-                        teamId,
-                        projectId,
-                        filePath: `${folderName}/page.svg`,
-                        content: serialized,
-                        encoding: "utf8",
-                        mimeType: "image/svg+xml",
-                    }),
-                    storeProjectFile({
-                        teamId,
-                        projectId,
-                        filePath: `${folderName}/preview.png`,
-                        content: previewBase64,
-                        encoding: "base64",
-                        mimeType: "image/png",
-                    })
-                ]);
+                await saveSnapshot(serialized);
                 setSyncStatus("saved");
                 setLastSavedAt(new Date().toLocaleTimeString());
                 try {
@@ -384,7 +389,7 @@ export default function ProjectPage() {
                 setSyncStatus("error");
             }
         }, 800);
-    }, [createPreviewPng, projectId, teamId]);
+    }, [projectId, saveSnapshot, teamId]);
 
     useEffect(() => {
         if (!svgRef.current) return;
@@ -589,6 +594,23 @@ export default function ProjectPage() {
                     console.error("Failed to load preview image:", error);
                 }
             }}
+            onRevert={async (entry) => {
+                if (!teamId || !projectId || !entry.pagePath) return;
+                try {
+                    const stored = await getProjectFile(teamId, projectId, entry.pagePath);
+                    const svgText = atob(stored.contentBase64);
+                    const folderLabel = `${entry.folder}-reverted`;
+                    await saveSnapshot(svgText, folderLabel);
+                    setLoadedSvgMarkup(null);
+                    setElements([]);
+                    setSyncStatus("saved");
+                    setLastSavedAt(new Date().toLocaleTimeString());
+                    const { history } = await listProjectHistory(teamId, projectId);
+                    setHistoryEntries(history);
+                } catch (error) {
+                    console.error("Failed to revert snapshot:", error);
+                }
+            }}
         />
 
         {isPreviewOpen && (
@@ -609,13 +631,35 @@ export default function ProjectPage() {
                                     <p className="text-xs text-gray-500">{previewLabel}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setIsPreviewOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                                aria-label="Close"
-                            >
-                                ×
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!selectedSvgText) return;
+                                        try {
+                                            const folderLabel = `${previewLabel}-reverted`;
+                                            await saveSnapshot(selectedSvgText, folderLabel);
+                                            setSyncStatus("saved");
+                                            setLastSavedAt(new Date().toLocaleTimeString());
+                                            const { history } = await listProjectHistory(teamId as number, projectId as number);
+                                            setHistoryEntries(history);
+                                        } catch (error) {
+                                            console.error("Failed to revert snapshot:", error);
+                                        }
+                                    }}
+                                    className="h-9 w-9 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                                    title="Revert to this snapshot"
+                                >
+                                    <FontAwesomeIcon icon={byPrefixAndName.fawsb["arrow-rotate-left"]} />
+                                </button>
+                                <button
+                                    onClick={() => setIsPreviewOpen(false)}
+                                    className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                    aria-label="Close"
+                                >
+                                    ×
+                                </button>
+                            </div>
                         </div>
                         <div className="px-6 py-4 border-b">
                             <div className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-xs">
