@@ -37,6 +37,7 @@ export default function ProjectPage() {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewLabel, setPreviewLabel] = useState<string>("");
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [previewTab, setPreviewTab] = useState<"preview" | "diff">("preview");
 
     const projectId = useMemo(() => {
         const idValue = Number(params?.id);
@@ -556,6 +557,7 @@ export default function ProjectPage() {
                     const dataUrl = `data:${stored.mimeType};base64,${stored.contentBase64}`;
                     setPreviewImage(dataUrl);
                     setPreviewLabel(formatHistoryLabel(entry.folder));
+                    setPreviewTab("preview");
                     setIsPreviewOpen(true);
                 } catch (error) {
                     console.error("Failed to load preview image:", error);
@@ -589,21 +591,48 @@ export default function ProjectPage() {
                                 ×
                             </button>
                         </div>
+                        <div className="px-6 py-4 border-b">
+                            <div className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-xs">
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewTab("preview")}
+                                    className={`px-3 py-1 rounded-full transition ${previewTab === "preview" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+                                >
+                                    Preview
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewTab("diff")}
+                                    className={`px-3 py-1 rounded-full transition ${previewTab === "diff" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+                                >
+                                    Diff
+                                </button>
+                            </div>
+                        </div>
                         <div className="px-6 py-5 space-y-4">
-                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                {previewImage ? (
-                                    <img
-                                        src={previewImage}
-                                        alt="Project preview"
-                                        className="w-full rounded-md border border-gray-200"
-                                    />
-                                ) : (
-                                    <div className="text-sm text-gray-500">No preview available.</div>
-                                )}
-                            </div>
-                            <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:24px_24px]">
-                                Canvas preview (mock)
-                            </div>
+                            {previewTab === "preview" && (
+                                <>
+                                    <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:24px_24px] min-h-[260px]">
+                                        Canvas preview (mock)
+                                    </div>
+                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                        {previewImage ? (
+                                            <img
+                                                src={previewImage}
+                                                alt="Project preview"
+                                                className="w-40 max-w-full rounded-md border border-gray-200"
+                                            />
+                                        ) : (
+                                            <div className="text-sm text-gray-500">No preview available.</div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            {previewTab === "diff" && (
+                                <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 min-h-[260px]">
+                                    Diff view coming soon.
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
