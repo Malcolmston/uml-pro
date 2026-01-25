@@ -5,25 +5,7 @@ import { useParams } from "next/navigation";
 import Class from "@/public/components/class/Class";
 import Visibility from "@/public/components/visibility";
 import CreateClass from "@/public/components/window/class/Create";
-
-
-export const Background = ({viewBox}: {viewBox: {x: number, y: number, width: number, height: number} }) => (
-    <>
-        <defs>
-            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#f3f4f6" strokeWidth="1"/>
-            </pattern>
-            <pattern id="grid-major" width="200" height="200" patternUnits="userSpaceOnUse">
-                <path d="M 200 0 L 0 0 0 200" fill="none" stroke="#e5e7eb" strokeWidth="2"/>
-            </pattern>
-        </defs>
-
-        <rect x={viewBox.x - 1000} y={viewBox.y - 1000} width={viewBox.width + 2000} height={viewBox.height + 2000}
-              fill="url(#grid)" style={{pointerEvents: 'none'}}/>
-        <rect x={viewBox.x - 1000} y={viewBox.y - 1000} width={viewBox.width + 2000} height={viewBox.height + 2000}
-              fill="url(#grid-major)" style={{pointerEvents: 'none'}}/>
-    </>
-);
+import Background from "./background";
 
 export default function ProjectPage() {
     const params = useParams<{ id: string }>();
