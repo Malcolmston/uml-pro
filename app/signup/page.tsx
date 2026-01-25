@@ -16,10 +16,11 @@ export default function SignupPage() {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+        const formElement = event.currentTarget
         setError(null)
         setSuccess(null)
 
-        const form = new FormData(event.currentTarget)
+        const form = new FormData(formElement)
         const payload = {
             firstName: form.get("firstName"),
             lastName: form.get("lastName"),
@@ -62,7 +63,7 @@ export default function SignupPage() {
             }
 
             setSuccess("Account created. Redirecting to dashboard.")
-            event.currentTarget.reset()
+            formElement.reset()
             setIsRedirecting(true)
             setTimeout(() => {
                 router.push("/dashboard")
