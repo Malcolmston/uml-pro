@@ -14,7 +14,7 @@ import CreateInterface from "@/public/components/window/interface/Create";
 import CreateRecord from "@/public/components/window/record/Create";
 
 import Background from "./background";
-import { getLatestProjectFile, listTeamProjects, listTeams, storeProjectFile } from "./_api";
+import { getProjectFile, listProjectHistory, listTeams, storeProjectFile } from "./_api";
 
 //import custom icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -29,7 +29,9 @@ export default function ProjectPage() {
     const lastSerializedRef = useRef<string>("");
     const [teamId, setTeamId] = useState<number | null>(null);
     const [loadedSvgMarkup, setLoadedSvgMarkup] = useState<string | null>(null);
-    const hasLoadedRef = useRef(false);
+    const [historyEntries, setHistoryEntries] = useState<Array<{ folder: string; pagePath?: string; previewPath?: string }>>([]);
+    const [syncStatus, setSyncStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+    const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
     const [status, setStatus] = useState<"idle" | "loading" | "error" | "saved">("idle")
 
@@ -224,34 +226,55 @@ export default function ProjectPage() {
 
     useEffect(() => {
         let isActive = true;
-        const findProjectTeam = async () => {
+        const resolveTeamAndHistory = async () => {
             if (!projectId) {
                 setTeamId(null);
+                setHistoryEntries([]);
                 return;
             }
             try {
                 const { teams } = await listTeams();
                 for (const team of teams) {
                     if (!team.id) continue;
-                    const { projects } = await listTeamProjects(team.id);
-                    const match = projects.find((project) => project.id === projectId);
-                    if (match && isActive) {
+                    try {
+                        const { history } = await listProjectHistory(team.id, projectId);
+                        if (!isActive) return;
                         setTeamId(team.id);
+                        setHistoryEntries(history);
+                        const latest = history[0]?.pagePath;
+                        if (latest) {
+                            const stored = await getProjectFile(team.id, projectId, latest);
+                            const svgText = atob(stored.contentBase64);
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(svgText, "image/svg+xml");
+                            const svgElement = doc.documentElement;
+                            setLoadedSvgMarkup(svgElement.innerHTML);
+                            setElements([]);
+                            setSyncStatus("saved");
+                        }
                         return;
+                    } catch (innerError) {
+                        if (innerError instanceof Error && innerError.message.includes("Project not found")) {
+                            continue;
+                        }
+                        throw innerError;
                     }
                 }
                 if (isActive) {
                     setTeamId(null);
+                    setHistoryEntries([]);
                 }
             } catch (error) {
                 if (isActive) {
                     console.error("Failed to resolve project team:", error);
                     setTeamId(null);
+                    setHistoryEntries([]);
+                    setSyncStatus("error");
                 }
             }
         };
 
-        void findProjectTeam();
+        void resolveTeamAndHistory();
 
         return () => {
             isActive = false;
@@ -289,6 +312,7 @@ export default function ProjectPage() {
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
         }
+        setSyncStatus("saving");
         saveTimeoutRef.current = setTimeout(async () => {
             if (!svgRef.current) return;
             const serialized = new XMLSerializer().serializeToString(svgRef.current);
@@ -296,6 +320,7 @@ export default function ProjectPage() {
             lastSerializedRef.current = serialized;
             const folderName = new Date().toISOString().replace(/[:.]/g, "-");
             try {
+                setSyncStatus("saving");
                 const previewBase64 = await createPreviewPng(serialized);
                 await Promise.all([
                     storeProjectFile({
@@ -315,8 +340,17 @@ export default function ProjectPage() {
                         mimeType: "image/png",
                     })
                 ]);
+                setSyncStatus("saved");
+                setLastSavedAt(new Date().toLocaleTimeString());
+                try {
+                    const { history } = await listProjectHistory(teamId, projectId);
+                    setHistoryEntries(history);
+                } catch (historyError) {
+                    console.error("Failed to refresh history:", historyError);
+                }
             } catch (error) {
                 console.error("Failed to store project SVG:", error);
+                setSyncStatus("error");
             }
         }, 800);
     }, [createPreviewPng, projectId, teamId]);
@@ -341,34 +375,73 @@ export default function ProjectPage() {
         scheduleSave();
     }, [scheduleSave]);
 
-    useEffect(() => {
-        if (!teamId || !projectId || hasLoadedRef.current) return;
-        hasLoadedRef.current = true;
-        const loadSvg = async () => {
-            try {
-                const stored = await getLatestProjectFile(teamId, projectId);
-                const svgText = atob(stored.contentBase64);
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(svgText, "image/svg+xml");
-                const svgElement = doc.documentElement;
-                setLoadedSvgMarkup(svgElement.innerHTML);
-                setElements([]);
-            } catch (error) {
-                console.error("Failed to load stored SVG:", error);
-            }
-        };
 
-        void loadSvg();
-    }, [projectId, teamId]);
+    const syncPill = useMemo(() => {
+        switch (syncStatus) {
+            case "saving":
+                return { label: "Saving", classes: "bg-amber-100 text-amber-700 border-amber-200" };
+            case "saved":
+                return { label: "Saved", classes: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+            case "error":
+                return { label: "Error", classes: "bg-red-100 text-red-700 border-red-200" };
+            default:
+                return { label: "Idle", classes: "bg-gray-100 text-gray-600 border-gray-200" };
+        }
+    }, [syncStatus]);
 
   return (
     <div className="flex min-h-screen bg-zinc-50 font-sans dark:bg-black overflow-hidden">
         {/* Sidebar/Toolbar */}
         <div className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col gap-4 shadow-sm z-10">
-            <h1 className="text-xl font-bold text-gray-800 mb-2">UML Pro Dev</h1>
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Project {params?.id}</p>
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <h1 className="text-xl font-bold text-gray-800 mb-2">UML Pro Dev</h1>
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Project {params?.id}</p>
+                </div>
+                <div className={`border px-2 py-1 text-[10px] uppercase tracking-[0.2em] rounded-full ${syncPill.classes}`}>
+                    {syncPill.label}
+                </div>
+            </div>
+            {lastSavedAt && syncStatus === "saved" && (
+                <p className="mt-2 text-[10px] text-gray-400">Last saved at {lastSavedAt}</p>
+            )}
 
             {buttons}
+
+            <div className="mt-4">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-3">
+                    History
+                </h2>
+                <div className="space-y-2">
+                    {historyEntries.length === 0 && (
+                        <p className="text-xs text-gray-400">No saved snapshots yet.</p>
+                    )}
+                    {historyEntries.map((entry) => (
+                        <button
+                            key={entry.folder}
+                            type="button"
+                            className="w-full rounded-md border border-gray-200 px-3 py-2 text-left text-xs text-gray-700 hover:border-gray-400"
+                            onClick={async () => {
+                                if (!teamId || !projectId || !entry.pagePath) return;
+                                try {
+                                    const stored = await getProjectFile(teamId, projectId, entry.pagePath);
+                                    const svgText = atob(stored.contentBase64);
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(svgText, "image/svg+xml");
+                                    const svgElement = doc.documentElement;
+                                    setLoadedSvgMarkup(svgElement.innerHTML);
+                                    setElements([]);
+                                } catch (error) {
+                                    console.error("Failed to load selected SVG:", error);
+                                }
+                            }}
+                        >
+                            <div className="text-[11px] font-medium text-gray-600">{entry.folder}</div>
+                            <div className="text-[10px] text-gray-400">{entry.pagePath ?? "Missing page.svg"}</div>
+                        </button>
+                    ))}
+                </div>
+            </div>
 
         </div>
 
