@@ -2,6 +2,7 @@
 
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import { useParams } from "next/navigation";
+import Image from "next/image";
 
 import Class from "@/public/components/class/Class";
 
@@ -317,7 +318,7 @@ export default function ProjectPage() {
         const url = URL.createObjectURL(svgBlob);
         try {
             const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-                const img = new Image();
+                const img = window.document.createElement("img");
                 img.onload = () => resolve(img);
                 img.onerror = () => reject(new Error("Failed to load SVG preview"));
                 img.src = url;
@@ -684,10 +685,12 @@ export default function ProjectPage() {
                                 <>
                                     <div className="rounded-lg border border-dashed border-gray-200 p-6 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:24px_24px] min-h-[320px] flex items-center justify-center">
                                         {selectedSvgDataUrl ? (
-                                            <img
+                                            <Image
                                                 src={selectedSvgDataUrl}
                                                 alt="Selected snapshot"
                                                 className="max-h-[360px] max-w-full"
+                                                width={720}
+                                                height={360}
                                             />
                                         ) : (
                                             <div className="text-xs text-gray-500">No selected snapshot.</div>
@@ -695,10 +698,12 @@ export default function ProjectPage() {
                                     </div>
                                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                                         {previewImage ? (
-                                            <img
+                                            <Image
                                                 src={previewImage}
                                                 alt="Project preview"
                                                 className="w-40 max-w-full rounded-md border border-gray-200"
+                                                width={160}
+                                                height={120}
                                             />
                                         ) : (
                                             <div className="text-sm text-gray-500">No preview available.</div>
@@ -713,10 +718,12 @@ export default function ProjectPage() {
                                             <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Current</div>
                                             <div className="flex-1 rounded-md border border-gray-200 bg-white p-3 flex items-center justify-center">
                                                 {latestSvgDataUrl ? (
-                                                    <img
+                                                    <Image
                                                         src={latestSvgDataUrl}
                                                         alt="Current snapshot"
                                                         className="max-h-[320px] max-w-full"
+                                                        width={640}
+                                                        height={320}
                                                     />
                                                 ) : (
                                                     <div className="text-xs text-gray-500">No current snapshot.</div>
@@ -727,10 +734,12 @@ export default function ProjectPage() {
                                             <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Selected</div>
                                             <div className="flex-1 rounded-md border border-gray-200 bg-white p-3 flex items-center justify-center">
                                                 {selectedSvgDataUrl ? (
-                                                    <img
+                                                    <Image
                                                         src={selectedSvgDataUrl}
                                                         alt="Selected snapshot"
                                                         className="max-h-[320px] max-w-full"
+                                                        width={640}
+                                                        height={320}
                                                     />
                                                 ) : (
                                                     <div className="text-xs text-gray-500">No selected snapshot.</div>
