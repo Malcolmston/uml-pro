@@ -7,6 +7,11 @@ import Visibility from "@/public/components/visibility";
 import CreateClass from "@/public/components/window/class/Create";
 import Background from "./background";
 
+//import custom icons
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { byPrefixAndName } from '@awesome.me/kit-ab2f5093a4/icons'
+
+
 export default function ProjectPage() {
     const params = useParams<{ id: string }>();
     const viewBox = { x: -100, y: -100, width: 1800, height: 1400 };
@@ -81,6 +86,77 @@ export default function ProjectPage() {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const connectors: React.ReactElement[] = [];
 
+    const buttons: Array<React.ReactElement> = [
+        (<button
+            key={'create-class'}
+            onClick={() => setIsCreateOpen(true)}
+            className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
+            title="Create New Class"
+        >
+            <FontAwesomeIcon icon={byPrefixAndName.fakd['class']} size="xl"/>
+            <span
+                className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Create New Class
+            </span>
+        </button>),
+
+        (<button
+            key={'create-abstract-class'}
+            onClick={() => setIsCreateOpen(true)}
+            className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
+            title="Create New Abstract Class"
+        >
+            <FontAwesomeIcon icon={byPrefixAndName.fakd['abstract-class']} size="xl"/>
+            <span
+                className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Create New Abstract Class
+            </span>
+        </button>),
+
+        (<button
+            key={'create-annotation'}
+            onClick={() => setIsCreateOpen(true)}
+            className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
+            title="Create New Annotation"
+        >
+            <FontAwesomeIcon icon={byPrefixAndName.fakd['annotation']} size="xl"/>
+            <span
+                className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Create New Annotation
+            </span>
+        </button>),
+
+        (
+            <button
+                key={'create-enum'}
+                onClick={() => setIsCreateOpen(true)}
+                className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
+                title="Create New Enum"
+            >
+                <FontAwesomeIcon icon={byPrefixAndName.fakd['enum']} size="xl"/>
+                <span
+                    className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Create New Enum
+                </span>
+            </button>
+        ),
+
+        (
+            <button
+                key={'create-interface'}
+                onClick={() => setIsCreateOpen(true)}
+                className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center group relative"
+                title="Create New Interface"
+            >
+                <FontAwesomeIcon icon={byPrefixAndName.fakd['interface']} size="2xl"/>
+                <span
+                    className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Create New Interface
+                </span>
+            </button>
+        )
+
+    ];
     const handleAddNode = (node: React.JSX.Element) => {
         setElements(prev => [...prev, node]);
         setIsCreateOpen(false);
@@ -92,12 +168,8 @@ export default function ProjectPage() {
         <div className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col gap-4 shadow-sm z-10">
             <h1 className="text-xl font-bold text-gray-800 mb-2">UML Pro Dev</h1>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Project {params?.id}</p>
-            <button
-                onClick={() => setIsCreateOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
-            >
-                Create New Class
-            </button>
+
+            {buttons}
 
             {isCreateOpen && (
                 <div className="mt-4 border-t pt-4 overflow-y-auto max-h-[calc(100vh-200px)]">
