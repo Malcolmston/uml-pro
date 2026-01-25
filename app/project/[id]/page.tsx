@@ -10,7 +10,6 @@ import Visibility from "@/public/components/visibility";
 import CreateClass from "@/public/components/window/class/Create";
 import CreateAbstract from "@/public/components/window/abstract/Create";
 import CreateAnnotation from "@/public/components/window/annotation/Create";
-import CreateEnum from "@/public/components/window/enum/Create";
 import CreateInterface from "@/public/components/window/interface/Create";
 import CreateRecord from "@/public/components/window/record/Create";
 
