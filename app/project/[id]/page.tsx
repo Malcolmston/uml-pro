@@ -15,6 +15,7 @@ import CreateRecord from "@/public/components/window/record/Create";
 
 import Background from "./background";
 import HistoryPopup from "./history";
+import DiffView from "./diff";
 import { getLatestProjectFile, getProjectFile, listProjectHistory, listTeams, storeProjectFile } from "./_api";
 
 //import custom icons
@@ -38,6 +39,16 @@ export default function ProjectPage() {
     const [previewLabel, setPreviewLabel] = useState<string>("");
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [previewTab, setPreviewTab] = useState<"preview" | "diff">("preview");
+    const [latestSvgText, setLatestSvgText] = useState<string | null>(null);
+    const [selectedSvgText, setSelectedSvgText] = useState<string | null>(null);
+    const latestSvgDataUrl = useMemo(() => {
+        if (!latestSvgText) return null;
+        return `data:image/svg+xml;utf8,${encodeURIComponent(latestSvgText)}`;
+    }, [latestSvgText]);
+    const selectedSvgDataUrl = useMemo(() => {
+        if (!selectedSvgText) return null;
+        return `data:image/svg+xml;utf8,${encodeURIComponent(selectedSvgText)}`;
+    }, [selectedSvgText]);
 
     const projectId = useMemo(() => {
         const idValue = Number(params?.id);
@@ -551,11 +562,26 @@ export default function ProjectPage() {
                 }
             }}
             onPreview={async (entry) => {
-                if (!teamId || !projectId || !entry.previewPath) return;
+                if (!teamId || !projectId) return;
                 try {
-                    const stored = await getProjectFile(teamId, projectId, entry.previewPath);
-                    const dataUrl = `data:${stored.mimeType};base64,${stored.contentBase64}`;
-                    setPreviewImage(dataUrl);
+                    if (entry.previewPath) {
+                        const storedPreview = await getProjectFile(teamId, projectId, entry.previewPath);
+                        const dataUrl = `data:${storedPreview.mimeType};base64,${storedPreview.contentBase64}`;
+                        setPreviewImage(dataUrl);
+                    } else {
+                        setPreviewImage(null);
+                    }
+
+                    if (entry.pagePath) {
+                        const storedSelected = await getProjectFile(teamId, projectId, entry.pagePath);
+                        setSelectedSvgText(atob(storedSelected.contentBase64));
+                    } else {
+                        setSelectedSvgText(null);
+                    }
+
+                    const storedLatest = await getLatestProjectFile(teamId, projectId);
+                    setLatestSvgText(atob(storedLatest.contentBase64));
+
                     setPreviewLabel(formatHistoryLabel(entry.folder));
                     setPreviewTab("preview");
                     setIsPreviewOpen(true);
@@ -567,14 +593,14 @@ export default function ProjectPage() {
 
         {isPreviewOpen && (
             <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
+                className="fixed inset-0 z-50 bg-black/60 backdrop-blur"
                 onClick={() => setIsPreviewOpen(false)}
             >
                 <div
-                    className="w-full max-w-2xl"
+                    className="h-full w-full"
                     onClick={(event) => event.stopPropagation()}
                 >
-                    <div className="bg-white rounded-xl shadow-lg w-full border overflow-hidden">
+                    <div className="bg-white h-full w-full border overflow-hidden">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
                             <div className="flex items-center gap-2">
                                 <FontAwesomeIcon icon={byPrefixAndName.fawsb["images"]} />
@@ -609,11 +635,19 @@ export default function ProjectPage() {
                                 </button>
                             </div>
                         </div>
-                        <div className="px-6 py-5 space-y-4">
+                        <div className="px-6 py-5 space-y-4 overflow-y-auto max-h-[calc(100vh-120px)]">
                             {previewTab === "preview" && (
                                 <>
-                                    <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:24px_24px] min-h-[260px]">
-                                        Canvas preview (mock)
+                                    <div className="rounded-lg border border-dashed border-gray-200 p-6 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:24px_24px] min-h-[320px] flex items-center justify-center">
+                                        {selectedSvgDataUrl ? (
+                                            <img
+                                                src={selectedSvgDataUrl}
+                                                alt="Selected snapshot"
+                                                className="max-h-[360px] max-w-full"
+                                            />
+                                        ) : (
+                                            <div className="text-xs text-gray-500">No selected snapshot.</div>
+                                        )}
                                     </div>
                                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                                         {previewImage ? (
@@ -629,8 +663,44 @@ export default function ProjectPage() {
                                 </>
                             )}
                             {previewTab === "diff" && (
-                                <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 min-h-[260px]">
-                                    Diff view coming soon.
+                                <div className="space-y-4">
+                                    <div className="rounded-lg border border-dashed border-gray-200 p-6 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:24px_24px] min-h-[320px] grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Current</div>
+                                            <div className="flex-1 rounded-md border border-gray-200 bg-white p-3 flex items-center justify-center">
+                                                {latestSvgDataUrl ? (
+                                                    <img
+                                                        src={latestSvgDataUrl}
+                                                        alt="Current snapshot"
+                                                        className="max-h-[320px] max-w-full"
+                                                    />
+                                                ) : (
+                                                    <div className="text-xs text-gray-500">No current snapshot.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Selected</div>
+                                            <div className="flex-1 rounded-md border border-gray-200 bg-white p-3 flex items-center justify-center">
+                                                {selectedSvgDataUrl ? (
+                                                    <img
+                                                        src={selectedSvgDataUrl}
+                                                        alt="Selected snapshot"
+                                                        className="max-h-[320px] max-w-full"
+                                                    />
+                                                ) : (
+                                                    <div className="text-xs text-gray-500">No selected snapshot.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-lg border border-gray-200 bg-white p-4 min-h-[260px]">
+                                        {latestSvgText && selectedSvgText ? (
+                                            <DiffView latest={latestSvgText} previous={selectedSvgText} />
+                                        ) : (
+                                            <div className="text-xs text-gray-500">Diff data unavailable.</div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
