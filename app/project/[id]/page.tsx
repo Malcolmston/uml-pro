@@ -14,6 +14,7 @@ import CreateInterface from "@/public/components/window/interface/Create";
 import CreateRecord from "@/public/components/window/record/Create";
 
 import Background from "./background";
+import HistoryPopup from "./history";
 import { getLatestProjectFile, getProjectFile, listProjectHistory, listTeams, storeProjectFile } from "./_api";
 
 //import custom icons
@@ -33,6 +34,10 @@ export default function ProjectPage() {
     const [syncStatus, setSyncStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
     const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [previewLabel, setPreviewLabel] = useState<string>("");
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [previewTab, setPreviewTab] = useState<"preview" | "diff">("preview");
 
     const projectId = useMemo(() => {
         const idValue = Number(params?.id);
@@ -525,61 +530,108 @@ export default function ProjectPage() {
             </div>
         )}
 
-        {isHistoryOpen && (
+        <HistoryPopup
+            isOpen={isHistoryOpen}
+            entries={historyEntries}
+            formatLabel={formatHistoryLabel}
+            onClose={() => setIsHistoryOpen(false)}
+            onSelect={async (entry) => {
+                if (!teamId || !projectId || !entry.pagePath) return;
+                try {
+                    const stored = await getProjectFile(teamId, projectId, entry.pagePath);
+                    const svgText = atob(stored.contentBase64);
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(svgText, "image/svg+xml");
+                    const svgElement = doc.documentElement;
+                    setLoadedSvgMarkup(svgElement.innerHTML);
+                    setElements([]);
+                    setIsHistoryOpen(false);
+                } catch (error) {
+                    console.error("Failed to load selected SVG:", error);
+                }
+            }}
+            onPreview={async (entry) => {
+                if (!teamId || !projectId || !entry.previewPath) return;
+                try {
+                    const stored = await getProjectFile(teamId, projectId, entry.previewPath);
+                    const dataUrl = `data:${stored.mimeType};base64,${stored.contentBase64}`;
+                    setPreviewImage(dataUrl);
+                    setPreviewLabel(formatHistoryLabel(entry.folder));
+                    setPreviewTab("preview");
+                    setIsPreviewOpen(true);
+                } catch (error) {
+                    console.error("Failed to load preview image:", error);
+                }
+            }}
+        />
+
+        {isPreviewOpen && (
             <div
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
-                onClick={() => setIsHistoryOpen(false)}
+                onClick={() => setIsPreviewOpen(false)}
             >
                 <div
-                    className="w-full max-w-xl"
+                    className="w-full max-w-2xl"
                     onClick={(event) => event.stopPropagation()}
                 >
-                    <div className="p-6 bg-white rounded-lg shadow-lg w-full space-y-6 overflow-y-auto max-h-[85vh] border">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-800">Project History</h2>
+                    <div className="bg-white rounded-xl shadow-lg w-full border overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b">
+                            <div className="flex items-center gap-2">
+                                <FontAwesomeIcon icon={byPrefixAndName.fawsb["images"]} />
+                                <div>
+                                    <h2 className="text-lg font-semibold text-gray-800">Snapshot preview</h2>
+                                    <p className="text-xs text-gray-500">{previewLabel}</p>
+                                </div>
+                            </div>
                             <button
-                                onClick={() => setIsHistoryOpen(false)}
+                                onClick={() => setIsPreviewOpen(false)}
                                 className="text-gray-400 hover:text-gray-600 text-xl leading-none"
                                 aria-label="Close"
                             >
                                 ×
                             </button>
                         </div>
-                        <div className="space-y-2">
-                            {historyEntries.length === 0 && (
-                                <p className="text-sm text-gray-500">No saved snapshots yet.</p>
-                            )}
-                            {historyEntries.length > 0 && (
-                                <select
-                                    className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-gray-400 focus:outline-none"
-                                    defaultValue=""
-                                    onChange={async (event) => {
-                                        const folder = event.target.value;
-                                        const entry = historyEntries.find((item) => item.folder === folder);
-                                        if (!entry || !teamId || !projectId || !entry.pagePath) return;
-                                        try {
-                                            const stored = await getProjectFile(teamId, projectId, entry.pagePath);
-                                            const svgText = atob(stored.contentBase64);
-                                            const parser = new DOMParser();
-                                            const doc = parser.parseFromString(svgText, "image/svg+xml");
-                                            const svgElement = doc.documentElement;
-                                            setLoadedSvgMarkup(svgElement.innerHTML);
-                                            setElements([]);
-                                            setIsHistoryOpen(false);
-                                        } catch (error) {
-                                            console.error("Failed to load selected SVG:", error);
-                                        }
-                                    }}
+                        <div className="px-6 py-4 border-b">
+                            <div className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-xs">
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewTab("preview")}
+                                    className={`px-3 py-1 rounded-full transition ${previewTab === "preview" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
                                 >
-                                    <option value="" disabled>
-                                        Select snapshot
-                                    </option>
-                                    {historyEntries.map((entry) => (
-                                        <option key={entry.folder} value={entry.folder}>
-                                            {formatHistoryLabel(entry.folder)}
-                                        </option>
-                                    ))}
-                                </select>
+                                    Preview
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewTab("diff")}
+                                    className={`px-3 py-1 rounded-full transition ${previewTab === "diff" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+                                >
+                                    Diff
+                                </button>
+                            </div>
+                        </div>
+                        <div className="px-6 py-5 space-y-4">
+                            {previewTab === "preview" && (
+                                <>
+                                    <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:24px_24px] min-h-[260px]">
+                                        Canvas preview (mock)
+                                    </div>
+                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                        {previewImage ? (
+                                            <img
+                                                src={previewImage}
+                                                alt="Project preview"
+                                                className="w-40 max-w-full rounded-md border border-gray-200"
+                                            />
+                                        ) : (
+                                            <div className="text-sm text-gray-500">No preview available.</div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            {previewTab === "diff" && (
+                                <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 min-h-[260px]">
+                                    Diff view coming soon.
+                                </div>
                             )}
                         </div>
                     </div>
