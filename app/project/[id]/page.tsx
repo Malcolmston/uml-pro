@@ -34,6 +34,9 @@ export default function ProjectPage() {
     const [syncStatus, setSyncStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
     const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [previewLabel, setPreviewLabel] = useState<string>("");
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     const projectId = useMemo(() => {
         const idValue = Number(params?.id);
@@ -546,7 +549,66 @@ export default function ProjectPage() {
                     console.error("Failed to load selected SVG:", error);
                 }
             }}
+            onPreview={async (entry) => {
+                if (!teamId || !projectId || !entry.previewPath) return;
+                try {
+                    const stored = await getProjectFile(teamId, projectId, entry.previewPath);
+                    const dataUrl = `data:${stored.mimeType};base64,${stored.contentBase64}`;
+                    setPreviewImage(dataUrl);
+                    setPreviewLabel(formatHistoryLabel(entry.folder));
+                    setIsPreviewOpen(true);
+                } catch (error) {
+                    console.error("Failed to load preview image:", error);
+                }
+            }}
         />
+
+        {isPreviewOpen && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
+                onClick={() => setIsPreviewOpen(false)}
+            >
+                <div
+                    className="w-full max-w-2xl"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <div className="bg-white rounded-xl shadow-lg w-full border overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b">
+                            <div className="flex items-center gap-2">
+                                <FontAwesomeIcon icon={byPrefixAndName.fawsb["images"]} />
+                                <div>
+                                    <h2 className="text-lg font-semibold text-gray-800">Snapshot preview</h2>
+                                    <p className="text-xs text-gray-500">{previewLabel}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsPreviewOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="px-6 py-5 space-y-4">
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                {previewImage ? (
+                                    <img
+                                        src={previewImage}
+                                        alt="Project preview"
+                                        className="w-full rounded-md border border-gray-200"
+                                    />
+                                ) : (
+                                    <div className="text-sm text-gray-500">No preview available.</div>
+                                )}
+                            </div>
+                            <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:24px_24px]">
+                                Canvas preview (mock)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
 
     </div>
   );
