@@ -14,6 +14,7 @@ import CreateInterface from "@/public/components/window/interface/Create";
 import CreateRecord from "@/public/components/window/record/Create";
 
 import Background from "./background";
+import HistoryPopup from "./history";
 import { getLatestProjectFile, getProjectFile, listProjectHistory, listTeams, storeProjectFile } from "./_api";
 
 //import custom icons
@@ -525,67 +526,27 @@ export default function ProjectPage() {
             </div>
         )}
 
-        {isHistoryOpen && (
-            <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
-                onClick={() => setIsHistoryOpen(false)}
-            >
-                <div
-                    className="w-full max-w-xl"
-                    onClick={(event) => event.stopPropagation()}
-                >
-                    <div className="p-6 bg-white rounded-lg shadow-lg w-full space-y-6 overflow-y-auto max-h-[85vh] border">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-800">Project History</h2>
-                            <button
-                                onClick={() => setIsHistoryOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                                aria-label="Close"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <div className="space-y-2">
-                            {historyEntries.length === 0 && (
-                                <p className="text-sm text-gray-500">No saved snapshots yet.</p>
-                            )}
-                            {historyEntries.length > 0 && (
-                                <select
-                                    className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-gray-400 focus:outline-none"
-                                    defaultValue=""
-                                    onChange={async (event) => {
-                                        const folder = event.target.value;
-                                        const entry = historyEntries.find((item) => item.folder === folder);
-                                        if (!entry || !teamId || !projectId || !entry.pagePath) return;
-                                        try {
-                                            const stored = await getProjectFile(teamId, projectId, entry.pagePath);
-                                            const svgText = atob(stored.contentBase64);
-                                            const parser = new DOMParser();
-                                            const doc = parser.parseFromString(svgText, "image/svg+xml");
-                                            const svgElement = doc.documentElement;
-                                            setLoadedSvgMarkup(svgElement.innerHTML);
-                                            setElements([]);
-                                            setIsHistoryOpen(false);
-                                        } catch (error) {
-                                            console.error("Failed to load selected SVG:", error);
-                                        }
-                                    }}
-                                >
-                                    <option value="" disabled>
-                                        Select snapshot
-                                    </option>
-                                    {historyEntries.map((entry) => (
-                                        <option key={entry.folder} value={entry.folder}>
-                                            {formatHistoryLabel(entry.folder)}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
+        <HistoryPopup
+            isOpen={isHistoryOpen}
+            entries={historyEntries}
+            formatLabel={formatHistoryLabel}
+            onClose={() => setIsHistoryOpen(false)}
+            onSelect={async (entry) => {
+                if (!teamId || !projectId || !entry.pagePath) return;
+                try {
+                    const stored = await getProjectFile(teamId, projectId, entry.pagePath);
+                    const svgText = atob(stored.contentBase64);
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(svgText, "image/svg+xml");
+                    const svgElement = doc.documentElement;
+                    setLoadedSvgMarkup(svgElement.innerHTML);
+                    setElements([]);
+                    setIsHistoryOpen(false);
+                } catch (error) {
+                    console.error("Failed to load selected SVG:", error);
+                }
+            }}
+        />
 
     </div>
   );
