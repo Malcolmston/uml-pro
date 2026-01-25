@@ -1,4 +1,4 @@
-import Interface from "@/public/components/interface/Interface";
+import Interface from "@/public/components/Interface/Interface";
 import {MethodProps} from "@/public/components/Method";
 import Visibility from "@/public/components/visibility";
 import {type AnnotationElement, Props} from "@/public/components/annotation/properties";
