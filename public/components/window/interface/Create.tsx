@@ -2,7 +2,7 @@ import {CreateInterfaceProps, CreateInterfaceState} from "@/public/components/wi
 import React from "react";
 import ObjectCreator from "@/public/components/window/ObjectCreator";
 import Visibility from "@/public/components/visibility";
-import Interface from "@/public/components/interface/Interface";
+import Interface from "@/public/components/Interface/Interface";
 
 export default class CreateInterface extends ObjectCreator<CreateInterfaceProps, CreateInterfaceState> {
     constructor(props: CreateInterfaceProps) {
