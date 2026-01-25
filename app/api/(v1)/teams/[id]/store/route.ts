@@ -168,6 +168,7 @@ export async function GET(
     const url = new URL(request.url)
     const projectIdParam = url.searchParams.get("projectId")
     const filePathParam = url.searchParams.get("filePath")
+    const listParam = url.searchParams.get("list")
     const projectId = Number(projectIdParam)
     if (!Number.isFinite(projectId)) {
         return NextResponse.json({ error: "Invalid projectId" }, { status: 400 })
@@ -196,17 +197,41 @@ export async function GET(
     }
 
     const bucketName = `project-${project.uuid}-files`
+    const listResult = await getAllFiles(bucketName)
+    if (listResult.error) {
+        return NextResponse.json({ error: listResult.error.message }, { status: 500 })
+    }
+
+    const files = (listResult.data || []).map((item) => item.name)
+    if (listParam === "1" || listParam === "true") {
+        const historyMap = new Map<string, { folder: string; pagePath?: string; previewPath?: string }>()
+        for (const name of files) {
+            const [folder, fileName] = name.split("/")
+            if (!folder || !fileName) continue
+            if (!historyMap.has(folder)) {
+                historyMap.set(folder, { folder })
+            }
+            const entry = historyMap.get(folder)
+            if (!entry) continue
+            if (fileName === "page.svg") {
+                entry.pagePath = name
+            }
+            if (fileName === "preview.png") {
+                entry.previewPath = name
+            }
+        }
+
+        const history = Array.from(historyMap.values()).sort((a, b) =>
+            b.folder.localeCompare(a.folder)
+        )
+
+        return NextResponse.json({ history }, { status: 200 })
+    }
+
     let targetPath = filePathParam
 
     if (!targetPath) {
-        const listResult = await getAllFiles(bucketName)
-        if (listResult.error) {
-            return NextResponse.json({ error: listResult.error.message }, { status: 500 })
-        }
-
-        const candidates = (listResult.data || [])
-            .map((item) => item.name)
-            .filter((name) => name.endsWith("/page.svg"))
+        const candidates = files.filter((name) => name.endsWith("/page.svg"))
 
         if (candidates.length === 0) {
             return NextResponse.json({ error: "No saved project found" }, { status: 404 })
