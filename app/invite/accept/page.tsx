@@ -41,16 +41,17 @@ export default function AcceptInvitePage() {
             return
         }
 
-        let teamId = Number(teamIdParam)
+        let teamId: number | null = Number(teamIdParam)
         if (!Number.isFinite(teamId)) {
             teamId = await resolveTeamId(token)
         }
 
-        if (!Number.isFinite(teamId)) {
+        if (teamId === null || !Number.isFinite(teamId)) {
             setStatus("error")
             setMessage("Invite link is invalid or expired. Ask your admin to resend it.")
             return
         }
+        const resolvedTeamId = teamId
 
         const authToken = window.localStorage.getItem("token")
         if (!authToken) {
@@ -63,7 +64,7 @@ export default function AcceptInvitePage() {
         setMessage(statusCopy.loading)
 
         try {
-            const response = await fetch(`/api/teams/${teamId}/members/invite/accept`, {
+            const response = await fetch(`/api/teams/${resolvedTeamId}/members/invite/accept`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

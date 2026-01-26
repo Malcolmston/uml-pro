@@ -454,7 +454,10 @@ export default function ProjectPage() {
             try {
                 const { invites } = await listTeamInvites(teamId);
                 if (active) {
-                    setInvites(invites);
+                    setInvites(invites.map((invite) => ({
+                        ...invite,
+                        createdAt: invite.createdAt ?? null,
+                    })));
                 }
             } catch (error) {
                 if (active) {
