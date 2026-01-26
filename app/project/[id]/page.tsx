@@ -17,7 +17,7 @@ import CreateRecord from "@/public/components/window/record/Create";
 import Background from "./background";
 import HistoryPopup from "./history";
 import DiffView from "./diff";
-import { getLatestProjectFile, getProjectFile, listProjectHistory, listTeams, storeProjectFile } from "./_api";
+import { getLatestProjectFile, getProjectFile, listProjectHistory, listTeamInvites, listTeams, storeProjectFile } from "./_api";
 
 //import custom icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -44,6 +44,10 @@ export default function ProjectPage() {
     const [previewTab, setPreviewTab] = useState<"preview" | "diff">("preview");
     const [latestSvgText, setLatestSvgText] = useState<string | null>(null);
     const [selectedSvgText, setSelectedSvgText] = useState<string | null>(null);
+    const [isInvitesOpen, setIsInvitesOpen] = useState(false);
+    const [invites, setInvites] = useState<Array<{ id: number | null; email: string; role: string; status?: string; createdAt: string | null }>>([]);
+    const [invitesLoading, setInvitesLoading] = useState(false);
+    const [invitesError, setInvitesError] = useState<string | null>(null);
     const latestSvgDataUrl = useMemo(() => {
         if (!latestSvgText) return null;
         return `data:image/svg+xml;utf8,${encodeURIComponent(latestSvgText)}`;
@@ -441,6 +445,33 @@ export default function ProjectPage() {
         scheduleSave();
     }, [scheduleSave]);
 
+    useEffect(() => {
+        if (!isInvitesOpen || !teamId) return;
+        let active = true;
+        const loadInvites = async () => {
+            setInvitesLoading(true);
+            setInvitesError(null);
+            try {
+                const { invites } = await listTeamInvites(teamId);
+                if (active) {
+                    setInvites(invites);
+                }
+            } catch (error) {
+                if (active) {
+                    setInvitesError(error instanceof Error ? error.message : "Failed to load invites.");
+                }
+            } finally {
+                if (active) {
+                    setInvitesLoading(false);
+                }
+            }
+        };
+        void loadInvites();
+        return () => {
+            active = false;
+        };
+    }, [isInvitesOpen, teamId]);
+
 
     const syncPill = useMemo(() => {
         switch (syncStatus) {
@@ -485,6 +516,14 @@ export default function ProjectPage() {
                         title="Project history"
                     >
                         <FontAwesomeIcon icon={byPrefixAndName.fas['clock-rotate-left']} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsInvitesOpen(true)}
+                        className="h-8 px-3 rounded-full border border-gray-200 text-[10px] uppercase tracking-[0.2em] text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                        title="Team invites"
+                    >
+                        Invites
                     </button>
                     <div className={`border px-2 py-1 text-[10px] uppercase tracking-[0.2em] rounded-full ${syncPill.classes}`}>
                         {syncPill.label}
@@ -799,6 +838,49 @@ export default function ProjectPage() {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {isInvitesOpen && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
+                onClick={() => setIsInvitesOpen(false)}
+            >
+                <div
+                    className="w-full max-w-xl"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <div className="p-6 bg-white rounded-lg shadow-lg w-full space-y-6 overflow-y-auto max-h-[85vh] border">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-800">Team invites</h2>
+                            <button
+                                onClick={() => setIsInvitesOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        {invitesLoading && <p className="text-sm text-gray-500">Loading invites...</p>}
+                        {invitesError && <p className="text-sm text-red-500">{invitesError}</p>}
+                        {!invitesLoading && invites.length === 0 && (
+                            <p className="text-sm text-gray-500">No pending invites.</p>
+                        )}
+                        <div className="space-y-3">
+                            {invites.map((invite) => (
+                                <div
+                                    key={invite.id}
+                                    className="rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700"
+                                >
+                                    <div className="font-semibold text-gray-900">{invite.email}</div>
+                                    <div className="text-xs text-gray-500">
+                                        Role: {invite.role} · {invite.status}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
