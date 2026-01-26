@@ -119,7 +119,8 @@ describe('POST /api/v1/teams/[id]/members/invite', () => {
         expect(mockInviteRepo.save).toHaveBeenCalled()
         expect(emailUtils.sendTeamInviteEmail).toHaveBeenCalledWith(expect.objectContaining({
             email: 'test@example.com',
-            teamName: 'Test Team'
+            teamName: 'Test Team',
+            teamId: mockTeamId
         }))
     })
 
