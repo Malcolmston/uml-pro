@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Fraunces, Space_Grotesk } from "next/font/google"
 
 const display = Fraunces({ subsets: ["latin"], weight: ["600", "700"] })
@@ -43,6 +44,7 @@ const getToken = () => {
 }
 
 export default function DashboardPage() {
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState<TabKey>("projects")
     const [teams, setTeams] = useState<Team[]>([])
     const [projects, setProjects] = useState<Project[]>([])
@@ -171,6 +173,13 @@ export default function DashboardPage() {
             setSearchingUsers(false)
         }
     }
+
+    const handleLogout = useCallback(() => {
+        if (typeof window !== "undefined") {
+            window.localStorage.removeItem("token")
+        }
+        router.push("/signin")
+    }, [router])
 
     const sendInvite = async (email: string, role: string) => {
         if (!selectedTeamId) {
@@ -365,8 +374,17 @@ export default function DashboardPage() {
                                 Keep every blueprint in sync.
                             </h1>
                         </div>
-                        <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#f4f1ea]">
-                            Active: {selectedTeam?.name ?? "No team selected"}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#f4f1ea]">
+                                Active: {selectedTeam?.name ?? "No team selected"}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#f4f1ea] hover:border-white/30"
+                            >
+                                Logout
+                            </button>
                         </div>
                     </header>
 
