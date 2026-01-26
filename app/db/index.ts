@@ -1,4 +1,5 @@
 import Database from "./connect"
+import type { DataSourceOptions } from "typeorm"
 
 /**
  * Initializes the database connection by establishing a connection with the database
@@ -16,9 +17,16 @@ import Database from "./connect"
 export const Init = () => {
     return Database.initialize()
         .then(() => {
+            const options = Database.options as DataSourceOptions
             console.log('✓ Database connected successfully')
-            console.log(`  Database: ${process.env.POSTGRES_DATABASE}`)
-            console.log(`  Host: ${process.env.POSTGRES_HOST}`)
+            if (process.env.NODE_ENV !== "production") {
+                console.log(`  Database: ${options.database ?? process.env.POSTGRES_DATABASE}`)
+                const host =
+                    "host" in options && typeof options.host === "string"
+                        ? options.host
+                        : process.env.POSTGRES_HOST
+                console.log(`  Host: ${host}`)
+            }
             console.log(`  Entities: ${Database.entityMetadatas.length}`)
         })
         .catch(err => {

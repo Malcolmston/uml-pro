@@ -23,19 +23,32 @@ const normalizePostgresUrl = (url: string) => {
     }
 }
 
+const stage: 'prod' | 'dev' | undefined | string = process.env.NODE_ENV;
+
+const db = stage !== "prod"
+    ? {
+        host: process.env.POSTGRES_HOST,
+        username: process.env.POSTGRES_USER,
+        password: process.env.POSTGRES_PASSWORD,
+        database: process.env.POSTGRES_DATABASE,
+    }
+    : {
+        host: process.env.PROD_POSTGRES_HOST,
+        username: process.env.PROD_POSTGRES_USER,
+        password: process.env.PROD_POSTGRES_PASSWORD,
+        database: process.env.PROD_POSTGRES_DATABASE,
+    };
+
 // Use connection pooling URL if available, otherwise fall back to individual params
-const connectionConfig = process.env.POSTGRES_URL 
+const connectionConfig = process.env.POSTGRES_URL
     ? {
         type: "postgres" as const,
         url: normalizePostgresUrl(process.env.POSTGRES_URL),
     }
     : {
         type: "postgres" as const,
-        host: process.env.POSTGRES_HOST,
         port: 5432,
-        username: process.env.POSTGRES_USER,
-        password: process.env.POSTGRES_PASSWORD,
-        database: process.env.POSTGRES_DATABASE,
+        ...db,
     }
 
 const Database = new DataSource({
