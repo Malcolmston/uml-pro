@@ -11,7 +11,7 @@ const getResendFrom = () =>
     process.env.RESEND_FROM ?? "UML Pro <onboarding@resend.dev>"
 
 const getAppUrl = () =>
-    process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001"
 
 /**
  * Sends an email using the Resend API.
@@ -67,14 +67,18 @@ export const sendEmail = async ({ to, subject, html, text }: SendEmailParams) =>
 export const sendTeamInviteEmail = async ({
     email,
     teamName,
+    teamId,
     token,
 }: {
     email: string
     teamName: string
+    teamId: number
     token: string
 }) => {
     const appUrl = getAppUrl()
-    const acceptLink = `${appUrl}/invite/accept?token=${encodeURIComponent(token)}`
+    const acceptLink = `${appUrl}/invite/accept?teamId=${encodeURIComponent(
+        String(teamId)
+    )}&token=${encodeURIComponent(token)}`
 
     const subject = `You're invited to join ${teamName}`
     const text = [
