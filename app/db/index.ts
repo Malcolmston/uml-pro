@@ -16,9 +16,10 @@ import Database from "./connect"
 export const Init = () => {
     return Database.initialize()
         .then(() => {
+            const options = Database.options as any
             console.log('✓ Database connected successfully')
-            console.log(`  Database: ${process.env.POSTGRES_DATABASE}`)
-            console.log(`  Host: ${process.env.POSTGRES_HOST}`)
+            console.log(`  Database: ${options.database || process.env.POSTGRES_DATABASE}`)
+            console.log(`  Host: ${options.host || process.env.POSTGRES_HOST}`)
             console.log(`  Entities: ${Database.entityMetadatas.length}`)
         })
         .catch(err => {
