@@ -5,13 +5,29 @@ type SendEmailParams = {
     text: string
 }
 
-const getResendApiKey = () => process.env.RESEND_MAIL_API
+const getStage = () => process.env.NODE_ENV as string | undefined
 
-const getResendFrom = () =>
-    process.env.RESEND_FROM ?? "UML Pro <onboarding@resend.dev>"
+const getResendApiKey = () => {
+    const stage = getStage()
+    return (stage === 'prod' || stage === 'production')
+        ? (process.env.PROD_RESEND_MAIL_API || process.env.RESEND_MAIL_API)
+        : process.env.RESEND_MAIL_API
+}
 
-const getAppUrl = () =>
-    process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001"
+const getResendFrom = () => {
+    const stage = getStage()
+    return ((stage === 'prod' || stage === 'production')
+        ? (process.env.PROD_RESEND_FROM || process.env.RESEND_FROM)
+        : process.env.RESEND_FROM) ?? "UML Pro <onboarding@resend.dev>"
+}
+
+const getAppUrl = () => {
+    const stage = getStage()
+    const isProd = stage === 'prod' || stage === 'production'
+    return (isProd
+        ? (process.env.PROD_APP_URL || process.env.APP_URL || process.env.PROD_NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL)
+        : (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL)) ?? "http://localhost:3001"
+}
 
 /**
  * Sends an email using the Resend API.
