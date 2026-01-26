@@ -101,12 +101,18 @@ export default function Home() {
             Sign in to access your projects, manage team roles, and keep work moving forward.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <button className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+            <a
+              href="/signup"
+              className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            >
               Sign in
-            </button>
-            <button className="rounded-full border border-slate-900 px-5 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-900 hover:text-white">
+            </a>
+            <a
+              href="/signup"
+              className="rounded-full border border-slate-900 px-5 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-900 hover:text-white"
+            >
               Create account
-            </button>
+            </a>
           </div>
         </div>
       </section>
