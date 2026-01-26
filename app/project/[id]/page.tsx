@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 
@@ -552,6 +553,12 @@ export default function ProjectPage() {
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                        href="/dashboard"
+                        className="h-8 px-3 rounded-full border border-gray-200 text-[10px] uppercase tracking-[0.2em] text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                    >
+                        Home
+                    </Link>
                     <button
                         type="button"
                         onClick={() => setIsSidebarOpen(false)}
@@ -597,6 +604,12 @@ export default function ProjectPage() {
         <div className="flex-1 relative">
             {!isViewer && !isSidebarOpen && (
                 <div className="absolute left-4 top-4 z-20">
+                    <Link
+                        href="/dashboard"
+                        className="mr-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-gray-600 shadow-sm hover:border-gray-400 hover:text-gray-800"
+                    >
+                        Home
+                    </Link>
                     <button
                         type="button"
                         onClick={() => setIsSidebarOpen(true)}
@@ -609,9 +622,17 @@ export default function ProjectPage() {
             )}
             {isViewer && roleBadge && (
                 <div className="absolute left-4 top-4 z-20">
-                    <span className={`border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] rounded-full ${roleBadge.classes}`}>
-                        {roleBadge.label}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/dashboard"
+                            className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-gray-600 shadow-sm hover:border-gray-400 hover:text-gray-800"
+                        >
+                            Home
+                        </Link>
+                        <span className={`border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] rounded-full ${roleBadge.classes}`}>
+                            {roleBadge.label}
+                        </span>
+                    </div>
                 </div>
             )}
             <svg
