@@ -23,9 +23,9 @@ const normalizePostgresUrl = (url: string) => {
     }
 }
 
-let stage: 'prod' | 'dev' | undefined | string = process.env.NODE_ENV;
+const stage: 'prod' | 'dev' | undefined | string = process.env.NODE_ENV;
 
-const db =stage !== "prod"
+const db = stage !== "prod"
     ? {
         host: process.env.POSTGRES_HOST,
         username: process.env.POSTGRES_USER,
