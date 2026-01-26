@@ -57,6 +57,11 @@ export async function POST(
     }
 
     const previousToken = invite.token
+    if (!invite.id) {
+        return NextResponse.json({ error: "Invite ID is missing" }, { status: 400 })
+    }
+    const inviteRecordId = invite.id
+
     const updatedInvite = {
         ...invite,
         token: crypto.randomBytes(32).toString("hex"),
@@ -64,12 +69,8 @@ export async function POST(
         invitedById: userId,
     }
     
-    if (!invite.id) {
-        return NextResponse.json({ error: "Invite ID is missing" }, { status: 400 })
-    }
-    
     await inviteRepo.update(
-        { id: updatedInvite.id },
+        { id: inviteRecordId },
         {
             token: updatedInvite.token,
             teamId: updatedInvite.teamId,
@@ -93,7 +94,7 @@ export async function POST(
         console.error("Invite email error:", error)
         // Revert token
         await inviteRepo.update(
-            { id: updatedInvite.id },
+            { id: inviteRecordId },
             {
                 token: previousToken,
                 teamId: updatedInvite.teamId,

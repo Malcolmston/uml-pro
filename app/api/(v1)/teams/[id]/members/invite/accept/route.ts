@@ -76,6 +76,9 @@ export async function POST(
     if (!invite.teamId || !Number.isFinite(invite.teamId)) {
         return NextResponse.json({ error: "Invite has invalid team ID" }, { status: 400 })
     }
+    if (!invite.id) {
+        return NextResponse.json({ error: "Invite is missing an id" }, { status: 400 })
+    }
 
     if (invite.status !== Invite.PENDING) {
         return NextResponse.json(
@@ -90,6 +93,7 @@ export async function POST(
 
     // Use the teamId from the invite to ensure consistency
     teamId = invite.teamId
+    const inviteId = invite.id
 
     try {
         await Database.transaction(async (entityManager) => {
@@ -128,7 +132,7 @@ export async function POST(
             invite.status = Invite.ACCEPTED
             invite.acceptedAt = acceptedAt
             await inviteRepo.update(
-                { id: invite.id },
+                { id: inviteId },
                 {
                     status: Invite.ACCEPTED,
                     acceptedAt,
