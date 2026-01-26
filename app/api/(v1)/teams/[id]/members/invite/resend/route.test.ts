@@ -36,7 +36,11 @@ vi.mock('../../../../_helpers', () => ({
 }))
 
 describe('POST /api/v1/teams/[id]/members/invite/resend', () => {
-    const mockInviteRepo = { findOne: vi.fn(), save: vi.fn() }
+    const mockInviteRepo = { 
+        findOne: vi.fn(), 
+        save: vi.fn().mockImplementation((entity) => Promise.resolve(entity)),
+        update: vi.fn().mockResolvedValue({ affected: 1 })
+    }
     const mockUserId = 1
     const mockTeamId = 100
     const mockInviteId = 10
@@ -132,15 +136,15 @@ describe('POST /api/v1/teams/[id]/members/invite/resend', () => {
         const res = await POST(req, context)
         
         expect(res.status).toBe(200)
-        expect(mockInviteRepo.save).toHaveBeenCalled()
-        // Check that token changed (mocked save receives modified object)
-        const savedInvite = mockInviteRepo.save.mock.calls[0][0]
-        expect(savedInvite.token).not.toBe('old-token')
+        expect(mockInviteRepo.update).toHaveBeenCalled()
+        const updateArgs = mockInviteRepo.update.mock.calls[0][1]
+        expect(updateArgs.token).not.toBe('old-token')
         
         expect(emailUtils.sendTeamInviteEmail).toHaveBeenCalledWith(expect.objectContaining({
             email: 'test@example.com',
             teamName: 'Test Team',
-            token: savedInvite.token
+            teamId: mockTeamId,
+            token: updateArgs.token
         }))
     })
 
@@ -151,9 +155,9 @@ describe('POST /api/v1/teams/[id]/members/invite/resend', () => {
         const res = await POST(req, context)
         
         expect(res.status).toBe(500)
-        // Verify rollback (second save call should have original token)
-        expect(mockInviteRepo.save).toHaveBeenCalledTimes(2)
-        const revertedInvite = mockInviteRepo.save.mock.calls[1][0]
+        // Verify rollback (second update call should have original token)
+        expect(mockInviteRepo.update).toHaveBeenCalledTimes(2)
+        const revertedInvite = mockInviteRepo.update.mock.calls[1][1]
         expect(revertedInvite.token).toBe('old-token')
     })
 })

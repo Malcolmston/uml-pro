@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 
@@ -17,7 +18,8 @@ import CreateRecord from "@/public/components/window/record/Create";
 import Background from "./background";
 import HistoryPopup from "./history";
 import DiffView from "./diff";
-import { getLatestProjectFile, getProjectFile, listProjectHistory, listTeams, storeProjectFile } from "./_api";
+import { getLatestProjectFile, getProjectFile, listProjectHistory, listTeamInvites, listTeams, storeProjectFile } from "./_api";
+import TeamRole from "@/app/db/teamRole";
 
 //import custom icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -33,6 +35,7 @@ export default function ProjectPage() {
     const historyCacheRef = useRef<Map<string, Array<{ folder: string; pagePath?: string; previewPath?: string }>>>(new Map());
     const fileCacheRef = useRef<Map<string, { contentBase64: string; mimeType: string }>>(new Map());
     const [teamId, setTeamId] = useState<number | null>(null);
+    const [teamRole, setTeamRole] = useState<TeamRole | null>(null);
     const [loadedSvgMarkup, setLoadedSvgMarkup] = useState<string | null>(null);
     const [historyEntries, setHistoryEntries] = useState<Array<{ folder: string; pagePath?: string; previewPath?: string }>>([]);
     const [syncStatus, setSyncStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -44,6 +47,23 @@ export default function ProjectPage() {
     const [previewTab, setPreviewTab] = useState<"preview" | "diff">("preview");
     const [latestSvgText, setLatestSvgText] = useState<string | null>(null);
     const [selectedSvgText, setSelectedSvgText] = useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isInvitesOpen, setIsInvitesOpen] = useState(false);
+    const [invites, setInvites] = useState<Array<{ id: number | null; email: string; role: string; status?: string; createdAt: string | null }>>([]);
+    const [invitesLoading, setInvitesLoading] = useState(false);
+    const [invitesError, setInvitesError] = useState<string | null>(null);
+    const isViewer = teamRole === TeamRole.VIEWER;
+    const roleBadge = teamRole
+        ? {
+              label: teamRole,
+              classes:
+                  teamRole === TeamRole.ADMIN
+                      ? "bg-amber-100 text-amber-800 border-amber-200"
+                      : teamRole === TeamRole.MEMBER
+                        ? "bg-sky-100 text-sky-800 border-sky-200"
+                        : "bg-slate-100 text-slate-600 border-slate-200",
+          }
+        : null;
     const latestSvgDataUrl = useMemo(() => {
         if (!latestSvgText) return null;
         return `data:image/svg+xml;utf8,${encodeURIComponent(latestSvgText)}`;
@@ -236,6 +256,7 @@ export default function ProjectPage() {
         ),
 
     ];
+    const actionButtons = isViewer ? [] : buttons;
     const handleAddNode = (node: React.JSX.Element) => {
         setElements(prev => [...prev, node]);
         setIsCreateOpen(false);
@@ -278,6 +299,7 @@ export default function ProjectPage() {
                         if (!isActive) return;
                         setCachedHistory(team.id, projectId, history);
                         setTeamId(team.id);
+                        setTeamRole(team.role ?? null);
                         setHistoryEntries(history);
                         const latest = history[0]?.pagePath;
                         if (latest) {
@@ -322,12 +344,14 @@ export default function ProjectPage() {
                 }
                 if (isActive) {
                     setTeamId(null);
+                    setTeamRole(null);
                     setHistoryEntries([]);
                 }
             } catch (error) {
                 if (isActive) {
                     console.error("Failed to resolve project team:", error);
                     setTeamId(null);
+                    setTeamRole(null);
                     setHistoryEntries([]);
                     setSyncStatus("error");
                 }
@@ -368,6 +392,7 @@ export default function ProjectPage() {
     }, [viewBox.height, viewBox.width]);
 
     const saveSnapshot = useCallback(async (svgText: string, folderLabel?: string) => {
+        if (isViewer) return;
         if (!teamId || !projectId) return;
         const previewBase64 = await createPreviewPng(svgText);
         const folderName = folderLabel || new Date().toISOString().replace(/[:.]/g, "-");
@@ -389,9 +414,10 @@ export default function ProjectPage() {
                 mimeType: "image/png",
             })
         ]);
-    }, [createPreviewPng, projectId, teamId]);
+    }, [createPreviewPng, isViewer, projectId, teamId]);
 
     const scheduleSave = useCallback(() => {
+        if (isViewer) return;
         if (!svgRef.current || !teamId || !projectId) return;
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
@@ -419,9 +445,10 @@ export default function ProjectPage() {
                 setSyncStatus("error");
             }
         }, 800);
-    }, [projectId, saveSnapshot, setCachedHistory, teamId]);
+    }, [isViewer, projectId, saveSnapshot, setCachedHistory, teamId]);
 
     useEffect(() => {
+        if (isViewer) return;
         if (!svgRef.current) return;
         const observer = new MutationObserver(() => {
             scheduleSave();
@@ -435,11 +462,51 @@ export default function ProjectPage() {
         return () => {
             observer.disconnect();
         };
-    }, [scheduleSave]);
+    }, [isViewer, scheduleSave]);
 
     useEffect(() => {
+        if (isViewer) return;
         scheduleSave();
-    }, [scheduleSave]);
+    }, [isViewer, scheduleSave]);
+
+    useEffect(() => {
+        if (isViewer) return;
+        if (!isInvitesOpen || !teamId) return;
+        let active = true;
+        const loadInvites = async () => {
+            setInvitesLoading(true);
+            setInvitesError(null);
+            try {
+                const { invites } = await listTeamInvites(teamId);
+                if (active) {
+                    setInvites(invites.map((invite) => ({
+                        ...invite,
+                        createdAt: invite.createdAt ?? null,
+                    })));
+                }
+            } catch (error) {
+                if (active) {
+                    setInvitesError(error instanceof Error ? error.message : "Failed to load invites.");
+                }
+            } finally {
+                if (active) {
+                    setInvitesLoading(false);
+                }
+            }
+        };
+        void loadInvites();
+        return () => {
+            active = false;
+        };
+    }, [isInvitesOpen, isViewer, teamId]);
+
+    useEffect(() => {
+        if (!isViewer) return;
+        setIsCreateOpen(false);
+        setIsHistoryOpen(false);
+        setIsInvitesOpen(false);
+        setIsPreviewOpen(false);
+    }, [isViewer]);
 
 
     const syncPill = useMemo(() => {
@@ -471,13 +538,35 @@ export default function ProjectPage() {
   return (
     <div className="flex min-h-screen bg-zinc-50 font-sans dark:bg-black overflow-hidden">
         {/* Sidebar/Toolbar */}
-        <div className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col gap-4 shadow-sm z-10">
-            <div className="flex items-start justify-between gap-2">
+        {!isViewer && isSidebarOpen && (
+        <div className="w-64 h-screen bg-white border-r border-gray-200 p-4 flex flex-col gap-4 shadow-sm z-10 overflow-hidden">
+            <div className="flex flex-col gap-3">
                 <div>
                     <h1 className="text-xl font-bold text-gray-800 mb-2">UML Pro Dev</h1>
-                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Project {params?.id}</p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Project {params?.id}</p>
+                        {roleBadge && (
+                            <span className={`border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] rounded-full ${roleBadge.classes}`}>
+                                {roleBadge.label}
+                            </span>
+                        )}
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                        href="/dashboard"
+                        className="h-8 px-3 rounded-full border border-gray-200 text-[10px] uppercase tracking-[0.2em] text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                    >
+                        Home
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="h-8 px-2 rounded-full border border-gray-200 text-[10px] uppercase tracking-[0.2em] text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                        title="Hide sidebar"
+                    >
+                        Hide
+                    </button>
                     <button
                         type="button"
                         onClick={() => setIsHistoryOpen(true)}
@@ -486,21 +575,66 @@ export default function ProjectPage() {
                     >
                         <FontAwesomeIcon icon={byPrefixAndName.fas['clock-rotate-left']} />
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsInvitesOpen(true)}
+                        className="h-8 px-3 rounded-full border border-gray-200 text-[10px] uppercase tracking-[0.2em] text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                        title="Team invites"
+                    >
+                        Invites
+                    </button>
                     <div className={`border px-2 py-1 text-[10px] uppercase tracking-[0.2em] rounded-full ${syncPill.classes}`}>
                         {syncPill.label}
                     </div>
                 </div>
             </div>
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+                <div className="flex flex-col gap-3">
+                    {actionButtons}
+                </div>
+            </div>
             {lastSavedAt && syncStatus === "saved" && (
-                <p className="mt-2 text-[10px] text-gray-400">Last saved at {lastSavedAt}</p>
+                <p className="text-[10px] text-gray-400">Last saved at {lastSavedAt}</p>
             )}
 
-            {buttons}
-
         </div>
+        )}
 
         {/* Main SVG Canvas */}
         <div className="flex-1 relative">
+            {!isViewer && !isSidebarOpen && (
+                <div className="absolute left-4 top-4 z-20">
+                    <Link
+                        href="/dashboard"
+                        className="mr-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-gray-600 shadow-sm hover:border-gray-400 hover:text-gray-800"
+                    >
+                        Home
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-gray-600 shadow-sm hover:border-gray-400 hover:text-gray-800"
+                        title="Show sidebar"
+                    >
+                        Menu
+                    </button>
+                </div>
+            )}
+            {isViewer && roleBadge && (
+                <div className="absolute left-4 top-4 z-20">
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/dashboard"
+                            className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-gray-600 shadow-sm hover:border-gray-400 hover:text-gray-800"
+                        >
+                            Home
+                        </Link>
+                        <span className={`border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] rounded-full ${roleBadge.classes}`}>
+                            {roleBadge.label}
+                        </span>
+                    </div>
+                </div>
+            )}
             <svg
                 width="100%"
                 height="100%"
@@ -531,7 +665,7 @@ export default function ProjectPage() {
             </svg>
         </div>
 
-        {isCreateOpen && (
+        {!isViewer && isCreateOpen && (
             <div
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
                 onClick={() => setIsCreateOpen(false)}
@@ -576,6 +710,7 @@ export default function ProjectPage() {
             </div>
         )}
 
+        {!isViewer && (
         <HistoryPopup
             isOpen={isHistoryOpen}
             entries={historyEntries}
@@ -656,8 +791,9 @@ export default function ProjectPage() {
                 }
             }}
         />
+        )}
 
-        {isPreviewOpen && (
+        {!isViewer && isPreviewOpen && (
             <div
                 className="fixed inset-0 z-50 bg-black/60 backdrop-blur"
                 onClick={() => setIsPreviewOpen(false)}
@@ -799,6 +935,49 @@ export default function ProjectPage() {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {isInvitesOpen && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur"
+                onClick={() => setIsInvitesOpen(false)}
+            >
+                <div
+                    className="w-full max-w-xl"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <div className="p-6 bg-white rounded-lg shadow-lg w-full space-y-6 overflow-y-auto max-h-[85vh] border">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-800">Team invites</h2>
+                            <button
+                                onClick={() => setIsInvitesOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        {invitesLoading && <p className="text-sm text-gray-500">Loading invites...</p>}
+                        {invitesError && <p className="text-sm text-red-500">{invitesError}</p>}
+                        {!invitesLoading && invites.length === 0 && (
+                            <p className="text-sm text-gray-500">No pending invites.</p>
+                        )}
+                        <div className="space-y-3">
+                            {invites.map((invite) => (
+                                <div
+                                    key={invite.id}
+                                    className="rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700"
+                                >
+                                    <div className="font-semibold text-gray-900">{invite.email}</div>
+                                    <div className="text-xs text-gray-500">
+                                        Role: {invite.role} · {invite.status}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

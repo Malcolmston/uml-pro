@@ -44,7 +44,10 @@ export async function POST(
     }
 
     const inviteRepo = Database.getRepository(TeamInvite)
-    const invite = await inviteRepo.findOne({ where: { id: targetInviteId, teamId } })
+    const invite = await inviteRepo.findOne({ 
+        where: { id: targetInviteId, teamId },
+        select: ['id', 'teamId', 'invitedById', 'email', 'role', 'token', 'status', 'createdAt', 'updatedAt']
+    })
     if (!invite) {
         return NextResponse.json({ error: "Invite not found" }, { status: 404 })
     }
@@ -54,8 +57,26 @@ export async function POST(
     }
 
     const previousToken = invite.token
-    invite.token = crypto.randomBytes(32).toString("hex")
-    await inviteRepo.save(invite)
+    if (!invite.id) {
+        return NextResponse.json({ error: "Invite ID is missing" }, { status: 400 })
+    }
+    const inviteRecordId = invite.id
+
+    const updatedInvite = {
+        ...invite,
+        token: crypto.randomBytes(32).toString("hex"),
+        teamId,
+        invitedById: userId,
+    }
+    
+    await inviteRepo.update(
+        { id: inviteRecordId },
+        {
+            token: updatedInvite.token,
+            teamId: updatedInvite.teamId,
+            invitedById: updatedInvite.invitedById,
+        }
+    )
 
     const team = await getTeamById(teamId)
     if (!team) {
@@ -64,14 +85,22 @@ export async function POST(
 
     try {
         await sendTeamInviteEmail({
-            email: invite.email,
+            email: updatedInvite.email,
             teamName: team.name,
-            token: invite.token,
+            teamId,
+            token: updatedInvite.token,
         })
     } catch (error) {
         console.error("Invite email error:", error)
-        invite.token = previousToken
-        await inviteRepo.save(invite)
+        // Revert token
+        await inviteRepo.update(
+            { id: inviteRecordId },
+            {
+                token: previousToken,
+                teamId: updatedInvite.teamId,
+                invitedById: updatedInvite.invitedById,
+            }
+        )
         return NextResponse.json(
             { error: "Invite updated but email failed to send" },
             { status: 500 }
@@ -82,9 +111,9 @@ export async function POST(
         {
             invite: {
                 id: invite.id,
-                email: invite.email,
-                role: invite.role,
-                token: invite.token,
+                email: updatedInvite.email,
+                role: updatedInvite.role,
+                token: updatedInvite.token,
             },
         },
         { status: 200 }

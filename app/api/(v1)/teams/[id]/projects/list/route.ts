@@ -42,7 +42,7 @@ export async function GET(
         return NextResponse.json({ error: "Team not found" }, { status: 404 })
     }
 
-    const allowed = team.canPerform(membership.role, "list", "bucket")
+    const allowed = team.canPerform(membership.role, "read", "bucket")
     if (allowed === false) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }

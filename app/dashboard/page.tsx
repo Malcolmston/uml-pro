@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Fraunces, Space_Grotesk } from "next/font/google"
 
 const display = Fraunces({ subsets: ["latin"], weight: ["600", "700"] })
@@ -19,7 +20,23 @@ type Project = {
     teamId: number | null
 }
 
-type TabKey = "projects" | "teams" | "settings"
+type Invite = {
+    id: number
+    email: string
+    role: string
+    status: string
+    createdAt: string | null
+}
+
+type UserSearchResult = {
+    id: number
+    firstname: string
+    lastname: string
+    email: string
+    username: string
+}
+
+type TabKey = "projects" | "teams" | "invites" | "settings"
 
 const getToken = () => {
     if (typeof window === "undefined") return null
@@ -27,6 +44,7 @@ const getToken = () => {
 }
 
 export default function DashboardPage() {
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState<TabKey>("projects")
     const [teams, setTeams] = useState<Team[]>([])
     const [projects, setProjects] = useState<Project[]>([])
@@ -41,6 +59,14 @@ export default function DashboardPage() {
     const [projectDescription, setProjectDescription] = useState("")
     const [projectVisibility, setProjectVisibility] = useState("public")
     const [creatingProject, setCreatingProject] = useState(false)
+    const [inviteEmail, setInviteEmail] = useState("")
+    const [inviteRole, setInviteRole] = useState("member")
+    const [invites, setInvites] = useState<Invite[]>([])
+    const [loadingInvites, setLoadingInvites] = useState(false)
+    const [inviteError, setInviteError] = useState<string | null>(null)
+    const [searchQuery, setSearchQuery] = useState("")
+    const [searchResults, setSearchResults] = useState<UserSearchResult[]>([])
+    const [searchingUsers, setSearchingUsers] = useState(false)
 
     const selectedTeam = useMemo(
         () => teams.find((team) => team.id === selectedTeamId) ?? null,
@@ -99,6 +125,135 @@ export default function DashboardPage() {
             setError("Network error while loading projects.")
         } finally {
             setLoadingProjects(false)
+        }
+    }
+
+    const fetchInvites = async (teamId: number) => {
+        setLoadingInvites(true)
+        setInviteError(null)
+        try {
+            const token = getToken()
+            const response = await fetch(`/api/teams/${teamId}/members/invite/list`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            })
+            const data = await response.json()
+            if (!response.ok) {
+                setInviteError(data?.error ?? "Failed to load invites.")
+                return
+            }
+            setInvites(data?.invites ?? [])
+        } catch {
+            setInviteError("Network error while loading invites.")
+        } finally {
+            setLoadingInvites(false)
+        }
+    }
+
+    const searchUsers = async () => {
+        if (!searchQuery.trim()) {
+            setSearchResults([])
+            return
+        }
+        setSearchingUsers(true)
+        setInviteError(null)
+        try {
+            const token = getToken()
+            const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery.trim())}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            })
+            const data = await response.json()
+            if (!response.ok) {
+                setInviteError(data?.error ?? "Failed to search users.")
+                return
+            }
+            setSearchResults(data?.users ?? [])
+        } catch {
+            setInviteError("Network error while searching users.")
+        } finally {
+            setSearchingUsers(false)
+        }
+    }
+
+    const handleLogout = useCallback(() => {
+        if (typeof window !== "undefined") {
+            window.localStorage.removeItem("token")
+        }
+        router.push("/signin")
+    }, [router])
+
+    const sendInvite = async (email: string, role: string) => {
+        if (!selectedTeamId) {
+            setInviteError("Select a team before inviting members.")
+            return
+        }
+        setInviteError(null)
+        try {
+            const token = getToken()
+            const response = await fetch(`/api/teams/${selectedTeamId}/members/invite`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ email, role }),
+            })
+            const data = await response.json()
+            if (!response.ok) {
+                setInviteError(data?.error ?? "Failed to send invite.")
+                return
+            }
+            setInviteEmail("")
+            await fetchInvites(selectedTeamId)
+        } catch {
+            setInviteError("Network error while sending invite.")
+        }
+    }
+
+    const resendInvite = async (inviteId: number) => {
+        if (!selectedTeamId) return
+        setInviteError(null)
+        try {
+            const token = getToken()
+            const response = await fetch(`/api/teams/${selectedTeamId}/members/invite/resend`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ inviteId }),
+            })
+            const data = await response.json()
+            if (!response.ok) {
+                setInviteError(data?.error ?? "Failed to resend invite.")
+                return
+            }
+            await fetchInvites(selectedTeamId)
+        } catch {
+            setInviteError("Network error while resending invite.")
+        }
+    }
+
+    const revokeInvite = async (inviteId: number) => {
+        if (!selectedTeamId) return
+        setInviteError(null)
+        try {
+            const token = getToken()
+            const response = await fetch(`/api/teams/${selectedTeamId}/members/invite/revoke`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ inviteId }),
+            })
+            const data = await response.json()
+            if (!response.ok) {
+                setInviteError(data?.error ?? "Failed to revoke invite.")
+                return
+            }
+            await fetchInvites(selectedTeamId)
+        } catch {
+            setInviteError("Network error while revoking invite.")
         }
     }
 
@@ -194,6 +349,12 @@ export default function DashboardPage() {
         }
     }, [selectedTeamId])
 
+    useEffect(() => {
+        if (activeTab === "invites" && selectedTeamId) {
+            fetchInvites(selectedTeamId)
+        }
+    }, [activeTab, selectedTeamId])
+
     return (
         <div className={`${ui.className} min-h-screen bg-[#0f1417] text-[#f4f1ea]`}>
             <div className="relative overflow-hidden">
@@ -213,13 +374,22 @@ export default function DashboardPage() {
                                 Keep every blueprint in sync.
                             </h1>
                         </div>
-                        <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#f4f1ea]">
-                            Active: {selectedTeam?.name ?? "No team selected"}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#f4f1ea]">
+                                Active: {selectedTeam?.name ?? "No team selected"}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#f4f1ea] hover:border-white/30"
+                            >
+                                Logout
+                            </button>
                         </div>
                     </header>
 
                     <section className="flex flex-wrap items-center gap-3">
-                        {(["projects", "teams", "settings"] as TabKey[]).map((tab) => (
+                        {(["projects", "teams", "invites", "settings"] as TabKey[]).map((tab) => (
                             <button
                                 key={tab}
                                 type="button"
@@ -306,10 +476,17 @@ export default function DashboardPage() {
                             </div>
 
                             <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-3">
                                     <p className="text-xs uppercase tracking-[0.2em] text-[#f2c078]">
                                         Projects
                                     </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab("invites")}
+                                        className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078]"
+                                    >
+                                        Manage invites
+                                    </button>
                                     <span className="text-xs text-[#9ba3a0]">
                                         {loadingProjects
                                             ? "Loading..."
@@ -442,6 +619,171 @@ export default function DashboardPage() {
                                     You have no teams yet.
                                 </p>
                             )}
+                        </section>
+                    )}
+
+                    {activeTab === "invites" && (
+                        <section className="grid gap-6 lg:grid-cols-[280px_1fr]">
+                            <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur">
+                                <p className="text-xs uppercase tracking-[0.2em] text-[#f2c078]">
+                                    Invite members
+                                </p>
+                                <div className="mt-4">
+                                    <label className="text-sm text-[#cfd5d2]">Team</label>
+                                    <select
+                                        className="mt-2 h-11 w-full rounded-2xl border border-white/10 bg-[#0d1114] px-4 text-sm text-[#f4f1ea]"
+                                        value={selectedTeamId ?? ""}
+                                        onChange={(event) =>
+                                            setSelectedTeamId(
+                                                event.target.value
+                                                    ? Number(event.target.value)
+                                                    : null
+                                            )
+                                        }
+                                    >
+                                        <option value="">Choose...</option>
+                                        {teams.map((team) => (
+                                            <option key={team.id} value={team.id}>
+                                                {team.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="mt-6 grid gap-3">
+                                    <label className="text-xs uppercase tracking-[0.2em] text-[#cfd5d2]">
+                                        Invite by email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={inviteEmail}
+                                        onChange={(event) => setInviteEmail(event.target.value)}
+                                        placeholder="name@example.com"
+                                        className="h-11 w-full rounded-2xl border border-white/10 bg-[#0d1114] px-4 text-sm text-[#f4f1ea] placeholder:text-[#6f7572] focus:border-[#f2c078] focus:outline-none"
+                                    />
+                                    <select
+                                        value={inviteRole}
+                                        onChange={(event) => setInviteRole(event.target.value)}
+                                        className="h-11 w-full rounded-2xl border border-white/10 bg-[#0d1114] px-4 text-sm text-[#f4f1ea]"
+                                    >
+                                        <option value="member">Member</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="viewer">Viewer</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078]"
+                                        onClick={() => sendInvite(inviteEmail, inviteRole)}
+                                    >
+                                        Send invite
+                                    </button>
+                                </div>
+                                <div className="mt-6 grid gap-3">
+                                    <label className="text-xs uppercase tracking-[0.2em] text-[#cfd5d2]">
+                                        Search users
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(event) => setSearchQuery(event.target.value)}
+                                        placeholder="Name, email, username"
+                                        className="h-11 w-full rounded-2xl border border-white/10 bg-[#0d1114] px-4 text-sm text-[#f4f1ea] placeholder:text-[#6f7572] focus:border-[#f2c078] focus:outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078]"
+                                        onClick={searchUsers}
+                                        disabled={searchingUsers}
+                                    >
+                                        {searchingUsers ? "Searching..." : "Search"}
+                                    </button>
+                                </div>
+                                {inviteError && (
+                                    <p className="mt-4 text-xs text-[#f4b1a6]">{inviteError}</p>
+                                )}
+                            </div>
+
+                            <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs uppercase tracking-[0.2em] text-[#f2c078]">
+                                        Pending invites
+                                    </p>
+                                    <span className="text-xs text-[#9ba3a0]">
+                                        {loadingInvites ? "Loading..." : `${invites.length} total`}
+                                    </span>
+                                </div>
+                                <div className="mt-6 grid gap-4">
+                                    {searchResults.length > 0 && (
+                                        <div className="rounded-2xl border border-white/10 bg-[#0d1114] px-5 py-4">
+                                            <p className="text-xs uppercase tracking-[0.2em] text-[#f2c078]">
+                                                Search results
+                                            </p>
+                                            <div className="mt-3 grid gap-2">
+                                                {searchResults.map((user) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0d1114] px-4 py-3 text-sm text-[#cfd5d2]"
+                                                    >
+                                                        <div>
+                                                            <div className="font-semibold text-[#f4f1ea]">
+                                                                {user.firstname} {user.lastname}
+                                                            </div>
+                                                            <div className="text-xs text-[#9ba3a0]">
+                                                                {user.email} · @{user.username}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078]"
+                                                            onClick={() => sendInvite(user.email, inviteRole)}
+                                                        >
+                                                            Invite
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {invites.length === 0 && !loadingInvites && (
+                                        <p className="text-sm text-[#cfd5d2]">
+                                            No pending invites.
+                                        </p>
+                                    )}
+                                    {invites.map((invite) => (
+                                        <div
+                                            key={invite.id}
+                                            className="rounded-2xl border border-white/10 bg-[#0d1114] px-5 py-4"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-semibold text-[#f4f1ea]">
+                                                        {invite.email}
+                                                    </p>
+                                                    <p className="text-xs text-[#9ba3a0]">
+                                                        Role: {invite.role} · {invite.status}
+                                                    </p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078]"
+                                                        onClick={() => resendInvite(invite.id)}
+                                                    >
+                                                        Resend
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#cfd5d2] hover:border-[#f2c078] hover:text-[#f2c078]"
+                                                        onClick={() => revokeInvite(invite.id)}
+                                                    >
+                                                        Revoke
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </section>
                     )}
 

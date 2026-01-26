@@ -28,7 +28,7 @@ vi.mock('../../../../_helpers', () => ({
 
 describe('POST /api/v1/teams/[id]/members/invite/accept', () => {
     const mockUserRepo = { findOne: vi.fn() }
-    const mockInviteRepo = { findOne: vi.fn(), save: vi.fn() }
+    const mockInviteRepo = { findOne: vi.fn(), save: vi.fn(), update: vi.fn().mockResolvedValue({ affected: 1 }) }
     const mockMemberRepo = { findOne: vi.fn(), save: vi.fn() }
     const mockEntityManager = {
         getRepository: vi.fn((entity: unknown) => {
@@ -123,11 +123,11 @@ describe('POST /api/v1/teams/[id]/members/invite/accept', () => {
         expect(res.status).toBe(404)
     })
 
-    it('should return 404 if invite is not PENDING', async () => {
+    it('should return 409 if invite is not PENDING', async () => {
         mockInviteRepo.findOne.mockResolvedValue({ ...mockInvite, status: Invite.ACCEPTED })
         const req = createRequest({ token: mockToken })
         const res = await POST(req, context)
-        expect(res.status).toBe(404)
+        expect(res.status).toBe(409)
     })
 
     it('should return 403 if invite email does not match user email', async () => {
@@ -147,9 +147,13 @@ describe('POST /api/v1/teams/[id]/members/invite/accept', () => {
             userId: mockUserId,
             role: mockInvite.role
         }))
-        expect(mockInviteRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-            status: Invite.ACCEPTED
-        }))
+        expect(mockInviteRepo.update).toHaveBeenCalledWith(
+            { id: mockInvite.id },
+            expect.objectContaining({
+                status: Invite.ACCEPTED,
+                teamId: mockTeamId
+            })
+        )
     })
 
     it('should handle race condition (duplicate member) gracefully', async () => {
@@ -161,9 +165,13 @@ describe('POST /api/v1/teams/[id]/members/invite/accept', () => {
         
         expect(res.status).toBe(200)
         // Should still update invite status
-        expect(mockInviteRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-            status: Invite.ACCEPTED
-        }))
+        expect(mockInviteRepo.update).toHaveBeenCalledWith(
+            { id: mockInvite.id },
+            expect.objectContaining({
+                status: Invite.ACCEPTED,
+                teamId: mockTeamId
+            })
+        )
     })
 
     it('should return 500 if transaction fails', async () => {
