@@ -18,8 +18,16 @@ type RoleType = 'admin' | 'member' | 'viewer'
 let cachedSupabase: ReturnType<typeof createClient> | null = null
 let cachedSupabaseKey = ''
 const getSupabase = () => {
-    const supabaseUrl = process.env.SUPABASE_URL
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const stage: string | undefined = process.env.NODE_ENV
+    
+    const supabaseUrl = stage === 'prod' || stage === 'production'
+        ? (process.env.PROD_SUPABASE_URL || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_PGSUPABASE_URL)
+        : (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_PGSUPABASE_URL)
+
+    const supabaseServiceRoleKey = stage === 'prod' || stage === 'production'
+        ? (process.env.PROD_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY)
+        : (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY)
+
     if (!supabaseUrl || !supabaseServiceRoleKey) {
         throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set')
     }
@@ -40,10 +48,22 @@ const getS3Client = () => {
         return null
     }
 
-    const s3Endpoint = process.env.S3_ENDPOINT
-    const s3AccessKeyId = process.env.AWS_ACCESS_KEY_ID
-    const s3SecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
-    const s3Region = process.env.AWS_REGION || 'us-east-1'
+    const stage: string | undefined = process.env.NODE_ENV
+    const isProd = stage === 'prod' || stage === 'production'
+
+    const s3Endpoint = isProd 
+        ? (process.env.PROD_S3_ENDPOINT || process.env.S3_ENDPOINT)
+        : process.env.S3_ENDPOINT
+
+    const s3AccessKeyId = isProd
+        ? (process.env.PROD_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID)
+        : process.env.AWS_ACCESS_KEY_ID
+
+    const s3SecretAccessKey = isProd
+        ? (process.env.PROD_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY)
+        : process.env.AWS_SECRET_ACCESS_KEY
+
+    const s3Region = (isProd ? process.env.PROD_AWS_REGION : process.env.AWS_REGION) || process.env.AWS_REGION || 'us-east-1'
 
     if (!s3Endpoint || !s3AccessKeyId || !s3SecretAccessKey) {
         return null
