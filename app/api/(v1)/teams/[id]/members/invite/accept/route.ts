@@ -145,7 +145,7 @@ export async function POST(
             error: error instanceof Error ? error.message : String(error),
             teamId,
             userId,
-            token,
+            token: token.substring(0, 4) + '...',
             inviteStatus: invite.status
         })
         

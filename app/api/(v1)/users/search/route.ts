@@ -20,14 +20,17 @@ export async function GET(request: NextRequest) {
         await Database.initialize()
     }
 
+    // Escape SQL LIKE metacharacters to prevent wildcard abuse
+    const escapedQuery = query.replace(/[\\%_]/g, '\\$&')
+
     const userRepo = Database.getRepository(User)
     const users = await userRepo.find({
         select: ["id", "firstname", "lastname", "email", "username"],
         where: [
-            { email: ILike(`%${query}%`) },
-            { username: ILike(`%${query}%`) },
-            { firstname: ILike(`%${query}%`) },
-            { lastname: ILike(`%${query}%`) }
+            { email: ILike(`%${escapedQuery}%`) },
+            { username: ILike(`%${escapedQuery}%`) },
+            { firstname: ILike(`%${escapedQuery}%`) },
+            { lastname: ILike(`%${escapedQuery}%`) }
         ],
         take: 10
     })
