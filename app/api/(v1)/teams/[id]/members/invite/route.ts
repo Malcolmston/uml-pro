@@ -64,6 +64,7 @@ export async function POST(
         await sendTeamInviteEmail({
             email: invite.email,
             teamName: team.name,
+            teamId,
             token: invite.token,
         })
     } catch (error) {
